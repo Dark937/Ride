@@ -1,14 +1,19 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Change this in production
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on ${port}`);
+});
 
 // Middleware
 app.use(cors({
@@ -18,6 +23,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 app.use(express.json());
+app.use(express.static('.'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride', { // Change to your MongoDB URI
@@ -154,6 +160,30 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Serve HTML pages
+app.get('/login', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'login.html'));
 });
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'register.html'));
+});
+
+app.get('/settings', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'settings.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'privacy.html'));
+});
+
+app.get('/tos', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'tos.html'));
+});
+
+// For Vercel serverless deployment
+if (process.env.NODE_ENV === 'production') {
+  // Export for Vercel
+  module.exports = app;
+}
+// Server listens at the top of the file

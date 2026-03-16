@@ -1,3 +1,0 @@
-git config user.name BrrbrrPatapim453
-git config user.email brrbrrpatapim153@gmail.com
-mongodb+srv://brrbrrpatapim153_db_user:5QZKDBTLrEZuyfQz@ridenow.pcskdmu.mongodb.net/?appname=RideNow

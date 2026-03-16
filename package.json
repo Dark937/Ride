@@ -2,9 +2,9 @@
   "name": "ride",
   "version": "1.0.0",
   "description": "**RideNow** is a modern **taxi booking web platform concept** designed to simplify urban transportation through a clean and intuitive interface.",
-  "main": "server.js",
+  "main": "scripts/server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node scripts/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
