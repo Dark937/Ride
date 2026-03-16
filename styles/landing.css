@@ -545,7 +545,17 @@ spline-viewer {
   align-items: center;
   justify-content: center;
   letter-spacing: 0.03em;
+  overflow: hidden;
 }
+
+/* Circle with photo: remove gradient bg, clean border only */
+.profile-btn .circle.is-logged-in.has-photo {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,.22);
+}
+.profile-btn .circle.is-logged-in.has-photo:hover { border-color: rgba(255,255,255,.40); }
+[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo { border-color: rgba(0,0,30,.20); }
+[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo:hover { border-color: rgba(0,0,30,.38); }
 
 #profileDropdown {
   position: absolute;
@@ -2021,36 +2031,13 @@ spline-viewer {
 [data-theme="light"] .lang-toggle-btn { color: rgba(10,10,24,.65); border-color: rgba(0,0,30,.14); background: rgba(0,0,20,.05); }
 [data-theme="light"] .lang-toggle-btn:hover { background: rgba(0,0,20,.10); color: #0a0a18; }
 
-/* ── PROFILE CIRCLE with photo ────────────────────────────────────── */
-.profile-btn .circle.is-logged-in {
-  background: linear-gradient(135deg, #3d5eff, #e03050);
-  border-color: transparent;
-  font-size: 11px; font-weight: 700; color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  letter-spacing: .03em; overflow: hidden;
-}
-
-
+/* ── PROFILE CIRCLE img (pseudo-elements hidden, img fills circle) ── */
 .profile-btn .circle.is-logged-in::before,
 .profile-btn .circle.is-logged-in::after { display: none; }
 .profile-btn .circle.is-logged-in img {
   width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
 }
-
-/* Circle with photo: remove gradient, use a subtle border instead */
-.profile-btn .circle.is-logged-in.has-photo {
-  background: transparent;
-  border: 2px solid rgba(255,255,255,.22);
-}
-.profile-btn .circle.is-logged-in.has-photo:hover {
-  border-color: rgba(255,255,255,.40);
-}
-[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo {
-  border-color: rgba(0,0,30,.20);
-}
-[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo:hover {
-  border-color: rgba(0,0,30,.38);
-}
+/* has-photo rules defined above near first .is-logged-in block */
 
 
 /* ══════════════════════════════════════════════════════════════════

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Ride</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    (function(){
+      var t=localStorage.getItem('ride_theme')||'dark';
+      var m=localStorage.getItem('ride_reduce_motion')==='true';
+      document.documentElement.setAttribute('data-theme',t);
+      if(m) document.documentElement.classList.add('reduce-motion');
+    })();
+  </script>
+  <link rel="stylesheet" href="styles/dashboard.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══════════════════════════════════════════
+       SIDEBAR
+       ══════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <img src="assets/logo.png" alt="Ride">
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-label">Main</div>
+      <a href="dashboard.html" class="sb-item active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="sb-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>My Rides</span>
+        <span class="sb-badge green">2</span>
+      </a>
+      <a href="#" class="sb-item">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+        <span>Fidelity</span>
+      </a>
+      <a href="#" class="sb-item">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>Payments</span>
+      </a>
+
+      <div class="sb-label">Account</div>
+      <a href="#" class="sb-item">
+        <svg viewBox="0 0 24 24"><path d="M18 20a6 6 0 00-12 0"/><circle cx="12" cy="10" r="4"/></svg>
+        <span>Profile</span>
+      </a>
+      <a href="settings.html" class="sb-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+      <a href="#" class="sb-item" id="sbSupport">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Support</span>
+        <span class="sb-badge">1</span>
+      </a>
+    </nav>
+
+    <div class="sb-footer">
+      <div class="sb-user" id="sbUser">
+        <div class="sb-avatar" id="sbAvatar">R</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sbName">Loading…</div>
+          <div class="sb-user-role">Rider</div>
+        </div>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════
+       MAIN
+       ══════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <div class="tb-title" id="tbGreeting">Good morning ✦</div>
+        <div class="tb-sub" id="tbDate">Monday, 16 March 2026</div>
+      </div>
+      <div class="tb-right">
+        <button class="tb-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="tb-btn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="dot"></span>
+        </button>
+        <button class="tb-btn tb-theme" id="themeBtn" aria-label="Toggle theme">
+          <svg class="icon-dark" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+          <svg class="icon-light" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="tb-avatar" id="tbAvatar">R</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Promo banner -->
+      <div class="promo-banner">
+        <div class="promo-text">
+          <span class="promo-badge">WEEKEND OFFER</span>
+          <h3>20% off your next 3 rides this weekend</h3>
+          <p>Use code <strong>RIDE20</strong> at checkout — valid Friday to Sunday.</p>
+        </div>
+        <a href="#" class="promo-cta">Claim offer</a>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="grid-4">
+        <div class="stat-card blue">
+          <div class="stat-top">
+            <span class="stat-label">Total rides</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          </div>
+          <div class="stat-val" id="statRides">47</div>
+          <div class="stat-foot">
+            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>12%</span>
+            <span class="stat-period">vs last month</span>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-top">
+            <span class="stat-label">Total spent</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+          </div>
+          <div class="stat-val" id="statSpent">€284</div>
+          <div class="stat-foot">
+            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>8%</span>
+            <span class="stat-period">vs last month</span>
+          </div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-top">
+            <span class="stat-label">Fidelity points</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span>
+          </div>
+          <div class="stat-val" id="statPts">1 240</div>
+          <div class="stat-foot">
+            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+320</span>
+            <span class="stat-period">this month</span>
+          </div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-top">
+            <span class="stat-label">Avg rating given</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></span>
+          </div>
+          <div class="stat-val">4.9</div>
+          <div class="stat-foot">
+            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+0.1</span>
+            <span class="stat-period">vs last month</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row: Rides table + Quick book -->
+      <div class="grid-2-1">
+
+        <!-- Recent rides -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Rides</span>
+            <a href="#" class="card-action">View all →</a>
+          </div>
+          <table class="rides-table">
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style="text-align:right">Fare</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Piazza Navona</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Fiumicino Airport</div></div></td>
+                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">14 Mar, 08:22</td>
+                <td><span class="ride-status completed">Completed</span></td>
+                <td class="ride-price">€38.50</td>
+              </tr>
+              <tr>
+                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Termini Station</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Colosseo</div></div></td>
+                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">13 Mar, 19:45</td>
+                <td><span class="ride-status completed">Completed</span></td>
+                <td class="ride-price">€11.20</td>
+              </tr>
+              <tr>
+                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Trastevere</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>EUR Centro</div></div></td>
+                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">12 Mar, 14:10</td>
+                <td><span class="ride-status cancelled">Cancelled</span></td>
+                <td class="ride-price" style="color:var(--muted)">—</td>
+              </tr>
+              <tr>
+                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Prati</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Testaccio</div></div></td>
+                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">11 Mar, 22:30</td>
+                <td><span class="ride-status completed">Completed</span></td>
+                <td class="ride-price">€9.80</td>
+              </tr>
+              <tr>
+                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Via Veneto</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Tiburtina</div></div></td>
+                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">10 Mar, 09:15</td>
+                <td><span class="ride-status ongoing"><span class="pulse"></span>Active</span></td>
+                <td class="ride-price">€16.40</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Quick book -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Book a Ride</span>
+          </div>
+          <div class="qb-form">
+            <div class="qb-field">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/></svg>
+              <input type="text" placeholder="Pickup location…" value="Via del Corso, Roma">
+            </div>
+            <div class="qb-field">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3" fill="currentColor" stroke="none" style="color:var(--accent)"/><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/></svg>
+              <input type="text" placeholder="Where to?">
+            </div>
+            <div class="qb-types">
+              <div class="qb-type active" onclick="selectType(this)">
+                <div class="qb-type-icon">🚗</div>
+                <div class="qb-type-label">Standard</div>
+              </div>
+              <div class="qb-type" onclick="selectType(this)">
+                <div class="qb-type-icon">🏎️</div>
+                <div class="qb-type-label">Sport</div>
+              </div>
+              <div class="qb-type" onclick="selectType(this)">
+                <div class="qb-type-icon">🚐</div>
+                <div class="qb-type-label">Van</div>
+              </div>
+            </div>
+            <button class="qb-submit">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Find a driver
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row: Activity chart + Fidelity card + Nearby -->
+      <div class="grid-3">
+
+        <!-- Spending activity -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Spending — Last 7 days</span>
+          </div>
+          <div class="chart-wrap">
+            <svg class="chart-svg" viewBox="0 0 280 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3d5eff" stop-opacity=".35"/>
+                  <stop offset="100%" stop-color="#3d5eff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Grid lines -->
+              <line x1="0" y1="20" x2="280" y2="20" stroke="var(--border)" stroke-width="0.5"/>
+              <line x1="0" y1="40" x2="280" y2="40" stroke="var(--border)" stroke-width="0.5"/>
+              <line x1="0" y1="60" x2="280" y2="60" stroke="var(--border)" stroke-width="0.5"/>
+              <!-- Area fill -->
+              <path d="M0,65 C20,60 30,50 60,42 S90,55 120,38 S150,20 180,30 S220,45 250,22 L280,15 L280,80 L0,80 Z" fill="url(#chartGrad)"/>
+              <!-- Line -->
+              <path d="M0,65 C20,60 30,50 60,42 S90,55 120,38 S150,20 180,30 S220,45 250,22 L280,15" fill="none" stroke="#3d5eff" stroke-width="2" stroke-linecap="round"/>
+              <!-- Dots -->
+              <circle cx="60" cy="42" r="3" fill="#3d5eff"/>
+              <circle cx="120" cy="38" r="3" fill="#3d5eff"/>
+              <circle cx="180" cy="30" r="3" fill="#3d5eff"/>
+              <circle cx="250" cy="22" r="3" fill="#3d5eff"/>
+              <circle cx="280" cy="15" r="4" fill="#3d5eff" stroke="var(--card-bg)" stroke-width="2"/>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px">
+            <span style="font-size:11.5px;color:var(--faint)">Mon</span>
+            <span style="font-size:11.5px;color:var(--faint)">Tue</span>
+            <span style="font-size:11.5px;color:var(--faint)">Wed</span>
+            <span style="font-size:11.5px;color:var(--faint)">Thu</span>
+            <span style="font-size:11.5px;color:var(--faint)">Fri</span>
+            <span style="font-size:11.5px;color:var(--faint)">Sat</span>
+            <span style="font-size:11.5px;color:var(--brand);font-weight:600">Sun</span>
+          </div>
+        </div>
+
+        <!-- Fidelity card -->
+        <div class="fidelity-card">
+          <div class="fc-tier">Gold tier • Ride Fidelity</div>
+          <div class="fc-pts" id="fcPts">1,240</div>
+          <div class="fc-pts-label">points available</div>
+          <div class="fc-bar-wrap">
+            <div class="fc-bar-track"><div class="fc-bar-fill" id="fcBar" style="width:62%"></div></div>
+            <div class="fc-bar-labels"><span>Gold</span><span>760 pts to Platinum</span></div>
+          </div>
+          <div class="fc-actions">
+            <a href="#" class="fc-btn primary">Redeem</a>
+            <a href="#" class="fc-btn secondary">History</a>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Achievements</span>
+            <span class="card-badge live">3 new</span>
+          </div>
+          <div class="ach-grid">
+            <div class="ach-item earned">
+              <span class="ach-icon">🔥</span>
+              <span class="ach-label">7-day streak</span>
+              <span class="ach-val">Active</span>
+            </div>
+            <div class="ach-item earned">
+              <span class="ach-icon">⭐</span>
+              <span class="ach-label">5-star rider</span>
+              <span class="ach-val">×12</span>
+            </div>
+            <div class="ach-item">
+              <span class="ach-icon">🌍</span>
+              <span class="ach-label">3 cities</span>
+              <span class="ach-val">Locked</span>
+            </div>
+            <div class="ach-item earned">
+              <span class="ach-icon">💨</span>
+              <span class="ach-label">Fast booker</span>
+              <span class="ach-val">×8</span>
+            </div>
+            <div class="ach-item">
+              <span class="ach-icon">🏅</span>
+              <span class="ach-label">50 rides</span>
+              <span class="ach-val">47/50</span>
+            </div>
+            <div class="ach-item earned">
+              <span class="ach-icon">🌙</span>
+              <span class="ach-label">Night owl</span>
+              <span class="ach-val">Active</span>
+            </div>
+            <div class="ach-item">
+              <span class="ach-icon">♻️</span>
+              <span class="ach-label">Eco rides</span>
+              <span class="ach-val">3/10</span>
+            </div>
+            <div class="ach-item earned">
+              <span class="ach-icon">💎</span>
+              <span class="ach-label">Gold tier</span>
+              <span class="ach-val">Earned</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row: Map + nearby drivers -->
+      <div class="grid-2">
+
+        <div class="map-card">
+          <div class="card-header">
+            <span class="card-title">Nearby drivers</span>
+            <span class="card-badge live">● Live</span>
+          </div>
+          <div class="map-bg">
+            <div class="map-grid"></div>
+            <div class="map-road-h"></div>
+            <div class="map-road-h2"></div>
+            <div class="map-road-v"></div>
+            <div class="map-road-v2"></div>
+            <!-- Your location -->
+            <div class="map-dot" style="top:45%;left:38%"></div>
+            <div class="map-label" style="top:28%;left:41%">You</div>
+            <!-- Driver 1 -->
+            <div class="map-dot map-dot-2" style="top:24%;left:58%;width:8px;height:8px"></div>
+            <!-- Driver 2 -->
+            <div class="map-dot map-dot-2" style="top:58%;left:65%;width:8px;height:8px;background:var(--green);box-shadow:0 0 0 4px var(--green-dim)"></div>
+            <!-- Driver 3 -->
+            <div class="map-dot map-dot-2" style="top:62%;left:22%;width:8px;height:8px;background:var(--green);box-shadow:0 0 0 4px var(--green-dim)"></div>
+          </div>
+          <div class="nearby-list">
+            <div class="nearby-item">
+              <div class="nearby-icon" style="background:var(--brand-dim);color:var(--brand)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
+              <div class="nearby-info">
+                <div class="nearby-name">Marco R. · ⭐ 4.98</div>
+                <div class="nearby-dist">350 m away · BMW 5 Series</div>
+              </div>
+              <div class="nearby-eta">2 min</div>
+            </div>
+            <div class="nearby-item">
+              <div class="nearby-icon" style="background:var(--green-dim);color:var(--green)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
+              <div class="nearby-info">
+                <div class="nearby-name">Giulia T. · ⭐ 4.96</div>
+                <div class="nearby-dist">620 m away · Audi A6</div>
+              </div>
+              <div class="nearby-eta">4 min</div>
+            </div>
+            <div class="nearby-item">
+              <div class="nearby-icon" style="background:var(--yellow-dim);color:var(--yellow)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
+              <div class="nearby-info">
+                <div class="nearby-name">Luca M. · ⭐ 4.94</div>
+                <div class="nearby-dist">890 m away · Mercedes E</div>
+              </div>
+              <div class="nearby-eta">6 min</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account summary -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Account summary</span>
+            <a href="settings.html" class="card-action">Edit →</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--surface)">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden" id="summaryAvatar">R</div>
+              <div>
+                <div style="font-size:15px;font-weight:700" id="summaryName">Rider</div>
+                <div style="font-size:12.5px;color:var(--muted)" id="summaryEmail">—</div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="padding:12px;border-radius:10px;background:var(--surface);text-align:center">
+                <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--brand)" id="summaryRides">47</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Total rides</div>
+              </div>
+              <div style="padding:12px;border-radius:10px;background:var(--surface);text-align:center">
+                <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--yellow)" id="summaryPts">1,240</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Fidelity pts</div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
+                <span style="font-size:13px;color:var(--muted)">Member since</span>
+                <span style="font-size:13px;font-weight:600" id="memberSince">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
+                <span style="font-size:13px;color:var(--muted)">Fidelity tier</span>
+                <span style="font-size:13px;font-weight:600;color:var(--yellow)">Gold ✦</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
+                <span style="font-size:13px;color:var(--muted)">Payment</span>
+                <span style="font-size:13px;font-weight:600">•••• 4821</span>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <a href="settings.html" style="flex:1;padding:9px;border-radius:9px;background:var(--brand-dim);color:var(--brand);font-size:13px;font-weight:600;text-align:center;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Settings</a>
+              <button id="signOutBtn" style="flex:1;padding:9px;border-radius:9px;background:var(--accent-dim);color:var(--accent);font-size:13px;font-weight:600;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Sign out</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Sign-out modal (injected by JS) -->
+
+<script src="assets/sql-wasm.js"></script>
+<script src="scripts/shared.js"></script>
+<script>
+"use strict";
+
+/* ── Greeting & date ── */
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const el = document.getElementById("tbGreeting");
+  if (el) el.textContent = g + " ✦";
+  const d = document.getElementById("tbDate");
+  if (d) d.textContent = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+}
+
+/* ── Theme ── */
+document.getElementById("themeBtn").addEventListener("click", () => {
+  Theme.toggle();
+});
+
+/* ── Vehicle type selection ── */
+function selectType(el) {
+  document.querySelectorAll(".qb-type").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* ── Sign-out modal ── */
+function buildSignOutModal() {
+  if (document.getElementById("soModal")) return document.getElementById("soModal");
+  const m = document.createElement("div");
+  m.id = "soModal"; m.className = "so-overlay";
+  m.innerHTML = `<div class="so-box" role="dialog" aria-modal="true">
+    <div class="so-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+    <h3>Sign out?</h3>
+    <p>You'll need to sign in again to access your account.</p>
+    <div class="so-actions">
+      <button class="so-cancel" id="soCancel">Cancel</button>
+      <button class="so-confirm" id="soConfirm">Sign out</button>
+    </div></div>`;
+  document.body.appendChild(m);
+  document.getElementById("soCancel").addEventListener("click", () => m.classList.remove("is-open"));
+  document.getElementById("soConfirm").addEventListener("click", () => { Session.clear(true); window.location.href = "index.html"; });
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("is-open"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") m.classList.remove("is-open"); });
+  return m;
+}
+
+/* ── Bootstrap ── */
+document.addEventListener("DOMContentLoaded", async () => {
+  Theme.apply();
+  Motion.apply();
+  Lang.apply();
+  setGreeting();
+
+  const user = await Session.get();
+
+  /* Redirect to login if not authenticated */
+  if (!user) {
+    window.location.href = "login.html?redirect=dashboard.html";
+    return;
+  }
+
+  /* Populate user info */
+  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Rider";
+
+  // Sidebar avatar
+  const sbAvatar = document.getElementById("sbAvatar");
+  if (sbAvatar) {
+    if (user.photo) { sbAvatar.innerHTML = `<img src="${user.photo}" alt="Avatar">`; }
+    else            { sbAvatar.textContent = user.initials || name[0] || "R"; }
+  }
+  const sbName = document.getElementById("sbName");
+  if (sbName) sbName.textContent = name;
+
+  // Topbar avatar
+  const tbAvatar = document.getElementById("tbAvatar");
+  if (tbAvatar) {
+    if (user.photo) { tbAvatar.innerHTML = `<img src="${user.photo}" alt="Avatar">`; tbAvatar.classList.add("has-photo"); }
+    else            { tbAvatar.textContent = user.initials || name[0] || "R"; }
+  }
+
+  // Greeting personalised
+  const h = new Date().getHours();
+  const g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const greetEl = document.getElementById("tbGreeting");
+  if (greetEl) greetEl.textContent = `${g}, ${user.firstName || name} ✦`;
+
+  // Account summary
+  const summaryAvatar = document.getElementById("summaryAvatar");
+  if (summaryAvatar) {
+    if (user.photo) { summaryAvatar.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; }
+    else            { summaryAvatar.textContent = user.initials || name[0] || "R"; }
+  }
+  const summaryName = document.getElementById("summaryName");
+  if (summaryName) summaryName.textContent = name;
+  const summaryEmail = document.getElementById("summaryEmail");
+  if (summaryEmail) summaryEmail.textContent = user.email || "";
+
+  // Member since
+  const ms = document.getElementById("memberSince");
+  if (ms && user.createdAt) {
+    ms.textContent = new Date(user.createdAt).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+  }
+
+  // Sign-out button
+  const soModal = buildSignOutModal();
+  document.getElementById("signOutBtn")?.addEventListener("click", () => soModal.classList.add("is-open"));
+  document.getElementById("sbUser")?.addEventListener("click",    () => soModal.classList.add("is-open"));
+});
+</script>
+
+<link rel="stylesheet" href="styles/landing.css">
+</body>
+</html>
