@@ -11,10 +11,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Change this in production
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server running on ${port}`);
-});
-
 // Middleware
 app.use(cors({
   origin: '*',
