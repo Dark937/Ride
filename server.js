@@ -7,7 +7,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Change this in production
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on ${port}`);
+});
 
 // Middleware
 app.use(cors({
@@ -179,9 +184,5 @@ app.get('/tos', (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   // Export for Vercel
   module.exports = app;
-} else {
-  // Local development
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
-  });
 }
+// Server listens at the top of the file
