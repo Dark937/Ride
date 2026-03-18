@@ -7,584 +7,891 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script>
-    (function(){
-      var t=localStorage.getItem('ride_theme')||'dark';
-      var m=localStorage.getItem('ride_reduce_motion')==='true';
-      document.documentElement.setAttribute('data-theme',t);
-      if(m) document.documentElement.classList.add('reduce-motion');
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="stylesheet" href="styles/landing.css">
+  <script>(function(){var t=localStorage.getItem('ride_theme')||'dark';var m=localStorage.getItem('ride_reduce_motion')==='true';document.documentElement.setAttribute('data-theme',t);if(m)document.documentElement.classList.add('reduce-motion')})();</script>
 </head>
 <body>
-
 <div class="app">
 
-  <!-- ══════════════════════════════════════════
-       SIDEBAR
-       ══════════════════════════════════════════ -->
-  <aside class="sidebar">
-    <div class="sb-logo">
-      <img src="assets/logo.png" alt="Ride">
+<!-- ══ SIDEBAR ═════════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo"><img src="assets/logo.png" alt="Ride"></div>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a class="sb-item active" data-panel="dashboard" href="#">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a class="sb-item" data-panel="fidelity" href="#">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+      <span>My Fidelity</span>
+    </a>
+    <a class="sb-item" data-panel="payments" href="#">
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Payments</span>
+    </a>
+    <div class="sb-section">Account</div>
+    <a class="sb-item" data-panel="account" href="#">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>My Account</span>
+    </a>
+    <a class="sb-item" href="settings.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Settings</span>
+    </a>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user" id="sbUser">
+      <div class="sb-avatar" id="sbAvatar">R</div>
+      <span class="sb-user-name" id="sbName">Loading…</span>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
     </div>
+  </div>
+</aside>
 
-    <nav class="sb-nav">
-      <div class="sb-label">Main</div>
-      <a href="dashboard.html" class="sb-item active">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Dashboard</span>
-      </a>
-      <a href="#" class="sb-item">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>My Rides</span>
-        <span class="sb-badge green">2</span>
-      </a>
-      <a href="#" class="sb-item">
-        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-        <span>Fidelity</span>
-      </a>
-      <a href="#" class="sb-item">
-        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        <span>Payments</span>
-      </a>
+<!-- ══ MAIN ══════════════════════════════════════════════════════════ -->
+<div class="main">
 
-      <div class="sb-label">Account</div>
-      <a href="#" class="sb-item">
-        <svg viewBox="0 0 24 24"><path d="M18 20a6 6 0 00-12 0"/><circle cx="12" cy="10" r="4"/></svg>
-        <span>Profile</span>
-      </a>
-      <a href="settings.html" class="sb-item">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        <span>Settings</span>
-      </a>
-      <a href="#" class="sb-item" id="sbSupport">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>Support</span>
-        <span class="sb-badge">1</span>
-      </a>
-    </nav>
-
-    <div class="sb-footer">
-      <div class="sb-user" id="sbUser">
-        <div class="sb-avatar" id="sbAvatar">R</div>
-        <div class="sb-user-info">
-          <div class="sb-user-name" id="sbName">Loading…</div>
-          <div class="sb-user-role">Rider</div>
-        </div>
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-      </div>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="tb-left">
+      <span class="tb-section-title" id="tbTitle">Dashboard</span>
     </div>
-  </aside>
+    <div class="tb-right">
+      <button class="tb-icon-btn" id="notifBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn tb-theme" id="themeBtn" aria-label="Toggle theme">
+        <svg class="icon-dark" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg class="icon-light" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="tb-avatar" id="tbAvatar">R</div>
+    </div>
+  </header>
 
-  <!-- ══════════════════════════════════════════
-       MAIN
-       ══════════════════════════════════════════ -->
-  <div class="main">
+  <!-- ══ PANEL: DASHBOARD ══════════════════════════════════════════ -->
+  <section class="panel active" id="panel-dashboard">
+    <div class="panel-inner">
 
-    <!-- Topbar -->
-    <header class="topbar">
-      <div>
-        <div class="tb-title" id="tbGreeting">Good morning ✦</div>
-        <div class="tb-sub" id="tbDate">Monday, 16 March 2026</div>
-      </div>
-      <div class="tb-right">
-        <button class="tb-btn" aria-label="Search">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
-        <button class="tb-btn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <span class="dot"></span>
-        </button>
-        <button class="tb-btn tb-theme" id="themeBtn" aria-label="Toggle theme">
-          <svg class="icon-dark" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
-          <svg class="icon-light" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        </button>
-        <div class="tb-avatar" id="tbAvatar">R</div>
-      </div>
-    </header>
-
-    <!-- Content -->
-    <div class="content">
-
-      <!-- Promo banner -->
-      <div class="promo-banner">
-        <div class="promo-text">
-          <span class="promo-badge">WEEKEND OFFER</span>
-          <h3>20% off your next 3 rides this weekend</h3>
-          <p>Use code <strong>RIDE20</strong> at checkout — valid Friday to Sunday.</p>
+      <!-- Welcome strip -->
+      <div class="welcome-strip">
+        <div>
+          <div class="ws-greeting" id="wsGreeting">Good morning ✦</div>
+          <div class="ws-sub" id="wsDate">Wednesday, 18 March 2026</div>
         </div>
-        <a href="#" class="promo-cta">Claim offer</a>
-      </div>
-
-      <!-- Stat cards -->
-      <div class="grid-4">
-        <div class="stat-card blue">
-          <div class="stat-top">
-            <span class="stat-label">Total rides</span>
-            <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-          </div>
-          <div class="stat-val" id="statRides">47</div>
-          <div class="stat-foot">
-            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>12%</span>
-            <span class="stat-period">vs last month</span>
-          </div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-top">
-            <span class="stat-label">Total spent</span>
-            <span class="stat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
-          </div>
-          <div class="stat-val" id="statSpent">€284</div>
-          <div class="stat-foot">
-            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>8%</span>
-            <span class="stat-period">vs last month</span>
-          </div>
-        </div>
-        <div class="stat-card yellow">
-          <div class="stat-top">
-            <span class="stat-label">Fidelity points</span>
-            <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span>
-          </div>
-          <div class="stat-val" id="statPts">1 240</div>
-          <div class="stat-foot">
-            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+320</span>
-            <span class="stat-period">this month</span>
-          </div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-top">
-            <span class="stat-label">Avg rating given</span>
-            <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></span>
-          </div>
-          <div class="stat-val">4.9</div>
-          <div class="stat-foot">
-            <span class="stat-delta up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+0.1</span>
-            <span class="stat-period">vs last month</span>
-          </div>
+        <div class="ws-stats">
+          <div class="ws-stat"><div class="ws-stat-val blue" id="wsRides">—</div><div class="ws-stat-label">Total rides</div></div>
+          <div class="ws-stat"><div class="ws-stat-val yellow" id="wsPts">—</div><div class="ws-stat-label">Fidelity pts</div></div>
+          <div class="ws-stat"><div class="ws-stat-val green" id="wsSpent">—</div><div class="ws-stat-label">Spent this month</div></div>
         </div>
       </div>
 
-      <!-- Row: Rides table + Quick book -->
-      <div class="grid-2-1">
+      <!-- Top row: next ride + fidelity mini + utilities -->
+      <div class="dash-row">
+
+        <!-- Next ride -->
+        <div class="next-ride-card" id="nextRideCard">
+          <div class="card-hd"><span class="card-title">Next Ride</span><span class="pill blue" id="nextRideCount" style="display:none"></span></div>
+          <div id="nextRideBody"></div>
+        </div>
+
+        <!-- Fidelity mini -->
+        <div class="fid-mini" id="fidMiniCard" style="cursor:pointer" data-panel="fidelity">
+          <div class="fm-tier">Ride Fidelity · Gold</div>
+          <div class="fm-pts" id="fidMiniPts">1,240</div>
+          <div class="fm-label">points available</div>
+          <div class="fm-bar-track"><div class="fm-bar-fill" id="fidMiniBar" style="width:62%"></div></div>
+          <div class="fm-next" id="fidMiniNext">760 pts to Platinum</div>
+          <a class="fm-btn" style="margin-top:12px">View Fidelity →</a>
+        </div>
+
+        <!-- Utilities -->
+        <div class="card card-sm">
+          <div class="card-hd"><span class="card-title">Quick Access</span></div>
+          <div class="util-grid">
+            <div class="util-item" data-panel="payments">
+              <div class="util-icon" style="background:var(--brand-dim);color:var(--brand)"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+              <span class="util-label">Payments</span>
+            </div>
+            <div class="util-item" data-panel="account">
+              <div class="util-icon" style="background:var(--green-dim);color:var(--green)"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <span class="util-label">Account</span>
+            </div>
+            <div class="util-item" onclick="window.location.href='settings.html'">
+              <div class="util-icon" style="background:var(--yellow-dim);color:var(--yellow)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+              <span class="util-label">Settings</span>
+            </div>
+            <div class="util-item" onclick="window.location.href='index.html'">
+              <div class="util-icon" style="background:var(--accent-dim);color:var(--accent)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+              <span class="util-label">Home</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom row: recent rides + spending chart -->
+      <div class="dash-grid">
 
         <!-- Recent rides -->
         <div class="card">
-          <div class="card-header">
+          <div class="card-hd">
             <span class="card-title">Recent Rides</span>
-            <a href="#" class="card-action">View all →</a>
+            <span class="card-link" id="bookNewLink" onclick="window.location.href='index.html'">+ Book new</span>
           </div>
-          <table class="rides-table">
-            <thead>
-              <tr>
-                <th>Route</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th style="text-align:right">Fare</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Piazza Navona</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Fiumicino Airport</div></div></td>
-                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">14 Mar, 08:22</td>
-                <td><span class="ride-status completed">Completed</span></td>
-                <td class="ride-price">€38.50</td>
-              </tr>
-              <tr>
-                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Termini Station</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Colosseo</div></div></td>
-                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">13 Mar, 19:45</td>
-                <td><span class="ride-status completed">Completed</span></td>
-                <td class="ride-price">€11.20</td>
-              </tr>
-              <tr>
-                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Trastevere</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>EUR Centro</div></div></td>
-                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">12 Mar, 14:10</td>
-                <td><span class="ride-status cancelled">Cancelled</span></td>
-                <td class="ride-price" style="color:var(--muted)">—</td>
-              </tr>
-              <tr>
-                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Prati</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Testaccio</div></div></td>
-                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">11 Mar, 22:30</td>
-                <td><span class="ride-status completed">Completed</span></td>
-                <td class="ride-price">€9.80</td>
-              </tr>
-              <tr>
-                <td><div class="ride-route"><div class="ride-from"><span class="r-dot from"></span>Via Veneto</div><div class="r-line-conn" style="margin-left:3px"></div><div class="ride-to"><span class="r-dot to"></span>Tiburtina</div></div></td>
-                <td style="color:var(--muted);font-size:12.5px;white-space:nowrap">10 Mar, 09:15</td>
-                <td><span class="ride-status ongoing"><span class="pulse"></span>Active</span></td>
-                <td class="ride-price">€16.40</td>
-              </tr>
-            </tbody>
+          <table class="rides-tbl">
+            <thead><tr>
+              <th>Route</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th style="text-align:right">Fare</th>
+            </tr></thead>
+            <tbody id="recentRidesTbody"></tbody>
           </table>
         </div>
 
-        <!-- Quick book -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Book a Ride</span>
+        <!-- Spending chart -->
+        <div class="chart-card">
+          <div class="card-hd"><span class="card-title">Spending</span></div>
+          <div class="chart-tabs" id="chartTabs">
+            <span class="chart-tab active" data-range="week">Week</span>
+            <span class="chart-tab" data-range="month">Month</span>
+            <span class="chart-tab" data-range="year">Year</span>
+            <span class="chart-tab" data-range="all">All time</span>
           </div>
-          <div class="qb-form">
-            <div class="qb-field">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/></svg>
-              <input type="text" placeholder="Pickup location…" value="Via del Corso, Roma">
-            </div>
-            <div class="qb-field">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3" fill="currentColor" stroke="none" style="color:var(--accent)"/><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/></svg>
-              <input type="text" placeholder="Where to?">
-            </div>
-            <div class="qb-types">
-              <div class="qb-type active" onclick="selectType(this)">
-                <div class="qb-type-icon">🚗</div>
-                <div class="qb-type-label">Standard</div>
-              </div>
-              <div class="qb-type" onclick="selectType(this)">
-                <div class="qb-type-icon">🏎️</div>
-                <div class="qb-type-label">Sport</div>
-              </div>
-              <div class="qb-type" onclick="selectType(this)">
-                <div class="qb-type-icon">🚐</div>
-                <div class="qb-type-label">Van</div>
-              </div>
-            </div>
-            <button class="qb-submit">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Find a driver
+          <div class="chart-summary" id="chartSummary"></div>
+          <div class="chart-area" id="chartArea">
+            <div class="chart-bars-wrap" id="chartBars"></div>
+          </div>
+          <div class="chart-tooltip" id="chartTooltip"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ PANEL: FIDELITY ══════════════════════════════════════════ -->
+  <section class="panel" id="panel-fidelity">
+    <div class="panel-inner">
+      <div class="fid-hero">
+        <div class="fh-tier-badge">✦ Gold Tier</div>
+        <div class="fh-pts" id="fidHeroPts">1,240</div>
+        <div class="fh-pts-label">points available</div>
+        <div class="fh-progress">
+          <div class="fh-bar-track"><div class="fh-bar-fill" id="fidHeroBar" style="width:62%"></div></div>
+          <div class="fh-bar-labels"><span>Gold (0)</span><span id="fidHeroNext">760 pts to Platinum (2000)</span></div>
+          <div class="fh-actions">
+            <a href="#" class="fh-btn primary">Redeem points</a>
+            <a href="#" class="fh-btn secondary">Explore rewards</a>
+          </div>
+        </div>
+      </div>
+      <div class="fid-stats-grid">
+        <div class="fid-stat"><div class="fid-stat-val" id="fsTotal" style="color:var(--brand)">—</div><div class="fid-stat-label">Total earned (all time)</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsRedeemed" style="color:var(--yellow)">—</div><div class="fid-stat-label">Points redeemed</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsTier" style="color:var(--green)">Gold</div><div class="fid-stat-label">Current tier</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsNext" style="color:var(--muted)">760</div><div class="fid-stat-label">Pts to next tier</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Points History</span></div>
+        <div class="fid-history" id="fidHistory"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ PANEL: PAYMENTS ══════════════════════════════════════════ -->
+  <section class="panel" id="panel-payments">
+    <div class="panel-inner">
+      <div class="pay-grid">
+        <!-- Cards -->
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Payment Methods</span></div>
+          <div class="cards-list" id="cardsList"></div>
+          <div style="margin-top:10px">
+            <button class="add-card-toggle" id="addCardToggle">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add new card
             </button>
+            <div class="add-card-form" id="addCardForm">
+              <div class="card-preview">
+                <div class="cp-top"><div class="cp-chip"></div><div class="cp-brand" id="cpBrand">VISA</div></div>
+                <div class="cp-number" id="cpNum">•••• •••• •••• ••••</div>
+                <div class="cp-bottom">
+                  <div class="cp-holder" id="cpHolder">CARDHOLDER NAME</div>
+                  <div class="cp-exp" id="cpExp">MM / YY</div>
+                </div>
+              </div>
+              <div class="form-field"><label>Cardholder name</label><input type="text" id="cName" placeholder="Marco Rossi" autocomplete="cc-name"></div>
+              <div class="form-row">
+                <div class="form-field"><label>Card number</label><input type="text" id="cNum" placeholder="1234 5678 9012 3456" autocomplete="cc-number" maxlength="19"></div>
+                <div class="form-field"><label>Expiry</label><input type="text" id="cExp" placeholder="MM / YY" autocomplete="cc-exp" maxlength="7"></div>
+              </div>
+              <div class="form-field"><label>CVV</label><input type="password" id="cCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc"></div>
+              <div class="form-btns">
+                <button class="form-btn primary" id="addCardSave">Save card</button>
+                <button class="form-btn ghost" id="addCardCancel">Cancel</button>
+              </div>
+            </div>
           </div>
         </div>
-
-      </div>
-
-      <!-- Row: Activity chart + Fidelity card + Nearby -->
-      <div class="grid-3">
-
-        <!-- Spending activity -->
+        <!-- Transactions -->
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Spending — Last 7 days</span>
-          </div>
-          <div class="chart-wrap">
-            <svg class="chart-svg" viewBox="0 0 280 80" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#3d5eff" stop-opacity=".35"/>
-                  <stop offset="100%" stop-color="#3d5eff" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <!-- Grid lines -->
-              <line x1="0" y1="20" x2="280" y2="20" stroke="var(--border)" stroke-width="0.5"/>
-              <line x1="0" y1="40" x2="280" y2="40" stroke="var(--border)" stroke-width="0.5"/>
-              <line x1="0" y1="60" x2="280" y2="60" stroke="var(--border)" stroke-width="0.5"/>
-              <!-- Area fill -->
-              <path d="M0,65 C20,60 30,50 60,42 S90,55 120,38 S150,20 180,30 S220,45 250,22 L280,15 L280,80 L0,80 Z" fill="url(#chartGrad)"/>
-              <!-- Line -->
-              <path d="M0,65 C20,60 30,50 60,42 S90,55 120,38 S150,20 180,30 S220,45 250,22 L280,15" fill="none" stroke="#3d5eff" stroke-width="2" stroke-linecap="round"/>
-              <!-- Dots -->
-              <circle cx="60" cy="42" r="3" fill="#3d5eff"/>
-              <circle cx="120" cy="38" r="3" fill="#3d5eff"/>
-              <circle cx="180" cy="30" r="3" fill="#3d5eff"/>
-              <circle cx="250" cy="22" r="3" fill="#3d5eff"/>
-              <circle cx="280" cy="15" r="4" fill="#3d5eff" stroke="var(--card-bg)" stroke-width="2"/>
-            </svg>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:10px">
-            <span style="font-size:11.5px;color:var(--faint)">Mon</span>
-            <span style="font-size:11.5px;color:var(--faint)">Tue</span>
-            <span style="font-size:11.5px;color:var(--faint)">Wed</span>
-            <span style="font-size:11.5px;color:var(--faint)">Thu</span>
-            <span style="font-size:11.5px;color:var(--faint)">Fri</span>
-            <span style="font-size:11.5px;color:var(--faint)">Sat</span>
-            <span style="font-size:11.5px;color:var(--brand);font-weight:600">Sun</span>
-          </div>
+          <div class="card-hd"><span class="card-title">Transaction History</span></div>
+          <table class="tx-table">
+            <thead><tr><th>Description</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
+            <tbody id="txTbody"></tbody>
+          </table>
         </div>
-
-        <!-- Fidelity card -->
-        <div class="fidelity-card">
-          <div class="fc-tier">Gold tier • Ride Fidelity</div>
-          <div class="fc-pts" id="fcPts">1,240</div>
-          <div class="fc-pts-label">points available</div>
-          <div class="fc-bar-wrap">
-            <div class="fc-bar-track"><div class="fc-bar-fill" id="fcBar" style="width:62%"></div></div>
-            <div class="fc-bar-labels"><span>Gold</span><span>760 pts to Platinum</span></div>
-          </div>
-          <div class="fc-actions">
-            <a href="#" class="fc-btn primary">Redeem</a>
-            <a href="#" class="fc-btn secondary">History</a>
-          </div>
-        </div>
-
-        <!-- Achievements -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Achievements</span>
-            <span class="card-badge live">3 new</span>
-          </div>
-          <div class="ach-grid">
-            <div class="ach-item earned">
-              <span class="ach-icon">🔥</span>
-              <span class="ach-label">7-day streak</span>
-              <span class="ach-val">Active</span>
-            </div>
-            <div class="ach-item earned">
-              <span class="ach-icon">⭐</span>
-              <span class="ach-label">5-star rider</span>
-              <span class="ach-val">×12</span>
-            </div>
-            <div class="ach-item">
-              <span class="ach-icon">🌍</span>
-              <span class="ach-label">3 cities</span>
-              <span class="ach-val">Locked</span>
-            </div>
-            <div class="ach-item earned">
-              <span class="ach-icon">💨</span>
-              <span class="ach-label">Fast booker</span>
-              <span class="ach-val">×8</span>
-            </div>
-            <div class="ach-item">
-              <span class="ach-icon">🏅</span>
-              <span class="ach-label">50 rides</span>
-              <span class="ach-val">47/50</span>
-            </div>
-            <div class="ach-item earned">
-              <span class="ach-icon">🌙</span>
-              <span class="ach-label">Night owl</span>
-              <span class="ach-val">Active</span>
-            </div>
-            <div class="ach-item">
-              <span class="ach-icon">♻️</span>
-              <span class="ach-label">Eco rides</span>
-              <span class="ach-val">3/10</span>
-            </div>
-            <div class="ach-item earned">
-              <span class="ach-icon">💎</span>
-              <span class="ach-label">Gold tier</span>
-              <span class="ach-val">Earned</span>
-            </div>
-          </div>
-        </div>
-
       </div>
+    </div>
+  </section>
 
-      <!-- Row: Map + nearby drivers -->
-      <div class="grid-2">
-
-        <div class="map-card">
-          <div class="card-header">
-            <span class="card-title">Nearby drivers</span>
-            <span class="card-badge live">● Live</span>
+  <!-- ══ PANEL: ACCOUNT ═══════════════════════════════════════════ -->
+  <section class="panel" id="panel-account">
+    <div class="panel-inner">
+      <div class="account-grid">
+        <div class="profile-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profileAvatar">R</div>
           </div>
-          <div class="map-bg">
-            <div class="map-grid"></div>
-            <div class="map-road-h"></div>
-            <div class="map-road-h2"></div>
-            <div class="map-road-v"></div>
-            <div class="map-road-v2"></div>
-            <!-- Your location -->
-            <div class="map-dot" style="top:45%;left:38%"></div>
-            <div class="map-label" style="top:28%;left:41%">You</div>
-            <!-- Driver 1 -->
-            <div class="map-dot map-dot-2" style="top:24%;left:58%;width:8px;height:8px"></div>
-            <!-- Driver 2 -->
-            <div class="map-dot map-dot-2" style="top:58%;left:65%;width:8px;height:8px;background:var(--green);box-shadow:0 0 0 4px var(--green-dim)"></div>
-            <!-- Driver 3 -->
-            <div class="map-dot map-dot-2" style="top:62%;left:22%;width:8px;height:8px;background:var(--green);box-shadow:0 0 0 4px var(--green-dim)"></div>
+          <div class="profile-name" id="profileName">—</div>
+          <div class="profile-email" id="profileEmail">—</div>
+          <div class="profile-since" id="profileSince">—</div>
+          <div class="profile-stats">
+            <div class="ps-item"><div class="ps-val" style="color:var(--brand)" id="psRides">—</div><div class="ps-label">Rides</div></div>
+            <div class="ps-item"><div class="ps-val" style="color:var(--yellow)" id="psPts">—</div><div class="ps-label">Points</div></div>
           </div>
-          <div class="nearby-list">
-            <div class="nearby-item">
-              <div class="nearby-icon" style="background:var(--brand-dim);color:var(--brand)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
-              <div class="nearby-info">
-                <div class="nearby-name">Marco R. · ⭐ 4.98</div>
-                <div class="nearby-dist">350 m away · BMW 5 Series</div>
-              </div>
-              <div class="nearby-eta">2 min</div>
-            </div>
-            <div class="nearby-item">
-              <div class="nearby-icon" style="background:var(--green-dim);color:var(--green)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
-              <div class="nearby-info">
-                <div class="nearby-name">Giulia T. · ⭐ 4.96</div>
-                <div class="nearby-dist">620 m away · Audi A6</div>
-              </div>
-              <div class="nearby-eta">4 min</div>
-            </div>
-            <div class="nearby-item">
-              <div class="nearby-icon" style="background:var(--yellow-dim);color:var(--yellow)"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg></div>
-              <div class="nearby-info">
-                <div class="nearby-name">Luca M. · ⭐ 4.94</div>
-                <div class="nearby-dist">890 m away · Mercedes E</div>
-              </div>
-              <div class="nearby-eta">6 min</div>
-            </div>
-          </div>
+          <a href="settings.html" class="acct-to-settings">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Edit in Settings
+          </a>
         </div>
-
-        <!-- Account summary -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Account summary</span>
-            <a href="settings.html" class="card-action">Edit →</a>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--surface)">
-              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden" id="summaryAvatar">R</div>
-              <div>
-                <div style="font-size:15px;font-weight:700" id="summaryName">Rider</div>
-                <div style="font-size:12.5px;color:var(--muted)" id="summaryEmail">—</div>
-              </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div style="padding:12px;border-radius:10px;background:var(--surface);text-align:center">
-                <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--brand)" id="summaryRides">47</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Total rides</div>
-              </div>
-              <div style="padding:12px;border-radius:10px;background:var(--surface);text-align:center">
-                <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--yellow)" id="summaryPts">1,240</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Fidelity pts</div>
-              </div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
-                <span style="font-size:13px;color:var(--muted)">Member since</span>
-                <span style="font-size:13px;font-weight:600" id="memberSince">—</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
-                <span style="font-size:13px;color:var(--muted)">Fidelity tier</span>
-                <span style="font-size:13px;font-weight:600;color:var(--yellow)">Gold ✦</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;background:var(--surface)">
-                <span style="font-size:13px;color:var(--muted)">Payment</span>
-                <span style="font-size:13px;font-weight:600">•••• 4821</span>
-              </div>
-            </div>
-
-            <div style="display:flex;gap:8px;margin-top:4px">
-              <a href="settings.html" style="flex:1;padding:9px;border-radius:9px;background:var(--brand-dim);color:var(--brand);font-size:13px;font-weight:600;text-align:center;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Settings</a>
-              <button id="signOutBtn" style="flex:1;padding:9px;border-radius:9px;background:var(--accent-dim);color:var(--accent);font-size:13px;font-weight:600;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Sign out</button>
-            </div>
-          </div>
+        <div class="info-card">
+          <div class="card-hd"><span class="card-title">Personal Information</span></div>
+          <div class="info-row"><span class="info-label">First name</span><span class="info-val" id="infoFirst">—</span></div>
+          <div class="info-row"><span class="info-label">Last name</span><span class="info-val" id="infoLast">—</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-val" id="infoEmail">—</span></div>
+          <div class="info-row"><span class="info-label">Phone</span><span class="info-val" id="infoPhone">—</span></div>
+          <div class="info-row"><span class="info-label">City</span><span class="info-val" id="infoCity">—</span></div>
+          <div class="info-row"><span class="info-label">Country</span><span class="info-val" id="infoCountry">—</span></div>
+          <div class="info-row"><span class="info-label">Member since</span><span class="info-val" id="infoSince">—</span></div>
+          <div class="info-row"><span class="info-label">Fidelity tier</span><span class="info-val" style="color:var(--yellow)">Gold ✦</span></div>
         </div>
-
       </div>
+    </div>
+  </section>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
+</div><!-- /main -->
 </div><!-- /app -->
 
-<!-- Sign-out modal (injected by JS) -->
+<!-- Upcoming rides popup -->
+<div class="upcoming-overlay" id="upcomingOverlay">
+  <div class="upcoming-modal">
+    <div class="upcoming-modal-hd">
+      <span class="upcoming-modal-title">All Upcoming Rides</span>
+      <button class="um-close" id="upcomingClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="upcoming-list" id="upcomingList"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script src="assets/sql-wasm.js"></script>
 <script src="scripts/shared.js"></script>
 <script>
 "use strict";
 
-/* ── Greeting & date ── */
-function setGreeting() {
+/* ══════════════════════════════════════════════════════════════════
+   DATA LAYER  (localStorage-backed mock data)
+   ══════════════════════════════════════════════════════════════════ */
+
+const RideData = {
+  RIDES_KEY:    'ride_rides',
+  BOOKINGS_KEY: 'ride_bookings',
+  CARDS_KEY:    'ride_cards',
+  FID_KEY:      'ride_fidelity',
+
+  /* Seed demo data if missing */
+  seed(userId) {
+    if (!localStorage.getItem(this.RIDES_KEY + '_' + userId)) {
+      const now = Date.now();
+      const rides = [
+        { id:'r1', from:'Piazza Navona', to:'Fiumicino Airport', date: new Date(now - 4*86400000).toISOString(), status:'completed', fare:38.50, car:'Ferrari Roma', pts:39 },
+        { id:'r2', from:'Termini Station', to:'Colosseo', date: new Date(now - 5*86400000).toISOString(), status:'completed', fare:11.20, car:'Lamborghini Urus', pts:11 },
+        { id:'r3', from:'Trastevere', to:'EUR Centro', date: new Date(now - 6*86400000).toISOString(), status:'cancelled', fare:0, car:'Porsche Taycan', pts:0 },
+        { id:'r4', from:'Prati', to:'Testaccio', date: new Date(now - 7*86400000).toISOString(), status:'completed', fare:9.80, car:'Aston Martin DBX', pts:10 },
+        { id:'r5', from:'Via Veneto', to:'Tiburtina', date: new Date(now - 8*86400000).toISOString(), status:'completed', fare:16.40, car:'Bentley Flying Spur', pts:16 },
+        { id:'r6', from:'Colosseo', to:'Villa Borghese', date: new Date(now - 12*86400000).toISOString(), status:'completed', fare:8.20, car:'Ferrari Roma', pts:8 },
+        { id:'r7', from:'Ostiense', to:'Parioli', date: new Date(now - 14*86400000).toISOString(), status:'completed', fare:14.60, car:'Rolls Royce Ghost', pts:15 },
+        { id:'r8', from:'Piazza Venezia', to:'Gianicolo', date: new Date(now - 20*86400000).toISOString(), status:'completed', fare:7.50, car:'Lamborghini Urus', pts:8 },
+        { id:'r9', from:'Pantheon', to:'Pigneto', date: new Date(now - 25*86400000).toISOString(), status:'completed', fare:12.80, car:'Porsche Taycan', pts:13 },
+        { id:'r10', from:'EUR', to:'Fiumicino Airport', date: new Date(now - 35*86400000).toISOString(), status:'completed', fare:28.00, car:'Bentley Flying Spur', pts:28 },
+        { id:'r11', from:'Trastevere', to:'Parioli', date: new Date(now - 50*86400000).toISOString(), status:'completed', fare:11.00, car:'Ferrari Roma', pts:11 },
+        { id:'r12', from:'Termini Station', to:'Ostia Lido', date: new Date(now - 65*86400000).toISOString(), status:'completed', fare:32.00, car:'Rolls Royce Ghost', pts:32 },
+      ];
+      localStorage.setItem(this.RIDES_KEY + '_' + userId, JSON.stringify(rides));
+    }
+    if (!localStorage.getItem(this.BOOKINGS_KEY + '_' + userId)) {
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(9,30,0,0);
+      const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 5); nextWeek.setHours(14,0,0,0);
+      const bookings = [
+        { id:'b1', from:'Via del Corso 1', to:'Fiumicino Airport', datetime: tomorrow.toISOString(), car:'Ferrari Roma', fare:38.50 },
+        { id:'b2', from:'Hotel Eden, Roma', to:'Napoli Centrale', datetime: nextWeek.toISOString(), car:'Bentley Flying Spur', fare:95.00 },
+      ];
+      localStorage.setItem(this.BOOKINGS_KEY + '_' + userId, JSON.stringify(bookings));
+    }
+    if (!localStorage.getItem(this.CARDS_KEY + '_' + userId)) {
+      const cards = [
+        { id:'c1', brand:'VISA', cls:'visa', num:'•••• •••• •••• 4242', exp:'12/26', name:'Marco Rossi', dflt:true },
+        { id:'c2', brand:'MC',   cls:'mc',   num:'•••• •••• •••• 8888', exp:'09/27', name:'Marco Rossi', dflt:false },
+      ];
+      localStorage.setItem(this.CARDS_KEY + '_' + userId, JSON.stringify(cards));
+    }
+    if (!localStorage.getItem(this.FID_KEY + '_' + userId)) {
+      const fid = { pts: 1240, redeemed: 360, totalEarned: 1600 };
+      localStorage.setItem(this.FID_KEY + '_' + userId, JSON.stringify(fid));
+    }
+  },
+
+  getRides(uid)    { return JSON.parse(localStorage.getItem(this.RIDES_KEY    + '_' + uid) || '[]'); },
+  getBookings(uid) { return JSON.parse(localStorage.getItem(this.BOOKINGS_KEY + '_' + uid) || '[]'); },
+  getCards(uid)    { return JSON.parse(localStorage.getItem(this.CARDS_KEY    + '_' + uid) || '[]'); },
+  getFid(uid)      { return JSON.parse(localStorage.getItem(this.FID_KEY      + '_' + uid) || '{"pts":0,"redeemed":0,"totalEarned":0}'); },
+
+  saveCards(uid, cards) { localStorage.setItem(this.CARDS_KEY + '_' + uid, JSON.stringify(cards)); },
+  saveBookings(uid, b)  { localStorage.setItem(this.BOOKINGS_KEY + '_' + uid, JSON.stringify(b)); },
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════════════ */
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function fmtDate(iso, short=false) {
+  const d = new Date(iso);
+  if (short) return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+
+function fmtDatetime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' · ' +
+         d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+function statusPill(s) {
+  const map = { completed:'green', cancelled:'red', ongoing:'blue' };
+  const label = s.charAt(0).toUpperCase() + s.slice(1);
+  return `<span class="pill ${map[s]||'blue'}">${label}</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PANEL NAVIGATION
+   ══════════════════════════════════════════════════════════════════ */
+
+const PANEL_TITLES = { dashboard:'Dashboard', fidelity:'My Fidelity', payments:'Payments', account:'My Account' };
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item[data-panel]').forEach(i => i.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  const sbItem = document.querySelector(`.sb-item[data-panel="${name}"]`);
+  if (sbItem) sbItem.classList.add('active');
+  const title = document.getElementById('tbTitle');
+  if (title) title.textContent = PANEL_TITLES[name] || '';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD PANEL
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderDashboard(user, uid) {
+  const rides    = RideData.getRides(uid);
+  const bookings = RideData.getBookings(uid);
+  const fid      = RideData.getFid(uid);
+
+  /* Welcome strip */
   const h = new Date().getHours();
-  const g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  const el = document.getElementById("tbGreeting");
-  if (el) el.textContent = g + " ✦";
-  const d = document.getElementById("tbDate");
-  if (d) d.textContent = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const g = h<12 ? 'Good morning' : h<18 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('wsGreeting').textContent = `${g}, ${user.firstName||'Rider'} ✦`;
+  document.getElementById('wsDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const completed = rides.filter(r=>r.status==='completed');
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const monthSpent = completed.filter(r=>new Date(r.date)>=monthStart).reduce((s,r)=>s+r.fare,0);
+  document.getElementById('wsRides').textContent = rides.length;
+  document.getElementById('wsPts').textContent = fid.pts.toLocaleString();
+  document.getElementById('wsSpent').textContent = '€' + monthSpent.toFixed(0);
+
+  /* Next ride */
+  renderNextRide(bookings, uid);
+
+  /* Fidelity mini */
+  const PTS_PLATINUM = 2000;
+  const pct = Math.min((fid.pts / PTS_PLATINUM) * 100, 100);
+  document.getElementById('fidMiniPts').textContent = fid.pts.toLocaleString();
+  document.getElementById('fidMiniBar').style.width = pct + '%';
+  document.getElementById('fidMiniNext').textContent = Math.max(0, PTS_PLATINUM - fid.pts) + ' pts to Platinum';
+
+  /* Recent rides table */
+  renderRecentRides(rides.slice(0,5));
+
+  /* Chart */
+  renderChart(rides, 'week');
 }
 
-/* ── Theme ── */
-document.getElementById("themeBtn").addEventListener("click", () => {
-  Theme.toggle();
-});
+function renderNextRide(bookings, uid) {
+  const body  = document.getElementById('nextRideBody');
+  const badge = document.getElementById('nextRideCount');
 
-/* ── Vehicle type selection ── */
-function selectType(el) {
-  document.querySelectorAll(".qb-type").forEach(t => t.classList.remove("active"));
-  el.classList.add("active");
-}
-
-/* ── Sign-out modal ── */
-function buildSignOutModal() {
-  if (document.getElementById("soModal")) return document.getElementById("soModal");
-  const m = document.createElement("div");
-  m.id = "soModal"; m.className = "so-overlay";
-  m.innerHTML = `<div class="so-box" role="dialog" aria-modal="true">
-    <div class="so-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-    <h3>Sign out?</h3>
-    <p>You'll need to sign in again to access your account.</p>
-    <div class="so-actions">
-      <button class="so-cancel" id="soCancel">Cancel</button>
-      <button class="so-confirm" id="soConfirm">Sign out</button>
-    </div></div>`;
-  document.body.appendChild(m);
-  document.getElementById("soCancel").addEventListener("click", () => m.classList.remove("is-open"));
-  document.getElementById("soConfirm").addEventListener("click", () => { Session.clear(true); window.location.href = "index.html"; });
-  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("is-open"); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") m.classList.remove("is-open"); });
-  return m;
-}
-
-/* ── Bootstrap ── */
-document.addEventListener("DOMContentLoaded", async () => {
-  Theme.apply();
-  Motion.apply();
-  Lang.apply();
-  setGreeting();
-
-  const user = await Session.get();
-
-  /* Redirect to login if not authenticated */
-  if (!user) {
-    window.location.href = "login.html?redirect=dashboard.html";
+  if (!bookings || bookings.length === 0) {
+    badge.style.display = 'none';
+    body.innerHTML = `
+      <div class="nr-empty">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <p>No upcoming rides booked.</p>
+      </div>
+      <button class="nr-book-btn" onclick="window.location.href='index.html'">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Book a new ride
+      </button>`;
     return;
   }
 
-  /* Populate user info */
-  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Rider";
+  const next = bookings[0];
+  badge.style.display = '';
+  badge.textContent   = bookings.length + ' upcoming';
 
-  // Sidebar avatar
-  const sbAvatar = document.getElementById("sbAvatar");
-  if (sbAvatar) {
-    if (user.photo) { sbAvatar.innerHTML = `<img src="${user.photo}" alt="Avatar">`; }
-    else            { sbAvatar.textContent = user.initials || name[0] || "R"; }
+  const moreHtml = bookings.length > 1
+    ? `<div class="nr-more" id="seeAllUpcoming">+ ${bookings.length-1} more upcoming — tap to manage</div>`
+    : '';
+
+  body.innerHTML = `
+    <div class="nr-ride">
+      <div class="nr-route">
+        <div class="nr-point"><span class="nr-dot from"></span>${next.from}</div>
+        <div class="nr-connector"></div>
+        <div class="nr-point"><span class="nr-dot to"></span>${next.to}</div>
+      </div>
+      <div class="nr-meta">
+        <span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${fmtDatetime(next.datetime)}</span>
+        <span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${next.car}</span>
+        <span class="nr-meta-item" style="color:var(--brand)">€${next.fare.toFixed(2)}</span>
+      </div>
+      <div class="nr-actions">
+        <button class="nr-btn primary" onclick="window.location.href='index.html'">+ Book another</button>
+        <button class="nr-btn ghost" data-cancel="${next.id}" data-uid="${uid}">Cancel</button>
+      </div>
+      ${moreHtml}
+    </div>`;
+
+  document.getElementById('seeAllUpcoming')?.addEventListener('click', () => openUpcoming(bookings, uid));
+  document.querySelector(`[data-cancel="${next.id}"]`)?.addEventListener('click', () => cancelBooking(next.id, uid));
+}
+
+function cancelBooking(id, uid) {
+  let bookings = RideData.getBookings(uid).filter(b => b.id !== id);
+  RideData.saveBookings(uid, bookings);
+  renderNextRide(bookings, uid);
+  openUpcomingIfOpen(bookings, uid);
+  toast('Ride cancelled.');
+}
+
+function openUpcoming(bookings, uid) {
+  const ol = document.getElementById('upcomingList');
+  ol.innerHTML = bookings.map(b => `
+    <div class="upcoming-item" id="ui-${b.id}">
+      <div class="ui-date">${fmtDatetime(b.datetime)}</div>
+      <div class="ui-route">
+        <div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${b.from}</div>
+        <div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div>
+        <div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${b.to}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${b.car} · €${b.fare.toFixed(2)}</div>
+      <div class="ui-actions">
+        <button class="ui-btn cancel" data-cancel="${b.id}" data-uid="${uid}">Cancel ride</button>
+        <button class="ui-btn edit">Edit (soon)</button>
+      </div>
+    </div>`).join('');
+  ol.querySelectorAll('[data-cancel]').forEach(btn =>
+    btn.addEventListener('click', () => { cancelBooking(btn.dataset.cancel, btn.dataset.uid); })
+  );
+  document.getElementById('upcomingOverlay').classList.add('open');
+}
+
+let _lastBookings = [], _lastUid = '';
+function openUpcomingIfOpen(bookings, uid) {
+  _lastBookings = bookings; _lastUid = uid;
+  if (document.getElementById('upcomingOverlay').classList.contains('open'))
+    openUpcoming(bookings, uid);
+}
+
+function renderRecentRides(rides) {
+  const tbody = document.getElementById('recentRidesTbody');
+  if (!rides.length) { tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px 0">No rides yet.</td></tr>`; return; }
+  tbody.innerHTML = rides.map(r => `
+    <tr>
+      <td><div class="ride-route-cell">
+        <div class="rr-from"><span class="rd from"></span>${r.from}</div>
+        <div class="rr-conn"></div>
+        <div class="rr-to"><span class="rd to"></span>${r.to}</div>
+      </div></td>
+      <td class="ride-date">${fmtDate(r.date, true)}</td>
+      <td>${statusPill(r.status)}</td>
+      <td class="ride-fare">${r.status==='cancelled'?'<span style="color:var(--faint)">—</span>':'€'+r.fare.toFixed(2)}</td>
+    </tr>`).join('');
+}
+
+/* ── CHART ── */
+const CHART_DATA = {
+  week(rides) {
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const today=new Date(); const dow=today.getDay()||7;
+    return days.map((_,i)=>{
+      const d=new Date(today); d.setDate(d.getDate()-(dow-1-i)); d.setHours(0,0,0,0);
+      const next=new Date(d); next.setDate(next.getDate()+1);
+      const sum=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=d&&new Date(r.date)<next).reduce((s,r)=>s+r.fare,0);
+      return {label:days[i],val:sum};
+    });
+  },
+  month(rides) {
+    const buckets=Array.from({length:4},(_,i)=>({label:`W${i+1}`,val:0}));
+    const now=new Date(); const ms=new Date(now.getFullYear(),now.getMonth(),1);
+    rides.filter(r=>r.status==='completed'&&new Date(r.date)>=ms).forEach(r=>{
+      const day=new Date(r.date).getDate();
+      buckets[Math.min(Math.floor((day-1)/7),3)].val+=r.fare;
+    });
+    return buckets;
+  },
+  year(rides) {
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const now=new Date(); const yr=now.getFullYear();
+    return months.map((m,i)=>{
+      const sum=rides.filter(r=>r.status==='completed'&&new Date(r.date).getFullYear()===yr&&new Date(r.date).getMonth()===i).reduce((s,r)=>s+r.fare,0);
+      return {label:m,val:sum};
+    });
+  },
+  all(rides) {
+    const map={};
+    rides.filter(r=>r.status==='completed').forEach(r=>{
+      const d=new Date(r.date); const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');
+      map[key]=(map[key]||0)+r.fare;
+    });
+    return Object.entries(map).sort(([a],[b])=>a<b?-1:1).map(([k,v])=>({label:k.slice(5),val:v}));
   }
-  const sbName = document.getElementById("sbName");
-  if (sbName) sbName.textContent = name;
+};
 
-  // Topbar avatar
-  const tbAvatar = document.getElementById("tbAvatar");
-  if (tbAvatar) {
-    if (user.photo) { tbAvatar.innerHTML = `<img src="${user.photo}" alt="Avatar">`; tbAvatar.classList.add("has-photo"); }
-    else            { tbAvatar.textContent = user.initials || name[0] || "R"; }
+let _chartRides=[], _chartRange='week';
+function renderChart(rides, range) {
+  _chartRides=rides; _chartRange=range;
+  // tabs
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.toggle('active',t.dataset.range===range));
+  const data = CHART_DATA[range] ? CHART_DATA[range](rides) : [];
+  const total = data.reduce((s,d)=>s+d.val,0);
+  const avg   = data.filter(d=>d.val>0).reduce((s,d,_,a)=>s+d.val/a.length,0);
+  const max   = Math.max(...data.map(d=>d.val),1);
+  const rides_c = rides.filter(r=>r.status==='completed');
+
+  // summary
+  document.getElementById('chartSummary').innerHTML = `
+    <div class="cs-item"><div class="cs-val" style="color:var(--brand)">€${total.toFixed(0)}</div><div class="cs-label">Total</div></div>
+    <div class="cs-item"><div class="cs-val" style="color:var(--muted)">€${avg.toFixed(0)}</div><div class="cs-label">Average / period</div></div>
+    <div class="cs-item"><div class="cs-val" style="color:var(--green)">${rides_c.length}</div><div class="cs-label">Rides completed</div></div>`;
+
+  // bars
+  const wrap=document.getElementById('chartBars');
+  wrap.innerHTML=data.map((d,i)=>{
+    const h=max>0?Math.max((d.val/max)*100,d.val>0?4:0):0;
+    return `<div class="chart-bar-col" data-i="${i}" data-val="${d.val.toFixed(2)}" data-label="${d.label}">
+      <div class="chart-bar" style="height:${h}%"></div>
+      <div class="chart-bar-label">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  const tooltip=document.getElementById('chartTooltip');
+  wrap.querySelectorAll('.chart-bar-col').forEach(col=>{
+    col.addEventListener('mouseenter',e=>{
+      const r=col.getBoundingClientRect(); const wr=wrap.getBoundingClientRect();
+      tooltip.textContent=`${col.dataset.label}: €${parseFloat(col.dataset.val).toFixed(2)}`;
+      tooltip.style.opacity='1';
+      tooltip.style.left=(r.left-wr.left+r.width/2)+'px';
+      tooltip.style.bottom=(wr.bottom-r.top+8)+'px';
+      col.querySelector('.chart-bar').classList.add('hovered');
+    });
+    col.addEventListener('mouseleave',()=>{
+      tooltip.style.opacity='0';
+      col.querySelector('.chart-bar').classList.remove('hovered');
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FIDELITY PANEL
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderFidelity(uid) {
+  const fid   = RideData.getFid(uid);
+  const rides = RideData.getRides(uid).filter(r=>r.status==='completed');
+  const PTS_PLATINUM = 2000;
+  const pct   = Math.min((fid.pts/PTS_PLATINUM)*100,100);
+
+  document.getElementById('fidHeroPts').textContent = fid.pts.toLocaleString();
+  document.getElementById('fidHeroBar').style.width = pct+'%';
+  document.getElementById('fidHeroNext').textContent = `${Math.max(0,PTS_PLATINUM-fid.pts)} pts to Platinum (${PTS_PLATINUM})`;
+  document.getElementById('fsTotal').textContent    = fid.totalEarned.toLocaleString();
+  document.getElementById('fsRedeemed').textContent = fid.redeemed.toLocaleString();
+  document.getElementById('fsNext').textContent     = Math.max(0,PTS_PLATINUM-fid.pts);
+
+  // History: rides + redemptions
+  const histEl = document.getElementById('fidHistory');
+  const entries = rides.slice(0,8).map(r=>({
+    title:`Ride to ${r.to}`, date:r.date, pts:'+'+r.pts, plus:true
+  }));
+  entries.splice(2,0,{title:'Points redeemed — discount applied', date: new Date(Date.now()-10*86400000).toISOString(), pts:'-120', plus:false});
+  histEl.innerHTML = entries.map(e=>`
+    <div class="fid-row">
+      <div class="fid-row-icon" style="background:${e.plus?'var(--green-dim)':'var(--accent-dim)'};color:${e.plus?'var(--green)':'var(--accent)'}">
+        <svg viewBox="0 0 24 24">${e.plus?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg>
+      </div>
+      <div class="fid-row-info">
+        <div class="fid-row-title">${e.title}</div>
+        <div class="fid-row-date">${fmtDate(e.date)}</div>
+      </div>
+      <div class="fid-row-pts ${e.plus?'plus':'minus'}">${e.pts} pts</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PAYMENTS PANEL
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderPayments(uid) {
+  renderCards(uid);
+  renderTransactions(uid);
+  initAddCard(uid);
+}
+
+function renderCards(uid) {
+  let cards = RideData.getCards(uid);
+  const list = document.getElementById('cardsList');
+  list.innerHTML = cards.map((c,i)=>`
+    <div class="pay-card-item${c.dflt?' default':''}" data-idx="${i}">
+      <div class="pay-card-brand ${c.cls}">${c.brand}</div>
+      <div class="pay-card-info">
+        <div class="pay-card-num">${c.num}</div>
+        <div class="pay-card-exp">Expires ${c.exp} · ${c.name}</div>
+      </div>
+      <div class="pay-card-actions">
+        ${c.dflt
+          ? '<span class="pay-dflt-badge">Default</span>'
+          : `<button class="pay-set-dflt" data-idx="${i}">Set default</button>`}
+        <button class="pay-card-del" data-idx="${i}" title="Remove">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+
+  list.addEventListener('click', e=>{
+    const dflt = e.target.closest('.pay-set-dflt');
+    if (dflt) {
+      const idx=parseInt(dflt.dataset.idx);
+      cards.forEach((c,i)=>{c.dflt=(i===idx);});
+      RideData.saveCards(uid,cards); renderCards(uid); toast('Default card updated.');
+      return;
+    }
+    const del = e.target.closest('.pay-card-del');
+    if (del) {
+      const idx=parseInt(del.dataset.idx);
+      const wasDflt=cards[idx]?.dflt;
+      cards.splice(idx,1);
+      if(wasDflt&&cards.length) cards[0].dflt=true;
+      RideData.saveCards(uid,cards); renderCards(uid); toast('Card removed.');
+    }
+  });
+}
+
+function renderTransactions(uid) {
+  const rides = RideData.getRides(uid);
+  const tbody = document.getElementById('txTbody');
+  const txs = rides.slice(0,10).map(r=>({
+    desc: `Ride to ${r.to}`, date: r.date,
+    amt: r.status==='cancelled' ? '—' : '€'+r.fare.toFixed(2),
+    status: r.status, cls: r.status==='completed'?'pill green':r.status==='cancelled'?'pill red':'pill blue',
+    refund: false
+  }));
+  tbody.innerHTML = txs.map(tx=>`
+    <tr>
+      <td class="tx-desc">${tx.desc}</td>
+      <td class="tx-date">${fmtDate(tx.date)}</td>
+      <td class="tx-amt${tx.refund?' refund':''}" style="text-align:right">${tx.amt}</td>
+      <td><span class="${tx.cls}">${tx.status.charAt(0).toUpperCase()+tx.status.slice(1)}</span></td>
+    </tr>`).join('');
+}
+
+function initAddCard(uid) {
+  const toggle  = document.getElementById('addCardToggle');
+  const form    = document.getElementById('addCardForm');
+  const cancel  = document.getElementById('addCardCancel');
+  const save    = document.getElementById('addCardSave');
+  const cName   = document.getElementById('cName');
+  const cNum    = document.getElementById('cNum');
+  const cExp    = document.getElementById('cExp');
+  const cCvv    = document.getElementById('cCvv');
+  if (!toggle) return;
+
+  // remove old listeners by cloning
+  toggle.replaceWith(toggle.cloneNode(true));
+  cancel.replaceWith(cancel.cloneNode(true));
+  save.replaceWith(save.cloneNode(true));
+  const t2=document.getElementById('addCardToggle'),c2=document.getElementById('addCardCancel'),s2=document.getElementById('addCardSave');
+
+  t2.addEventListener('click',()=>form.classList.toggle('show'));
+  c2.addEventListener('click',()=>{ form.classList.remove('show'); clearForm(); });
+
+  cName?.addEventListener('input',()=>{ const el=document.getElementById('cpHolder'); if(el) el.textContent=cName.value.toUpperCase()||'CARDHOLDER NAME'; });
+  cNum?.addEventListener('input',()=>{
+    let v=cNum.value.replace(/\D/g,'').slice(0,16);
+    cNum.value=v.replace(/(.{4})/g,'$1 ').trim();
+    const el=document.getElementById('cpNum'); if(el) el.textContent=(v+'????????????????').slice(0,16).replace(/(.{4})/g,'$1 ').trim().replace(/[0-9]/g,'•');
+    const br=document.getElementById('cpBrand'); if(br) br.textContent=v.startsWith('4')?'VISA':v.startsWith('5')?'MC':v.startsWith('3')?'AMEX':'';
+  });
+  cExp?.addEventListener('input',()=>{
+    let v=cExp.value.replace(/\D/g,'').slice(0,4);
+    if(v.length>2) v=v.slice(0,2)+' / '+v.slice(2);
+    cExp.value=v;
+    const el=document.getElementById('cpExp'); if(el) el.textContent=v||'MM / YY';
+  });
+
+  s2.addEventListener('click',()=>{
+    const name=cName?.value.trim(); const num=cNum?.value.replace(/\s/g,''); const exp=cExp?.value; const cvv=cCvv?.value;
+    if(!name||num.length<15||exp.length<4||!cvv){ toast('Please fill in all fields correctly.'); return; }
+    const brand=num.startsWith('4')?'VISA':num.startsWith('5')?'MC':num.startsWith('3')?'AMEX':'CARD';
+    const cls=brand==='VISA'?'visa':brand==='MC'?'mc':brand==='AMEX'?'amex':'other';
+    let cards=RideData.getCards(uid);
+    cards.push({id:'c'+Date.now(),brand,cls,num:'•••• •••• •••• '+num.slice(-4),exp:exp.replace(' ',''),name,dflt:cards.length===0});
+    RideData.saveCards(uid,cards);
+    renderCards(uid); form.classList.remove('show'); clearForm(); toast('Card added.');
+  });
+
+  function clearForm(){
+    if(cName) cName.value=''; if(cNum) cNum.value=''; if(cExp) cExp.value=''; if(cCvv) cCvv.value='';
+    const h=document.getElementById('cpHolder'); if(h) h.textContent='CARDHOLDER NAME';
+    const n=document.getElementById('cpNum'); if(n) n.textContent='•••• •••• •••• ••••';
+    const e=document.getElementById('cpExp'); if(e) e.textContent='MM / YY';
+    const b=document.getElementById('cpBrand'); if(b) b.textContent='';
   }
+}
 
-  // Greeting personalised
-  const h = new Date().getHours();
-  const g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  const greetEl = document.getElementById("tbGreeting");
-  if (greetEl) greetEl.textContent = `${g}, ${user.firstName || name} ✦`;
+/* ══════════════════════════════════════════════════════════════════
+   ACCOUNT PANEL
+   ══════════════════════════════════════════════════════════════════ */
 
-  // Account summary
-  const summaryAvatar = document.getElementById("summaryAvatar");
-  if (summaryAvatar) {
-    if (user.photo) { summaryAvatar.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; }
-    else            { summaryAvatar.textContent = user.initials || name[0] || "R"; }
-  }
-  const summaryName = document.getElementById("summaryName");
-  if (summaryName) summaryName.textContent = name;
-  const summaryEmail = document.getElementById("summaryEmail");
-  if (summaryEmail) summaryEmail.textContent = user.email || "";
+function renderAccount(user, uid) {
+  const rides = RideData.getRides(uid);
+  const fid   = RideData.getFid(uid);
+  const name  = `${user.firstName||''} ${user.lastName||''}`.trim();
 
-  // Member since
-  const ms = document.getElementById("memberSince");
-  if (ms && user.createdAt) {
-    ms.textContent = new Date(user.createdAt).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
-  }
+  const av = document.getElementById('profileAvatar');
+  if (av) { if(user.photo){av.innerHTML=`<img src="${user.photo}" alt="">`;}else{av.textContent=user.initials||name[0]||'R';} }
+  document.getElementById('profileName').textContent  = name||'—';
+  document.getElementById('profileEmail').textContent = user.email||'—';
+  document.getElementById('profileSince').textContent = user.createdAt ? 'Member since '+fmtDate(user.createdAt) : '';
+  document.getElementById('psRides').textContent = rides.length;
+  document.getElementById('psPts').textContent   = fid.pts.toLocaleString();
 
-  // Sign-out button
-  const soModal = buildSignOutModal();
-  document.getElementById("signOutBtn")?.addEventListener("click", () => soModal.classList.add("is-open"));
-  document.getElementById("sbUser")?.addEventListener("click",    () => soModal.classList.add("is-open"));
+  document.getElementById('infoFirst').textContent   = user.firstName||'—';
+  document.getElementById('infoLast').textContent    = user.lastName||'—';
+  document.getElementById('infoEmail').textContent   = user.email||'—';
+  document.getElementById('infoPhone').textContent   = user.phone||'Not set';
+  document.getElementById('infoCity').textContent    = user.city||'Not set';
+  document.getElementById('infoCountry').textContent = user.country||'Not set';
+  document.getElementById('infoSince').textContent   = user.createdAt ? fmtDate(user.createdAt) : '—';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOOTSTRAP
+   ══════════════════════════════════════════════════════════════════ */
+
+document.addEventListener('DOMContentLoaded', async () => {
+  Theme.apply(); Motion.apply(); Lang.apply();
+
+  const user = await Session.get();
+  if (!user) { window.location.href = 'login.html?redirect=dashboard.html'; return; }
+
+  const uid  = user.id;
+  RideData.seed(uid);
+
+  /* Sidebar + topbar user */
+  const name = `${user.firstName||''} ${user.lastName||''}`.trim()||'Rider';
+  const sbAv = document.getElementById('sbAvatar');
+  if(sbAv){ if(user.photo){sbAv.innerHTML=`<img src="${user.photo}" alt="">`;}else{sbAv.textContent=user.initials||name[0]||'R';} }
+  document.getElementById('sbName').textContent = name;
+  const tbAv = document.getElementById('tbAvatar');
+  if(tbAv){ if(user.photo){tbAv.innerHTML=`<img src="${user.photo}" alt="">`;tbAv.classList.add('has-photo');}else{tbAv.textContent=user.initials||name[0]||'R';} }
+
+  /* Sidebar nav */
+  document.querySelectorAll('.sb-item[data-panel]').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      const panel = item.dataset.panel;
+      switchPanel(panel);
+      if(panel==='fidelity') renderFidelity(uid);
+      if(panel==='payments') renderPayments(uid);
+      if(panel==='account')  renderAccount(user, uid);
+    });
+  });
+
+  /* Utility quick-access items */
+  document.querySelectorAll('.util-item[data-panel]').forEach(item => {
+    item.addEventListener('click', () => {
+      const panel = item.dataset.panel;
+      switchPanel(panel);
+      if(panel==='payments') renderPayments(uid);
+      if(panel==='account')  renderAccount(user, uid);
+    });
+  });
+
+  /* Fidelity mini card click */
+  document.getElementById('fidMiniCard')?.addEventListener('click', () => {
+    switchPanel('fidelity'); renderFidelity(uid);
+  });
+
+  /* Chart tabs */
+  document.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      renderChart(RideData.getRides(uid), tab.dataset.range);
+    });
+  });
+
+  /* Theme */
+  document.getElementById('themeBtn').addEventListener('click', () => Theme.toggle());
+
+  /* Upcoming overlay close */
+  document.getElementById('upcomingClose').addEventListener('click', () =>
+    document.getElementById('upcomingOverlay').classList.remove('open'));
+  document.getElementById('upcomingOverlay').addEventListener('click', e => {
+    if(e.target===document.getElementById('upcomingOverlay'))
+      document.getElementById('upcomingOverlay').classList.remove('open');
+  });
+
+  /* Sign-out from sidebar user */
+  document.getElementById('sbUser').addEventListener('click', () => {
+    if(confirm('Sign out?')){ Session.clear(true); window.location.href='index.html'; }
+  });
+
+  /* Render initial panel */
+  renderDashboard(user, uid);
 });
 </script>
-
-<link rel="stylesheet" href="styles/landing.css">
 </body>
 </html>

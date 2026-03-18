@@ -34,6 +34,32 @@
   </header>
 
   <div class="shell">
+  <div class="mobile-nav" id="mobileNav" style="display:none">
+    <button class="mobile-nav-item active" data-panel="p-account">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Account
+    </button>
+    <button class="mobile-nav-item" data-panel="p-security">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Security
+    </button>
+    <button class="mobile-nav-item" data-panel="p-appearance">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      Appearance
+    </button>
+    <button class="mobile-nav-item" data-panel="p-billing">
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Billing
+    </button>
+    <button class="mobile-nav-item" data-panel="p-notifications">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Notifications
+    </button>
+    <button class="mobile-nav-item" data-panel="p-privacy">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Privacy
+    </button>
+  </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -477,6 +503,31 @@
 
   <script src="assets/sql-wasm.js"></script>
   <script src="scripts/shared.js"></script>
-  <script src="scripts/settings.js"></script>
+  <script src="scripts/settings.js">
+  /* ── Mobile nav ── */
+  (function() {
+    const mobileNav = document.getElementById('mobileNav');
+    if (!mobileNav) return;
+    function syncMobileNav(panelId) {
+      mobileNav.querySelectorAll('.mobile-nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.panel === panelId);
+      });
+      // scroll active item into view
+      const active = mobileNav.querySelector('.mobile-nav-item.active');
+      if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    mobileNav.querySelectorAll('.mobile-nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = document.querySelector('[data-panel="' + btn.dataset.panel + '"]');
+        if (target) target.click();
+        syncMobileNav(btn.dataset.panel);
+      });
+    });
+    // Keep in sync when desktop sidebar is clicked
+    document.querySelectorAll('.sb-item[data-panel]').forEach(sb => {
+      sb.addEventListener('click', () => syncMobileNav(sb.dataset.panel));
+    });
+  })();
+</script>
 </body>
 </html>
