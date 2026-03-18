@@ -148,7 +148,7 @@ const Session = {
 /* ── MOCK AUTH ────────────────────────────────────────────────────── */
 const Auth = {
   getApiBase() {
-    return `${window.location.protocol}//${window.location.hostname}`;
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
   },
 
   async register({ firstName, lastName, email, password }) {
@@ -372,6 +372,30 @@ const LANGS = {
     yourDataDesc:"Puoi richiedere un'esportazione completa dei tuoi dati personali in qualsiasi momento. Te li invieremo per email entro 48 ore.",
     exportDataBtn:"Richiedi esportazione dati",
     dangerDesc:"Elimina definitivamente il tuo account e tutti i dati associati.",
+    // Dashboard
+    dashTitle:"Dashboard", myFidelityTitle:"La mia Fedeltà", paymentsTitle:"Pagamenti",
+    myAccountTitle:"Il mio Account",
+    nextRide:"Prossima corsa", recentRides:"Corse recenti", bookRide:"Prenota una corsa",
+    findDriver:"Trova un autista", bookAnother:"+ Prenota un altra", cancelRide:"Annulla",
+    noUpcomingRides:"Nessuna corsa prenotata.", spending:"Spese",
+    quickAccess:"Accesso rapido", upcomingAll:"Tutte le prossime corse",
+    fidelityPts:"punti disponibili", redeem:"Riscatta punti",
+    exploreRewards:"Scopri i premi", pointsHistory:"Storico punti",
+    paymentMethods2:"Metodi di pagamento", addNewCard:"Aggiungi carta",
+    saveCard:"Salva carta", cardholderName:"Nome titolare",
+    cardNumber:"Numero carta", expiry:"Scadenza",
+    personalInfo2:"Informazioni personali", editInSettings:"Modifica in Impostazioni",
+    totalRides:"Corse totali", totalSpent:"Totale speso",
+    spentThisMonth:"Speso questo mese", avgRating:"Valutazione media data",
+    memberSince:"Membro dal", fidelityTier:"Livello fedeltà",
+    tosPageTitle:"Termini di Servizio", privacyPageTitle:"Informativa sulla Privacy",
+    tosFooterLink:"Termini di Servizio", privacyFooterLink:"Informativa sulla Privacy",
+    legalBadge:"Legale", tosContents:"Contenuti", tosEffective:"In vigore dal 1 gennaio 2026",
+    tosReadTime:"~8 min di lettura", privacyReadTime:"~10 min di lettura", gdprNote:"Conforme GDPR",
+    tosContactTitle:"Domande sui Termini?",
+    tosContactDesc:"Il nostro team legale è a disposizione. Rispondiamo entro 2 giorni lavorativi.",
+    privacyContactTitle:"Domande sulla privacy?",
+    privacyContactDesc:"Il nostro DPO è disponibile per qualsiasi richiesta. Rispondiamo entro 30 giorni (GDPR).",
     twoFaTitle:"Autenticazione a due fattori",
     totpLabel:"App autenticazione (TOTP)",
     totpDesc:"Richiedi un codice temporaneo al login da un nuovo dispositivo.",
@@ -467,6 +491,13 @@ const LANGS = {
     yourDataDesc:"Vous pouvez demander une exportation complète de vos données à tout moment. Nous vous l'enverrons par email dans les 48 heures.",
     exportDataBtn:"Demander l'exportation des données",
     dangerDesc:"Supprimez définitivement votre compte et toutes les données associées.",
+    dashTitle:"Dashboard", myFidelityTitle:"Ma Fidélité", paymentsTitle:"Paiements",
+    myAccountTitle:"Mon Compte", nextRide:"Prochain trajet", recentRides:"Trajets récents",
+    bookRide:"Réserver un trajet", findDriver:"Trouver un chauffeur",
+    noUpcomingRides:"Aucun trajet prévu.", spending:"Dépenses",
+    quickAccess:"Accès rapide", fidelityPts:"points disponibles",
+    tosPageTitle:"Conditions d\'utilisation", privacyPageTitle:"Politique de confidentialité",
+    legalBadge:"Légal", tosContents:"Sommaire",
     twoFaTitle:"Authentification à deux facteurs",
     totpLabel:"Application d'authentification (TOTP)",
     totpDesc:"Exiger un code temporel lors de la connexion depuis un nouvel appareil.",
@@ -562,6 +593,13 @@ const LANGS = {
     yourDataDesc:"Puedes solicitar una exportación completa de tus datos en cualquier momento. Te los enviaremos por email en 48 horas.",
     exportDataBtn:"Solicitar exportación de datos",
     dangerDesc:"Elimina permanentemente tu cuenta y todos los datos asociados.",
+    dashTitle:"Panel", myFidelityTitle:"Mi Fidelidad", paymentsTitle:"Pagos",
+    myAccountTitle:"Mi Cuenta", nextRide:"Próximo viaje", recentRides:"Viajes recientes",
+    bookRide:"Reservar viaje", findDriver:"Buscar conductor",
+    noUpcomingRides:"No hay viajes reservados.", spending:"Gastos",
+    quickAccess:"Acceso rápido", fidelityPts:"puntos disponibles",
+    tosPageTitle:"Términos de Servicio", privacyPageTitle:"Aviso de Privacidad",
+    legalBadge:"Legal", tosContents:"Contenido",
     twoFaTitle:"Autenticación de dos factores",
     totpLabel:"Aplicación de autenticación (TOTP)",
     totpDesc:"Requerir un código temporal al iniciar sesión desde un nuevo dispositivo.",
@@ -656,6 +694,13 @@ const LANGS = {
     yourDataDesc:"您可以随时申请完整的个人数据导出。我们将在48小时内通过电子邮件发送给您。",
     exportDataBtn:"申请数据导出",
     dangerDesc:"永久删除您的账户和所有相关数据。",
+    dashTitle:"控制台", myFidelityTitle:"我的积分", paymentsTitle:"付款",
+    myAccountTitle:"我的账户", nextRide:"下次行程", recentRides:"最近行程",
+    bookRide:"预订行程", findDriver:"寻找司机",
+    noUpcomingRides:"暂无预订行程。", spending:"消费",
+    quickAccess:"快速访问", fidelityPts:"可用积分",
+    tosPageTitle:"服务条款", privacyPageTitle:"隐私声明",
+    legalBadge:"法律", tosContents:"目录",
     twoFaTitle:"双重身份验证",
     totpLabel:"身份验证器应用 (TOTP)",
     totpDesc:"从新设备登录时需要时间码。",
@@ -668,7 +713,17 @@ const LANGS = {
 
 /* ── LANG ─────────────────────────────────────────────────────────── */
 const Lang = {
-  get()  { return localStorage.getItem("ride_lang") || "en"; },
+  _detect() {
+    // Map browser language to our supported set, fallback to "it"
+    const nav = (navigator.language || navigator.userLanguage || "it").toLowerCase();
+    if (nav.startsWith("it")) return "it";
+    if (nav.startsWith("fr")) return "fr";
+    if (nav.startsWith("es")) return "es";
+    if (nav.startsWith("zh")) return "zh";
+    if (nav.startsWith("en")) return "en";
+    return "it";
+  },
+  get()  { return localStorage.getItem("ride_lang") || this._detect(); },
   set(l) { localStorage.setItem("ride_lang", l); },
   t(key) { return (LANGS[this.get()] || LANGS.en)[key] || key; },
   apply() {

@@ -100,6 +100,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   Motion.apply();
   Lang.apply();
 
+  // Wire theme toggle button (present on tos/privacy pages)
+  document.getElementById("legalThemeBtn")?.addEventListener("click", () => { Theme.toggle(); });
+
   // Init profile dropdown (async — reads session)
   await initTopbarDropdown();
 

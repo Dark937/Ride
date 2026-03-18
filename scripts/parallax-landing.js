@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.innerWidth <= 1024) {
         if (isFixed) releaseFixed();
-        return;
+        return; // mobile handled by IntersectionObserver
       }
 
       const vpH     = window.innerHeight;
@@ -262,6 +262,72 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", onScrollEffects, { passive: true });
     window.addEventListener("resize", onScrollEffects);
     onScrollEffects();
+
+    // ── MOBILE PARALLAX — IntersectionObserver per panel ────────────
+    (function initMobileParallax() {
+      if (!featurePanels.length || !parallaxSection) return;
+
+      function isMobile() { return window.innerWidth <= 1024; }
+
+      // Inject per-panel image cards into .features-right panels
+      function buildMobileImages() {
+        featurePanels.forEach(panel => {
+          if (panel.querySelector('.feature-panel-img')) return; // already built
+          const img   = panel.dataset.img || '';
+          const alt   = panel.dataset.alt || '';
+          if (!img) return;
+          const wrap = document.createElement('div');
+          wrap.className = 'feature-panel-img is-inactive';
+          wrap.innerHTML = `<img src="${img}" alt="${alt}" loading="lazy">`;
+          panel.appendChild(wrap);
+        });
+      }
+
+      function updateMobilePanel(index) {
+        featurePanels.forEach((panel, i) => {
+          const imgEl = panel.querySelector('.feature-panel-img');
+          if (imgEl) imgEl.classList.toggle('is-inactive', i !== index);
+        });
+        setActiveFeature(index);
+      }
+
+      let mobileObserver = null;
+
+      function attachObserver() {
+        if (!isMobile()) return;
+        buildMobileImages();
+        if (mobileObserver) mobileObserver.disconnect();
+        mobileObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const idx = featurePanels.indexOf(entry.target);
+            if (idx !== -1) updateMobilePanel(idx);
+          });
+        }, { threshold: 0.45 });
+        featurePanels.forEach(p => mobileObserver.observe(p));
+      }
+
+      function detachObserver() {
+        if (mobileObserver) { mobileObserver.disconnect(); mobileObserver = null; }
+        // Remove injected images so desktop isn't affected
+        featurePanels.forEach(p => {
+          const img = p.querySelector('.feature-panel-img');
+          if (img) img.remove();
+        });
+      }
+
+      // Init on load
+      if (isMobile()) attachObserver();
+
+      // Re-check on resize crossing the 1024 boundary
+      let wasMobile = isMobile();
+      window.addEventListener('resize', () => {
+        const nowMobile = isMobile();
+        if (nowMobile && !wasMobile) { attachObserver(); }
+        else if (!nowMobile && wasMobile) { detachObserver(); }
+        wasMobile = nowMobile;
+      });
+    })();
 
     // Hero scroll
     const splineBg = document.querySelector(".spline-bg");

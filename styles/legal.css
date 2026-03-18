@@ -100,8 +100,22 @@ body {
 
 /* topbar right area */
 .topbar-right {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
 }
+
+/* theme toggle button */
+.tb-theme-legal {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); border: 1px solid var(--border);
+  background: var(--surface); transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.tb-theme-legal:hover { background: var(--surface-2); color: var(--text); }
+.tb-theme-legal svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+.tb-theme-legal .icon-light { display: none; }
+[data-theme="light"] .tb-theme-legal .icon-dark  { display: none; }
+[data-theme="light"] .tb-theme-legal .icon-light { display: block; }
 
 /* ── PAGE LAYOUT ─────────────────────────────────────────────────────── */
 .legal-page {

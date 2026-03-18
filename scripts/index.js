@@ -127,25 +127,16 @@ function applyLandingTranslations() {
   if (gi[0]) _set(gi[0], t.signIn        || "Sign in");
   if (gi[1]) _set(gi[1], t.createAccount || "Create account");
 
-  // ── Section kickers ──
-  const kickers = document.querySelectorAll(".section-kicker");
-  const kickerMap = {
-    "Core Features":  t.sectionCoreFeatures  || "Core Features",
-    "How It Works":   t.sectionHowItWorks    || "How It Works",
-    "Our Vehicles":   t.sectionOurVehicles   || "Our Vehicles",
-    "Fidelity Card":  t.sectionFidelityCard  || "Fidelity Card",
-    "Drive with Ride":t.sectionDriveWithRide || "Drive with Ride",
-  };
-  kickers.forEach(k => { const v = kickerMap[k.textContent.trim()]; if (v) k.textContent = v; });
+  // ── Section kickers (use data-i18n-key for stable lookup) ──
+  document.querySelectorAll(".section-kicker[data-i18n-key]").forEach(k => {
+    const v = t[k.dataset.i18nKey];
+    if (v) k.textContent = v;
+  });
 
-  // ── Footer column headings ──
-  document.querySelectorAll(".footer-grid h4").forEach(h => {
-    const map = {
-      "Product":  t.footerProduct  || "Product",
-      "Company":  t.footerCompany  || "Company",
-      "Legal":    t.footerLegal    || "Legal",
-    };
-    const v = map[h.textContent.trim()]; if (v) h.textContent = v;
+  // ── Footer column headings (use data-i18n-key) ──
+  document.querySelectorAll(".footer-grid h4[data-i18n-key]").forEach(h => {
+    const v = t[h.dataset.i18nKey];
+    if (v) h.textContent = v;
   });
 
   // ── Footer bottom copyright ──

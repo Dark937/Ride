@@ -545,17 +545,7 @@ spline-viewer {
   align-items: center;
   justify-content: center;
   letter-spacing: 0.03em;
-  overflow: hidden;
 }
-
-/* Circle with photo: remove gradient bg, clean border only */
-.profile-btn .circle.is-logged-in.has-photo {
-  background: transparent;
-  border: 2px solid rgba(255,255,255,.22);
-}
-.profile-btn .circle.is-logged-in.has-photo:hover { border-color: rgba(255,255,255,.40); }
-[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo { border-color: rgba(0,0,30,.20); }
-[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo:hover { border-color: rgba(0,0,30,.38); }
 
 #profileDropdown {
   position: absolute;
@@ -1763,24 +1753,52 @@ spline-viewer {
     max-width: 100%;
   }
 
+  /* Mobile: features-right is visible as scroll triggers */
   .features-right {
-    display: none; /* scroll triggers not needed on mobile */
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Mobile: show images directly after text */
+  /* Each panel is a tall scroll zone — image sits inside it */
+  .feature-panel {
+    height: auto;
+    min-height: 80vh;
+    pointer-events: none;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-panel.active,
+  .feature-panel.passed { opacity: 1; }
+
+  /* Mobile image: full-width card rendered inside each panel via JS clone */
   .features-image-fixed {
     position: static !important;
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    margin-top: 24px;
-    opacity: 1 !important;
+    display: none !important; /* replaced by per-panel images via JS */
   }
 
-  .features-image-card {
-    max-width: 100%;
-    opacity: 1 !important;
-    transform: none !important;
+  /* Mobile per-panel image cards injected by JS */
+  .feature-panel-img {
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.40);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .feature-panel-img img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    display: block;
+  }
+
+  .feature-panel-img.is-inactive {
+    opacity: 0.28;
+    transform: scale(0.97);
   }
 
   .feature-progress {
@@ -2031,13 +2049,36 @@ spline-viewer {
 [data-theme="light"] .lang-toggle-btn { color: rgba(10,10,24,.65); border-color: rgba(0,0,30,.14); background: rgba(0,0,20,.05); }
 [data-theme="light"] .lang-toggle-btn:hover { background: rgba(0,0,20,.10); color: #0a0a18; }
 
-/* ── PROFILE CIRCLE img (pseudo-elements hidden, img fills circle) ── */
+/* ── PROFILE CIRCLE with photo ────────────────────────────────────── */
+.profile-btn .circle.is-logged-in {
+  background: linear-gradient(135deg, #3d5eff, #e03050);
+  border-color: transparent;
+  font-size: 11px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: .03em; overflow: hidden;
+}
+
+
 .profile-btn .circle.is-logged-in::before,
 .profile-btn .circle.is-logged-in::after { display: none; }
 .profile-btn .circle.is-logged-in img {
   width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
 }
-/* has-photo rules defined above near first .is-logged-in block */
+
+/* Circle with photo: remove gradient, use a subtle border instead */
+.profile-btn .circle.is-logged-in.has-photo {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,.22);
+}
+.profile-btn .circle.is-logged-in.has-photo:hover {
+  border-color: rgba(255,255,255,.40);
+}
+[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo {
+  border-color: rgba(0,0,30,.20);
+}
+[data-theme="light"] .profile-btn .circle.is-logged-in.has-photo:hover {
+  border-color: rgba(0,0,30,.38);
+}
 
 
 /* ══════════════════════════════════════════════════════════════════

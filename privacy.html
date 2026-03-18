@@ -37,6 +37,10 @@
     <img src="assets/logo.png" alt="Ride">
   </a>
   <div class="topbar-right" id="topbarRight">
+    <button class="tb-theme-legal" id="legalThemeBtn" aria-label="Toggle theme">
+      <svg class="icon-dark" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg class="icon-light" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
     <button class="lang-toggle-btn" id="langToggleBtn" aria-label="Toggle language">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>
       <span class="lang-label">EN</span>
@@ -94,27 +98,27 @@
   <div class="legal-hero">
     <div class="legal-badge">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      Legal
+      <span data-i18n="legalBadge">Legal</span>
     </div>
-    <h1>Privacy Notice</h1>
+    <h1 data-i18n="privacyFooterLink">Privacy Notice</h1>
     <div class="legal-meta">
       <span>
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Effective: 1 January 2026
+        <span data-i18n="tosEffective">Effective: 1 January 2026</span>
       </span>
       <span class="dot"></span>
       <span>
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ~10 min read
+        <span data-i18n="privacyReadTime">~10 min read</span>
       </span>
       <span class="dot"></span>
-      <span>GDPR compliant</span>
+      <span data-i18n="gdprNote">GDPR compliant</span>
     </div>
   </div>
 
   <!-- Table of Contents -->
   <nav class="legal-toc" aria-label="Table of contents">
-    <div class="legal-toc-title">Contents</div>
+    <div class="legal-toc-title" data-i18n="tosContents">Contents</div>
     <ol>
       <li><a href="#controller">Data Controller</a></li>
       <li><a href="#collect">Data We Collect</a></li>
@@ -141,7 +145,7 @@
       <div class="legal-note">
         <strong>Registered address:</strong> Ride S.r.l., Via del Corso 1, 00186 Roma RM, Italy<br>
         <strong>VAT number:</strong> IT12345678901<br>
-        <strong>DPO contact:</strong> privacy@ride.app
+        <strong>DPO contact:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5d2d2f342b3c3e241d2f343938733c2d2d">[email&#160;protected]</a>
       </div>
     </section>
 
@@ -275,7 +279,7 @@
         <li><strong>Withdraw consent</strong> — at any time, for processing based on consent</li>
         <li><strong>Lodge a complaint</strong> — with the Italian Data Protection Authority (Garante) at <strong>garanteprivacy.it</strong></li>
       </ul>
-      <p>You can exercise most of these rights directly from Settings → Privacy → Your Data. For requests that cannot be fulfilled in-app, contact us at privacy@ride.app. We will respond within 30 days.</p>
+      <p>You can exercise most of these rights directly from Settings → Privacy → Your Data. For requests that cannot be fulfilled in-app, contact us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="403032293621233900322924256e213030">[email&#160;protected]</a>. We will respond within 30 days.</p>
     </section>
 
     <section class="legal-section" id="cookies">
@@ -294,7 +298,7 @@
     <section class="legal-section" id="children">
       <div class="section-num">10</div>
       <h2>Children's Privacy</h2>
-      <p>Our Services are not directed at individuals under the age of 18. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us at privacy@ride.app and we will take steps to delete it promptly.</p>
+      <p>Our Services are not directed at individuals under the age of 18. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea9a98839c8b8993aa98838e8fc48b9a9a">[email&#160;protected]</a> and we will take steps to delete it promptly.</p>
       <div class="legal-warn">
         <strong>Parents & guardians:</strong> If you discover that a minor has created a Ride account without consent, please contact our support team immediately for assistance.
       </div>
@@ -320,7 +324,7 @@
       <h2>Contact & DPO</h2>
       <p>Our Data Protection Officer can be reached at:</p>
       <ul>
-        <li><strong>Email:</strong> privacy@ride.app</li>
+        <li><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea9a98839c8b8993aa98838e8fc48b9a9a">[email&#160;protected]</a></li>
         <li><strong>Post:</strong> Data Protection Officer, Ride S.r.l., Via del Corso 1, 00186 Roma RM, Italy</li>
       </ul>
       <p>If you are not satisfied with our response, you have the right to lodge a complaint with the Garante per la Protezione dei Dati Personali (Italian Data Protection Authority) at <strong>garanteprivacy.it</strong>.</p>
@@ -330,10 +334,10 @@
 
   <!-- Contact card -->
   <div class="legal-contact">
-    <h3>Privacy questions?</h3>
-    <p>Our Data Protection Officer is available for any privacy-related enquiries. We respond within 30 days as required by GDPR.</p>
-    <a href="mailto:privacy@ride.app" class="btn-contact">
-      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    <h3 data-i18n="privacyContactTitle">Privacy questions?</h3>
+    <p data-i18n="privacyContactDesc">Our Data Protection Officer is available for any privacy-related enquiries. We respond within 30 days as required by GDPR.</p>
+        <a href="mailto:privacy@ride.app" class="btn-contact">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z""/><polyline points="22,6 12,13 2,6"/></svg>
       privacy@ride.app
     </a>
   </div>
@@ -342,8 +346,8 @@
   <footer class="legal-footer">
     <p>© 2026 Ride S.r.l. All rights reserved.</p>
     <nav>
-      <a href="tos.html">Terms of Service</a>
-      <a href="privacy.html" class="active">Privacy Notice</a>
+      <a href="tos.html" data-i18n="tosFooterLink">Terms of Service</a>
+      <a href="privacy.html" class="active" data-i18n="privacyFooterLink">Privacy Notice</a>
     </nav>
   </footer>
 
