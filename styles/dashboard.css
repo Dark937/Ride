@@ -90,21 +90,20 @@ html,body{
   height:100vh;
   overflow:hidden;
 }
-
 /* ══════════════════════════════════
    SIDEBAR  (settings-style)
    ══════════════════════════════════ */
 .sidebar{
+  position:fixed;
+  top:0; left:0; bottom:0;
   width:var(--sidebar-w);
-  flex-shrink:0;
-  height:100%;
   background:var(--sidebar-bg);
   border-right:1px solid var(--border);
   display:flex;
   flex-direction:column;
   padding:16px 10px 14px;
   overflow:hidden;
-  z-index:20;
+  z-index:110;
 }
 
 .sb-logo{
@@ -153,18 +152,25 @@ html,body{
   flex-direction:column;
   overflow:hidden;
   min-width:0;
+  margin-left:var(--sidebar-w);
+  padding-top:var(--topbar-h); /* space for fixed topbar */
+  transition:margin-left .2s;
 }
 
 /* ── TOPBAR ── */
 .topbar{
+  position:fixed;
+  top:0; left:var(--sidebar-w); right:0;
   height:var(--topbar-h);
-  flex-shrink:0;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 24px;
   border-bottom:1px solid var(--border);
   background:var(--bg);
-  z-index:10;
+  z-index:100;
+  transition:left .2s;
 }
+/* Content area must start below the fixed topbar */
+.panel{padding-top:0}
 
 .tb-section-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
 
@@ -818,6 +824,80 @@ html,body{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+
+
+/* ── COUPON MODAL ── */
+.coupon-overlay{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.coupon-overlay.open{opacity:1;pointer-events:auto}
+.coupon-modal{
+  background:var(--card-bg);border:1px solid var(--border-md);
+  border-radius:18px;padding:24px;width:100%;max-width:420px;
+  max-height:80vh;overflow-y:auto;
+  transform:translateY(10px) scale(.97);
+  transition:transform .22s cubic-bezier(.22,1,.36,1);
+}
+.coupon-overlay.open .coupon-modal{transform:none}
+.coupon-modal-hd{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;
+}
+.coupon-modal-title{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.coupon-close{
+  width:26px;height:26px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);background:var(--surface);transition:background .14s;
+}
+.coupon-close:hover{background:var(--surface-2)}
+.coupon-close svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.coupon-list{display:flex;flex-direction:column;gap:10px}
+.coupon-item{
+  border:1px dashed var(--border-md);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);cursor:pointer;transition:border-color .14s,background .14s;
+}
+.coupon-item:hover{border-color:var(--brand);background:var(--brand-dim)}
+.coupon-badge{
+  font-size:11px;font-weight:800;letter-spacing:.04em;
+  padding:3px 9px;border-radius:999px;flex-shrink:0;
+}
+.coupon-badge.discount{background:var(--green-dim);color:var(--green)}
+.coupon-badge.free{background:var(--brand-dim);color:var(--brand)}
+.coupon-badge.partner{background:var(--yellow-dim);color:var(--yellow)}
+.coupon-info{flex:1}
+.coupon-name{font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:2px}
+.coupon-desc{font-size:12px;color:var(--muted)}
+.coupon-cost{font-size:12px;font-weight:700;color:var(--brand);flex-shrink:0}
+.coupon-used{color:var(--faint);font-size:11px;margin-top:6px;text-align:center}
+
+/* ── REVIEWS CARD ── */
+.reviews-card{display:flex;flex-direction:column;gap:12px}
+.review-item{
+  display:flex;gap:10px;padding:12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+}
+.review-stars{display:flex;gap:2px;margin-bottom:4px}
+.review-star{font-size:11px;color:var(--yellow)}
+.review-star.empty{color:var(--faint)}
+.review-text{font-size:12.5px;color:var(--text-2);line-height:1.5;margin-bottom:4px}
+.review-meta{font-size:11px;color:var(--muted)}
+.review-avatar{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.review-avg{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;background:var(--brand-dim);border-radius:10px;
+  border:1px solid var(--border-md);
+}
+.review-avg-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--brand)}
+.review-avg-label{font-size:12px;color:var(--muted)}
+
 /* ══════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════ */
@@ -837,6 +917,30 @@ html,body{
   .sb-item{justify-content:center;padding:10px}
   .dash-row{grid-template-columns:1fr}
   .dash-grid{grid-template-columns:1fr}
+  .fid-stats-grid{grid-template-columns:1fr 1fr}
+  .fid-tiers{grid-template-columns:1fr}
+  .pay-grid{grid-template-columns:1fr}
+  .account-grid{grid-template-columns:1fr}
   .panel-inner{padding:14px}
   .welcome-strip{flex-direction:column;align-items:flex-start}
+
+  /* Next ride — prevent text clipping on small screens */
+  .next-ride-card{min-width:0}
+  .nr-route,.nr-point{min-width:0;overflow:hidden}
+  .nr-point{font-size:12px;gap:6px}
+  .nr-meta{flex-direction:column;gap:4px}
+  .nr-meta-item{font-size:11.5px}
+  .nr-btn{font-size:12px;padding:8px 0}
+  .nr-actions{gap:6px}
+
+  /* Fidelity hero — fix overflow on narrow screens */
+  .fid-hero{padding:18px 16px;word-break:break-word}
+  .fh-pts{font-size:34px}
+  .fh-actions{flex-direction:column;gap:8px}
+  .fh-btn{padding:10px}
+
+  /* Account panel — ensure it scrolls */
+  #panel-account{overflow-y:auto}
+  #panel-account .panel-inner{padding-bottom:40px}
+  .profile-card,.info-card{width:100%}
 }

@@ -391,6 +391,9 @@ body {
   .driver-promo {
     flex: none;
   }
+  .account-left-col {
+    gap: 16px;
+  }
 }
 
 /* ── AVATAR ──────────────────────────────────────────────────────────── */
@@ -711,93 +714,73 @@ body {
 @media (max-width: 1100px) {
   .form-grid { grid-template-columns:1fr 1fr; }
 }
+
+/* Mobile nav — hidden by default, shown at <=768px */
+#mobileNav { display: none; }
+
 @media (max-width: 768px) {
-  /* ── allow page-level scroll on mobile ── */
-  html { overflow: auto; height: auto; }
-  body { height: auto; overflow: auto; }
-
-  /* ── topbar ── */
-  .topbar { padding: 0 16px; }
-  .tb-logo img { height: 18px; }
-
-  /* ── shell becomes normal flow ── */
-  .shell {
-    position: static;
+  .sidebar { display:none; }
+  .content {
+    padding: 0 0 60px;   /* mobile nav bar sits at top, panels below */
+    overflow-y: auto;
+    display: flex;
     flex-direction: column;
-    overflow: visible;
-    height: auto;
   }
+  .form-grid { grid-template-columns:1fr; }
+  .field.span2 { grid-column:span 1; }
 
-  /* ── hide desktop sidebar ── */
-  .sidebar { display: none; }
-
-  /* ── mobile nav tab bar ── */
-  .mobile-nav {
-    display: flex !important;
+  /* Mobile nav bar */
+  #mobileNav {
+    display: flex;
     overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
     gap: 4px;
-    padding: 8px 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--card-border);
     background: var(--sidebar-bg);
-    border-bottom: 1px solid var(--sidebar-border);
-    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     flex-shrink: 0;
   }
-  .mobile-nav::-webkit-scrollbar { display: none; }
-  .mobile-nav-item {
-    display: inline-flex;
+  #mobileNav::-webkit-scrollbar { display: none; }
+
+  .mn-item {
+    display: flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 13px;
+    padding: 7px 12px;
     border-radius: 8px;
     font-size: 12.5px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-muted, rgba(255,255,255,.5));
     white-space: nowrap;
     cursor: pointer;
     flex-shrink: 0;
-    border: none;
-    background: none;
-    transition: background .15s, color .15s;
+    transition: background .14s, color .14s;
   }
-  .mobile-nav-item.active {
-    background: var(--brand-dim);
+  .mn-item.active {
+    background: var(--brand-dim, rgba(61,94,255,.12));
     color: var(--brand);
   }
-  .mobile-nav-item svg {
-    width: 14px; height: 14px;
+  .mn-item svg {
+    width: 13px; height: 13px;
     stroke: currentColor; fill: none;
-    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    stroke-width: 1.8; stroke-linecap: round;
     flex-shrink: 0;
   }
 
-  /* ── content fills screen, scrolls normally ── */
-  .content {
-    height: auto;
-    min-height: calc(100vh - var(--topbar-h) - 50px);
-    overflow-y: visible;
-    overflow-x: hidden;
-    padding: 20px 16px 80px;
+  /* Panels scroll inside content below the nav bar */
+  .panel, .panel.active {
+    padding: 20px 16px 28px;
+    flex: 1;
   }
 
-  /* ── forms ── */
-  .form-grid { grid-template-columns: 1fr; }
-  .field.span2 { grid-column: span 1; }
-
-  /* ── cards ── */
-  .card { padding: 16px; }
-  .card-full { padding: 16px; }
-
-  /* ── billing card preview ── */
-  .card-preview-wrap { max-width: 100%; }
-
-  /* ── sessions list ── */
-  .sess-item { flex-wrap: wrap; gap: 8px; }
-
-  /* ── account left col ── */
-  .account-left-col { flex-direction: column; }
+  /* driver promo gap from personal info on mobile */
+  .account-left-col {
+    gap: 20px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

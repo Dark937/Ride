@@ -63,7 +63,7 @@
         <svg class="icon-light" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <!-- Profile avatar -->
-      <div class="tb-avatar" id="tbAvatar" aria-label="Profile menu">R</div>
+      <div class="tb-avatar" id="tbAvatar" aria-label="Profile menu" title="Profile" style="cursor:pointer">R</div>
     </div>
   </header>
 
@@ -156,24 +156,21 @@
         </div>
 
         <div class="card card-sm">
-          <div class="card-hd"><span class="card-title" data-i18n="quickAccess">Quick Access</span></div>
-          <div class="util-grid">
-            <div class="util-item" data-panel="payments">
-              <div class="util-icon" style="background:var(--brand-dim);color:var(--brand)"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-              <span class="util-label" data-i18n="paymentsTitle">Payments</span>
+          <div class="card-hd">
+            <span class="card-title">Recent Reviews</span>
+            <span class="pill green">4.8 ★</span>
+          </div>
+          <div class="reviews-card">
+            <div class="review-avg">
+              <div class="review-avg-val">4.8</div>
+              <div>
+                <div class="review-stars">
+                  <span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span>
+                </div>
+                <div class="review-avg-label">Based on 12 rides</div>
+              </div>
             </div>
-            <div class="util-item" data-panel="account">
-              <div class="util-icon" style="background:var(--green-dim);color:var(--green)"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-              <span class="util-label" data-i18n="myAccountTitle">Account</span>
-            </div>
-            <div class="util-item" onclick="window.location.href='settings.html'">
-              <div class="util-icon" style="background:var(--yellow-dim);color:var(--yellow)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
-              <span class="util-label" data-i18n="settings">Settings</span>
-            </div>
-            <div class="util-item" onclick="window.location.href='index.html'">
-              <div class="util-icon" style="background:var(--accent-dim);color:var(--accent)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-              <span class="util-label" data-i18n="home">Home</span>
-            </div>
+            <div id="reviewsList"></div>
           </div>
         </div>
       </div>
@@ -183,7 +180,6 @@
         <div class="card">
           <div class="card-hd">
             <span class="card-title" data-i18n="recentRides">Recent Rides</span>
-            <span class="card-link" onclick="window.location.href='index.html'">+ Book new</span>
           </div>
           <table class="rides-tbl">
             <thead><tr>
@@ -256,6 +252,15 @@
           <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Early access to new features</div>
           <div class="ftc-unlock" id="tier2UnlockMsg">Earn <strong id="tier2PtsNeeded">—</strong> more lifetime pts to unlock</div>
         </div>
+      </div>
+
+      <!-- Partner coupons (Standard tier benefit) -->
+      <div class="card" id="partnerCouponsCard">
+        <div class="card-hd">
+          <span class="card-title">🎟️ Partner Coupons</span>
+          <span class="pill blue" id="couponsAvail">3 available</span>
+        </div>
+        <div class="coupon-list" id="partnerCouponList"></div>
       </div>
 
       <div class="fid-stats-grid">
@@ -374,6 +379,17 @@
       <button class="so-cancel" id="soCancel">Cancel</button>
       <button class="so-confirm" id="soConfirm">Sign out</button>
     </div>
+  </div>
+</div>
+
+<!-- Coupon/Rewards modal -->
+<div class="coupon-overlay" id="couponOverlay">
+  <div class="coupon-modal">
+    <div class="coupon-modal-hd">
+      <span class="coupon-modal-title" id="couponModalTitle">Explore Rewards</span>
+      <button class="coupon-close" id="couponClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="coupon-list" id="couponModalList"></div>
   </div>
 </div>
 
@@ -505,13 +521,76 @@ function renderDashboard(user, uid) {
   document.getElementById('wsSpent').textContent='€'+monthSpent.toFixed(0);
   renderNextRide(bookings,uid);
   // Fidelity mini
-  const GOLD_THRESHOLD=2000;
+  
+const PARTNER_COUPONS = [
+  {id:'c1', badge:'partner', badgeLabel:'Partner', name:'20% off at Eataly', desc:'Valid on your next purchase over €30', cost:150, used:false},
+  {id:'c2', badge:'free',    badgeLabel:'Free ride', name:'Free ride up to €15', desc:'Redeem for any city ride', cost:200, used:false},
+  {id:'c3', badge:'discount', badgeLabel:'Discount', name:'€10 off next ride', desc:'Applied automatically at checkout', cost:100, used:false},
+  {id:'c4', badge:'partner', badgeLabel:'Partner', name:'Free coffee at Lavazza', desc:'One free espresso at any Lavazza café', cost:50, used:false},
+  {id:'c5', badge:'partner', badgeLabel:'Partner', name:'15% off at Trenitalia', desc:'On regional trains, valid 30 days', cost:300, used:false},
+  {id:'c6', badge:'discount', badgeLabel:'Discount', name:'€5 credit', desc:'Added to your Ride wallet instantly', cost:60, used:false},
+];
+
+function renderPartnerCoupons(pts) {
+  const el = document.getElementById('partnerCouponList');
+  if (!el) return;
+  const shown = PARTNER_COUPONS.slice(0, 3);
+  el.innerHTML = shown.map(cp => `
+    <div class="coupon-item" data-id="${cp.id}">
+      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+      <div class="coupon-info">
+        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-desc">${cp.desc}</div>
+      </div>
+      <div class="coupon-cost">${cp.cost} pts</div>
+    </div>`).join('');
+  document.getElementById('couponsAvail').textContent = PARTNER_COUPONS.length + ' available';
+
+  el.querySelectorAll('.coupon-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const cp = PARTNER_COUPONS.find(x => x.id === item.dataset.id);
+      if (!cp) return;
+      if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return; }
+      if (confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) {
+        toast(`✓ Coupon redeemed: ${cp.name}`);
+      }
+    });
+  });
+}
+
+function openCouponModal(title, coupons, pts) {
+  document.getElementById('couponModalTitle').textContent = title;
+  const list = document.getElementById('couponModalList');
+  list.innerHTML = coupons.map(cp => `
+    <div class="coupon-item" data-cost="${cp.cost}" data-name="${cp.name}" data-pts="${pts}">
+      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+      <div class="coupon-info">
+        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-desc">${cp.desc}</div>
+        ${pts < cp.cost ? '<div class="coupon-used">Need '+(cp.cost-pts)+' more pts</div>' : ''}
+      </div>
+      <div class="coupon-cost" style="color:${pts>=cp.cost?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
+    </div>`).join('');
+  list.querySelectorAll('.coupon-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const cost = +item.dataset.cost, name = item.dataset.name, avail = +item.dataset.pts;
+      if (avail < cost) { toast('Not enough points.'); return; }
+      if (confirm(`Redeem "${name}" for ${cost} points?`)) {
+        document.getElementById('couponOverlay').classList.remove('open');
+        toast(`✓ Coupon redeemed: ${name}`);
+      }
+    });
+  });
+  document.getElementById('couponOverlay').classList.add('open');
+}
+const GOLD_THRESHOLD=2000;
   const pct=Math.min((fid.totalEarned/GOLD_THRESHOLD)*100,100);
   document.getElementById('fidMiniPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidMiniBar').style.width=pct+'%';
   document.getElementById('fidMiniNext').textContent=
     fid.totalEarned>=GOLD_THRESHOLD?'Gold tier unlocked ✦':`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} pts to Gold`;
   renderRecentRides(rides.slice(0,5));
+  renderReviews();
   renderChart(rides,'week');
 }
 
@@ -542,6 +621,27 @@ function openUpcoming(bookings,uid) {
   ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${fmtDatetime(b.datetime)}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${b.from}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${b.to}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${b.car} · €${b.fare.toFixed(2)}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${b.id}" data-uid="${uid}">Cancel</button><button class="ui-btn edit">Edit (soon)</button></div></div>`).join('');
   ol.querySelectorAll('[data-cancel]').forEach(btn=>btn.addEventListener('click',()=>cancelBooking(btn.dataset.cancel,btn.dataset.uid)));
   document.getElementById('upcomingOverlay').classList.add('open');
+}
+
+function renderReviews() {
+  const el = document.getElementById('reviewsList');
+  if (!el) return;
+  const reviews = [
+    {name:'Marco R.', rating:5, text:'Incredible service. The Ferrari was spotless.', time:'2 days ago'},
+    {name:'Giulia T.', rating:5, text:'On time and super professional driver.', time:'Last week'},
+    {name:'Luca B.',  rating:4, text:'Great ride, slightly late pickup.', time:'2 weeks ago'},
+  ];
+  el.innerHTML = reviews.map(r => {
+    const stars = Array.from({length:5},(_,i)=>`<span class="review-star${i<r.rating?'':' empty'}">${i<r.rating?'★':'★'}</span>`).join('');
+    return `<div class="review-item">
+      <div class="review-avatar">${r.name[0]}</div>
+      <div style="flex:1;min-width:0">
+        <div class="review-stars">${stars}</div>
+        <div class="review-text">${r.text}</div>
+        <div class="review-meta">${r.name} · ${r.time}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderRecentRides(rides) {
@@ -644,6 +744,68 @@ function renderChart(rides,range){
 /* ════════════════════════════════════════════════════════
    FIDELITY PANEL
    ════════════════════════════════════════════════════════ */
+
+const PARTNER_COUPONS = [
+  {id:'c1', badge:'partner', badgeLabel:'Partner', name:'20% off at Eataly', desc:'Valid on your next purchase over €30', cost:150, used:false},
+  {id:'c2', badge:'free',    badgeLabel:'Free ride', name:'Free ride up to €15', desc:'Redeem for any city ride', cost:200, used:false},
+  {id:'c3', badge:'discount', badgeLabel:'Discount', name:'€10 off next ride', desc:'Applied automatically at checkout', cost:100, used:false},
+  {id:'c4', badge:'partner', badgeLabel:'Partner', name:'Free coffee at Lavazza', desc:'One free espresso at any Lavazza café', cost:50, used:false},
+  {id:'c5', badge:'partner', badgeLabel:'Partner', name:'15% off at Trenitalia', desc:'On regional trains, valid 30 days', cost:300, used:false},
+  {id:'c6', badge:'discount', badgeLabel:'Discount', name:'€5 credit', desc:'Added to your Ride wallet instantly', cost:60, used:false},
+];
+
+function renderPartnerCoupons(pts) {
+  const el = document.getElementById('partnerCouponList');
+  if (!el) return;
+  const shown = PARTNER_COUPONS.slice(0, 3);
+  el.innerHTML = shown.map(cp => `
+    <div class="coupon-item" data-id="${cp.id}">
+      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+      <div class="coupon-info">
+        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-desc">${cp.desc}</div>
+      </div>
+      <div class="coupon-cost">${cp.cost} pts</div>
+    </div>`).join('');
+  document.getElementById('couponsAvail').textContent = PARTNER_COUPONS.length + ' available';
+
+  el.querySelectorAll('.coupon-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const cp = PARTNER_COUPONS.find(x => x.id === item.dataset.id);
+      if (!cp) return;
+      if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return; }
+      if (confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) {
+        toast(`✓ Coupon redeemed: ${cp.name}`);
+      }
+    });
+  });
+}
+
+function openCouponModal(title, coupons, pts) {
+  document.getElementById('couponModalTitle').textContent = title;
+  const list = document.getElementById('couponModalList');
+  list.innerHTML = coupons.map(cp => `
+    <div class="coupon-item" data-cost="${cp.cost}" data-name="${cp.name}" data-pts="${pts}">
+      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+      <div class="coupon-info">
+        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-desc">${cp.desc}</div>
+        ${pts < cp.cost ? '<div class="coupon-used">Need '+(cp.cost-pts)+' more pts</div>' : ''}
+      </div>
+      <div class="coupon-cost" style="color:${pts>=cp.cost?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
+    </div>`).join('');
+  list.querySelectorAll('.coupon-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const cost = +item.dataset.cost, name = item.dataset.name, avail = +item.dataset.pts;
+      if (avail < cost) { toast('Not enough points.'); return; }
+      if (confirm(`Redeem "${name}" for ${cost} points?`)) {
+        document.getElementById('couponOverlay').classList.remove('open');
+        toast(`✓ Coupon redeemed: ${name}`);
+      }
+    });
+  });
+  document.getElementById('couponOverlay').classList.add('open');
+}
 const GOLD_THRESHOLD=2000;
 function renderFidelity(uid){
   const fid=RideData.getFid(uid);
@@ -677,6 +839,20 @@ function renderFidelity(uid){
     t2msg.style.display='';
     t2ptsNeeded.textContent=(GOLD_THRESHOLD-fid.totalEarned).toLocaleString();
   }
+
+  // Partner coupons
+  renderPartnerCoupons(fid.pts);
+
+  // Wire "Explore rewards" → full coupon modal
+  document.querySelector('.fh-btn.secondary')?.addEventListener('click', e => {
+    e.preventDefault();
+    openCouponModal('Explore Rewards', PARTNER_COUPONS, fid.pts);
+  });
+  // Wire "Redeem points" → modal filtered to affordable
+  document.querySelector('.fh-btn.primary')?.addEventListener('click', e => {
+    e.preventDefault();
+    openCouponModal('Redeem Points', PARTNER_COUPONS, fid.pts);
+  });
 
   // History
   const histEl=document.getElementById('fidHistory');
@@ -828,7 +1004,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Topbar buttons
   document.getElementById('themeBtn').addEventListener('click',()=>Theme.toggle());
   document.getElementById('notifBtn').addEventListener('click',()=>toggleDropdown('notifDropdown'));
-  document.getElementById('tbAvatar').addEventListener('click',()=>toggleDropdown('profileDropdown'));
+  document.getElementById('tbAvatar').addEventListener('click',()=>{
+    window.location.href='settings.html';
+  });
 
   // Profile dropdown actions
   document.getElementById('ddDashboard').addEventListener('click',()=>{switchPanel('dashboard');});
@@ -844,6 +1022,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // Upcoming close
   document.getElementById('upcomingClose').addEventListener('click',()=>document.getElementById('upcomingOverlay').classList.remove('open'));
+  document.getElementById('couponClose')?.addEventListener('click',()=>document.getElementById('couponOverlay').classList.remove('open'));
+  document.getElementById('couponOverlay')?.addEventListener('click',e=>{if(e.target===document.getElementById('couponOverlay'))document.getElementById('couponOverlay').classList.remove('open');});
   document.getElementById('upcomingOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('upcomingOverlay'))document.getElementById('upcomingOverlay').classList.remove('open');});
 
   // Theme/lang sync from settings tab

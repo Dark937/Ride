@@ -117,8 +117,8 @@ function applyLandingTranslations() {
 
   // ── Profile dropdown — logged in ──
   const ui = [...document.querySelectorAll("[data-user] .dd-item")];
-  if (ui[0]) _set(ui[0], t.myRides       || "My rides");
-  if (ui[1]) _set(ui[1], t.fidelityPoints || "Fidelity points");
+  if (ui[0]) _set(ui[0], t.myDashboard    || "My Dashboard");
+  if (ui[1]) _set(ui[1], t.myFidelityLink || "My Fidelity");
   if (ui[2]) _set(ui[2], t.settings       || "Settings");
   _set(document.querySelector(".dd-signout"), t.signOut || "Sign out");
 
@@ -127,13 +127,13 @@ function applyLandingTranslations() {
   if (gi[0]) _set(gi[0], t.signIn        || "Sign in");
   if (gi[1]) _set(gi[1], t.createAccount || "Create account");
 
-  // ── Section kickers (use data-i18n-key for stable lookup) ──
+  // ── Section kickers (data-i18n-key = stable across re-translates) ──
   document.querySelectorAll(".section-kicker[data-i18n-key]").forEach(k => {
     const v = t[k.dataset.i18nKey];
     if (v) k.textContent = v;
   });
 
-  // ── Footer column headings (use data-i18n-key) ──
+  // ── Footer column headings (data-i18n-key = stable) ──
   document.querySelectorAll(".footer-grid h4[data-i18n-key]").forEach(h => {
     const v = t[h.dataset.i18nKey];
     if (v) h.textContent = v;

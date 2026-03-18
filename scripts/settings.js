@@ -42,6 +42,17 @@ function initNav() {
 
   items.forEach(i => i.addEventListener("click", () => activate(i.dataset.panel)));
 
+  // Sync mobile nav bar
+  const mnItems = document.querySelectorAll(".mn-item[data-panel]");
+  mnItems.forEach(btn => btn.addEventListener("click", () => activate(btn.dataset.panel)));
+
+  // Keep mobile nav in sync with activate()
+  const _origActivate = activate;
+  activate = function(id) {
+    _origActivate(id);
+    mnItems.forEach(b => b.classList.toggle("active", b.dataset.panel === id));
+  };
+
   const hash  = location.hash.replace("#", "");
   const valid = [...panels].some(p => p.id === hash);
   activate(valid ? hash : "p-account");

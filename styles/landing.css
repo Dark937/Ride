@@ -86,7 +86,8 @@ button {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 16px 28px;
+  height: 60px;
+  padding: 0 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1522,29 +1523,7 @@ spline-viewer {
 }
 
 .nav-close-btn {
-  position: absolute;
-  top: 22px;
-  left: 28px;
-  width: 44px;
-  height: 44px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.7;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.nav-close-btn:hover {
-  opacity: 1;
-  transform: scale(1.1) rotate(90deg);
-}
-
-.nav-close-btn svg {
-  width: 26px;
-  height: 26px;
+  display: none; /* menuBtn toggles open/close — no second X needed */
 }
 
 .nav-links {
@@ -1579,16 +1558,19 @@ spline-viewer {
 
 .nav-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  padding-top: 28px;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: auto;
 }
 
 .nav-socials {
   display: flex;
-  gap: 28px;
+  gap: 22px;
+  flex-wrap: wrap;
 }
 
 .nav-social-link {
@@ -1611,6 +1593,7 @@ spline-viewer {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 }
 
 /* Stagger nav links on open */
@@ -1753,33 +1736,26 @@ spline-viewer {
     max-width: 100%;
   }
 
-  /* Mobile: features-right is visible as scroll triggers */
+  /* Mobile: features-right is the scroll trigger column — keep visible */
   .features-right {
     display: flex;
     flex-direction: column;
   }
 
-  /* Each panel is a tall scroll zone — image sits inside it */
+  /* Each panel = one scroll zone; image injected by JS into it */
   .feature-panel {
     height: auto;
-    min-height: 80vh;
-    pointer-events: none;
+    min-height: 75vh;
     opacity: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 12px 0;
   }
-
   .feature-panel.active,
   .feature-panel.passed { opacity: 1; }
 
-  /* Mobile image: full-width card rendered inside each panel via JS clone */
-  .features-image-fixed {
-    position: static !important;
-    display: none !important; /* replaced by per-panel images via JS */
-  }
-
-  /* Mobile per-panel image cards injected by JS */
+  /* Per-panel image card injected by mobile parallax JS */
   .feature-panel-img {
     width: 100%;
     border-radius: 20px;
@@ -1788,17 +1764,20 @@ spline-viewer {
     box-shadow: 0 12px 40px rgba(0,0,0,0.40);
     transition: opacity 0.35s ease, transform 0.35s ease;
   }
-
   .feature-panel-img img {
     width: 100%;
     aspect-ratio: 16 / 10;
     object-fit: cover;
     display: block;
   }
-
   .feature-panel-img.is-inactive {
-    opacity: 0.28;
+    opacity: 0.25;
     transform: scale(0.97);
+  }
+
+  /* Hide the single fixed image container — JS renders per-panel instead */
+  .features-image-fixed {
+    display: none !important;
   }
 
   .feature-progress {
@@ -1895,9 +1874,27 @@ spline-viewer {
   }
 }
 
+@media (max-width: 480px) {
+  .topbar {
+    height: 54px;
+    padding: 0 14px;
+  }
+  .topbar-right {
+    gap: 6px;
+  }
+  /* Globe icon only — hide text label on tiny screens */
+  .lang-label {
+    display: none;
+  }
+  .lang-toggle-btn {
+    padding: 5px 8px;
+    gap: 0;
+  }
+}
+
 @media (max-width: 600px) {
   .topbar {
-    padding: 0 18px;
+    padding: 0 16px;
   }
 
   .content {

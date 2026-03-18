@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.innerWidth <= 1024) {
         if (isFixed) releaseFixed();
-        return; // mobile handled by IntersectionObserver
+        return;
       }
 
       const vpH     = window.innerHeight;
@@ -263,18 +263,17 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", onScrollEffects);
     onScrollEffects();
 
-    // ── MOBILE PARALLAX — IntersectionObserver per panel ────────────
+    // ── MOBILE PARALLAX  (<=1024px) — IntersectionObserver per panel ──
     (function initMobileParallax() {
       if (!featurePanels.length || !parallaxSection) return;
 
       function isMobile() { return window.innerWidth <= 1024; }
 
-      // Inject per-panel image cards into .features-right panels
-      function buildMobileImages() {
+      function buildPanelImages() {
         featurePanels.forEach(panel => {
-          if (panel.querySelector('.feature-panel-img')) return; // already built
-          const img   = panel.dataset.img || '';
-          const alt   = panel.dataset.alt || '';
+          if (panel.querySelector('.feature-panel-img')) return;
+          const img = panel.dataset.img || '';
+          const alt = panel.dataset.alt || '';
           if (!img) return;
           const wrap = document.createElement('div');
           wrap.className = 'feature-panel-img is-inactive';
@@ -283,48 +282,45 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      function updateMobilePanel(index) {
-        featurePanels.forEach((panel, i) => {
-          const imgEl = panel.querySelector('.feature-panel-img');
-          if (imgEl) imgEl.classList.toggle('is-inactive', i !== index);
+      function activateMobilePanel(index) {
+        featurePanels.forEach((p, i) => {
+          const el = p.querySelector('.feature-panel-img');
+          if (el) el.classList.toggle('is-inactive', i !== index);
         });
         setActiveFeature(index);
       }
 
       let mobileObserver = null;
 
-      function attachObserver() {
+      function attach() {
         if (!isMobile()) return;
-        buildMobileImages();
+        buildPanelImages();
         if (mobileObserver) mobileObserver.disconnect();
         mobileObserver = new IntersectionObserver((entries) => {
           entries.forEach(entry => {
             if (!entry.isIntersecting) return;
             const idx = featurePanels.indexOf(entry.target);
-            if (idx !== -1) updateMobilePanel(idx);
+            if (idx !== -1) activateMobilePanel(idx);
           });
         }, { threshold: 0.45 });
         featurePanels.forEach(p => mobileObserver.observe(p));
       }
 
-      function detachObserver() {
+      function detach() {
         if (mobileObserver) { mobileObserver.disconnect(); mobileObserver = null; }
-        // Remove injected images so desktop isn't affected
         featurePanels.forEach(p => {
           const img = p.querySelector('.feature-panel-img');
           if (img) img.remove();
         });
       }
 
-      // Init on load
-      if (isMobile()) attachObserver();
+      if (isMobile()) attach();
 
-      // Re-check on resize crossing the 1024 boundary
       let wasMobile = isMobile();
       window.addEventListener('resize', () => {
         const nowMobile = isMobile();
-        if (nowMobile && !wasMobile) { attachObserver(); }
-        else if (!nowMobile && wasMobile) { detachObserver(); }
+        if (nowMobile && !wasMobile) attach();
+        else if (!nowMobile && wasMobile) detach();
         wasMobile = nowMobile;
       });
     })();
@@ -413,10 +409,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openMenu() {
       savedScrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflowY = 'scroll';
+      // Use overflow:hidden on <html> — avoids body position:fixed jank and scroll loss on iOS
+      document.documentElement.style.overflowY = 'hidden';
 
       navOverlay.classList.add("is-open");
       navOverlay.setAttribute("aria-hidden", "false");
@@ -429,11 +423,9 @@ document.addEventListener("DOMContentLoaded", () => {
       navOverlay.classList.remove("is-open");
       navOverlay.setAttribute("aria-hidden", "true");
 
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflowY = '';
-      window.scrollTo(0, savedScrollY);
+      document.documentElement.style.overflowY = '';
+      // Re-sync any stale parallax state after re-enabling scroll
+      requestAnimationFrame(() => { onScrollEffects(); });
 
       menuBtn.innerHTML = HAMBURGER_SVG;
       menuBtn.setAttribute("aria-label", "Open menu");
