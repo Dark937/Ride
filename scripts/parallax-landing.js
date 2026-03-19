@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const scrolled   = -secRect.top - ENTRY_BIAS * vpH;
       const panelIndex = Math.max(0, Math.min(
-        Math.floor(scrolled / vpH + 0.08),
+        Math.floor(scrolled / vpH + 0.50),
         featurePanels.length - 1
       ));
       setActiveFeature(panelIndex);
@@ -262,68 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", onScrollEffects, { passive: true });
     window.addEventListener("resize", onScrollEffects);
     onScrollEffects();
-
-    // ── MOBILE PARALLAX  (<=1024px) — IntersectionObserver per panel ──
-    (function initMobileParallax() {
-      if (!featurePanels.length || !parallaxSection) return;
-
-      function isMobile() { return window.innerWidth <= 1024; }
-
-      function buildPanelImages() {
-        featurePanels.forEach(panel => {
-          if (panel.querySelector('.feature-panel-img')) return;
-          const img = panel.dataset.img || '';
-          const alt = panel.dataset.alt || '';
-          if (!img) return;
-          const wrap = document.createElement('div');
-          wrap.className = 'feature-panel-img is-inactive';
-          wrap.innerHTML = `<img src="${img}" alt="${alt}" loading="lazy">`;
-          panel.appendChild(wrap);
-        });
-      }
-
-      function activateMobilePanel(index) {
-        featurePanels.forEach((p, i) => {
-          const el = p.querySelector('.feature-panel-img');
-          if (el) el.classList.toggle('is-inactive', i !== index);
-        });
-        setActiveFeature(index);
-      }
-
-      let mobileObserver = null;
-
-      function attach() {
-        if (!isMobile()) return;
-        buildPanelImages();
-        if (mobileObserver) mobileObserver.disconnect();
-        mobileObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            const idx = featurePanels.indexOf(entry.target);
-            if (idx !== -1) activateMobilePanel(idx);
-          });
-        }, { threshold: 0.45 });
-        featurePanels.forEach(p => mobileObserver.observe(p));
-      }
-
-      function detach() {
-        if (mobileObserver) { mobileObserver.disconnect(); mobileObserver = null; }
-        featurePanels.forEach(p => {
-          const img = p.querySelector('.feature-panel-img');
-          if (img) img.remove();
-        });
-      }
-
-      if (isMobile()) attach();
-
-      let wasMobile = isMobile();
-      window.addEventListener('resize', () => {
-        const nowMobile = isMobile();
-        if (nowMobile && !wasMobile) attach();
-        else if (!nowMobile && wasMobile) detach();
-        wasMobile = nowMobile;
-      });
-    })();
 
     // Hero scroll
     const splineBg = document.querySelector(".spline-bg");
@@ -409,8 +347,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openMenu() {
       savedScrollY = window.scrollY;
-      // Use overflow:hidden on <html> — avoids body position:fixed jank and scroll loss on iOS
-      document.documentElement.style.overflowY = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflowY = 'scroll';
 
       navOverlay.classList.add("is-open");
       navOverlay.setAttribute("aria-hidden", "false");
@@ -423,9 +363,11 @@ document.addEventListener("DOMContentLoaded", () => {
       navOverlay.classList.remove("is-open");
       navOverlay.setAttribute("aria-hidden", "true");
 
-      document.documentElement.style.overflowY = '';
-      // Re-sync any stale parallax state after re-enabling scroll
-      requestAnimationFrame(() => { onScrollEffects(); });
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
+      window.scrollTo(0, savedScrollY);
 
       menuBtn.innerHTML = HAMBURGER_SVG;
       menuBtn.setAttribute("aria-label", "Open menu");

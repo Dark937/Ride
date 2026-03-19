@@ -42,17 +42,6 @@ function initNav() {
 
   items.forEach(i => i.addEventListener("click", () => activate(i.dataset.panel)));
 
-  // Sync mobile nav bar
-  const mnItems = document.querySelectorAll(".mn-item[data-panel]");
-  mnItems.forEach(btn => btn.addEventListener("click", () => activate(btn.dataset.panel)));
-
-  // Keep mobile nav in sync with activate()
-  const _origActivate = activate;
-  activate = function(id) {
-    _origActivate(id);
-    mnItems.forEach(b => b.classList.toggle("active", b.dataset.panel === id));
-  };
-
   const hash  = location.hash.replace("#", "");
   const valid = [...panels].some(p => p.id === hash);
   activate(valid ? hash : "p-account");
@@ -70,6 +59,17 @@ async function populateUserUI(user) {
     if (user.photo) tbAvatar.innerHTML = `<img src="${user.photo}" alt="">`;
     else tbAvatar.textContent = user.initials || full[0] || "R";
   }
+
+  // Populate + wire settings profile dropdown
+  const spdAvatar = document.getElementById("spdAvatar");
+  const spdName   = document.getElementById("spdName");
+  const spdEmail  = document.getElementById("spdEmail");
+  if (spdAvatar) {
+    if (user.photo) spdAvatar.innerHTML = `<img src="${user.photo}" alt="">`;
+    else spdAvatar.textContent = user.initials || full[0] || "R";
+  }
+  if (spdName)  spdName.textContent  = full;
+  if (spdEmail) spdEmail.textContent = user.email || "";
 
   const sbAv     = document.getElementById("sbAv");
   const sbPname  = document.getElementById("sbPname");
@@ -500,6 +500,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   initNav();
   initLogout();
+
+  // Profile dropdown wiring
+  const profileDd = document.getElementById("settingsProfileDd");
+  const tbAv = document.getElementById("tbAvatar");
+  if (tbAv && profileDd) {
+    tbAv.addEventListener("click", e => {
+      e.stopPropagation();
+      profileDd.classList.toggle("open");
+    });
+    document.addEventListener("click", e => {
+      if (!profileDd.contains(e.target) && e.target !== tbAv)
+        profileDd.classList.remove("open");
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") profileDd.classList.remove("open");
+    });
+    document.getElementById("spdSignOut")?.addEventListener("click", () => {
+      profileDd.classList.remove("open");
+      document.getElementById("soModal")?.classList.add("open");
+    });
+  }
   await initAccount();
   await initSecurity();
   initAppearance();

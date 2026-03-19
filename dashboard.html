@@ -63,7 +63,7 @@
         <svg class="icon-light" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <!-- Profile avatar -->
-      <div class="tb-avatar" id="tbAvatar" aria-label="Profile menu" title="Profile" style="cursor:pointer">R</div>
+      <div class="tb-avatar" id="tbAvatar" aria-label="Profile menu" style="cursor:pointer">R</div>
     </div>
   </header>
 
@@ -211,65 +211,85 @@
   <!-- ══ PANEL: FIDELITY ══════════════════════════════════════════ -->
   <section class="panel" id="panel-fidelity">
     <div class="panel-inner">
+
+      <!-- Hero card: points + tier + progress -->
       <div class="fid-hero">
-        <div class="fh-tier-badge" id="fhTierBadge">✦ Standard Tier</div>
-        <div class="fh-pts" id="fidHeroPts">—</div>
-        <div class="fh-pts-label" data-i18n="fidelityPts">points available</div>
+        <div class="fh-top">
+          <div>
+            <div class="fh-tier-badge" id="fhTierBadge">✦ Standard Tier</div>
+            <div class="fh-pts" id="fidHeroPts">—</div>
+            <div class="fh-pts-label" data-i18n="fidelityPts">points available</div>
+          </div>
+          <!-- Physical card placeholder -->
+          <div class="fid-card-preview">
+            <div class="fcp-shine"></div>
+            <div class="fcp-top">
+              <span class="fcp-brand">RIDE</span>
+              <span class="fcp-tier" id="fcpTier">STANDARD</span>
+            </div>
+            <div class="fcp-pts" id="fcpPts">1,240 pts</div>
+            <div class="fcp-bottom">
+              <span class="fcp-label">Fidelity Card</span>
+              <span class="fcp-wave">≋</span>
+            </div>
+          </div>
+        </div>
         <div class="fh-progress">
           <div class="fh-bar-track"><div class="fh-bar-fill" id="fidHeroBar" style="width:0%"></div></div>
-          <div class="fh-bar-labels"><span>0</span><span id="fidHeroNext"></span></div>
-          <div class="fh-actions">
-            <a href="#" class="fh-btn primary" data-i18n="redeem">Redeem points</a>
-            <a href="#" class="fh-btn secondary" data-i18n="exploreRewards">Explore rewards</a>
-          </div>
+          <div class="fh-bar-labels"><span>0 pts</span><span id="fidHeroNext"></span></div>
+        </div>
+        <div class="fh-actions">
+          <a href="#" class="fh-btn primary" id="redeemBtn">Redeem points</a>
+          <a href="#" class="fh-btn secondary" id="exploreBtn">Explore rewards</a>
         </div>
       </div>
 
-      <!-- Two-tier explanation -->
+      <!-- Stats row -->
+      <div class="fid-stats-grid">
+        <div class="fid-stat"><div class="fid-stat-val" id="fsAvailable" style="color:var(--brand)">—</div><div class="fid-stat-label">Available points</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsTotal" style="color:var(--yellow)">—</div><div class="fid-stat-label">Lifetime earned</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsRedeemed" style="color:var(--muted)">—</div><div class="fid-stat-label">Redeemed</div></div>
+        <div class="fid-stat"><div class="fid-stat-val" id="fsTier" style="color:var(--green)">Standard</div><div class="fid-stat-label" data-i18n="fidelityTier">Current tier</div></div>
+      </div>
+
+      <!-- Tiers side by side -->
       <div class="fid-tiers">
-        <!-- Tier 1: Standard — always unlocked -->
         <div class="fid-tier-card active-tier" id="tier1Card">
           <div class="ftc-header">
             <div class="ftc-icon" style="background:var(--brand-dim)">🎟️</div>
             <span class="ftc-name">Standard</span>
             <span class="ftc-badge active" id="tier1Badge">Active</span>
           </div>
-          <p class="ftc-desc">Spend your points on coupons and rewards at any time. Points never expire.</p>
-          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Redeem points for ride discounts</div>
-          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Exclusive partner coupons</div>
-          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Priority customer support</div>
+          <p class="ftc-desc">Use your points for coupons, ride discounts and partner rewards. Points never expire.</p>
+          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Ride discounts</div>
+          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Partner coupons</div>
+          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Priority support</div>
         </div>
-        <!-- Tier 2: Gold — unlocks at 2000 lifetime points -->
         <div class="fid-tier-card" id="tier2Card">
           <div class="ftc-header">
             <div class="ftc-icon" style="background:var(--yellow-dim)">✦</div>
             <span class="ftc-name">Gold</span>
             <span class="ftc-badge locked" id="tier2Badge">Locked</span>
           </div>
-          <p class="ftc-desc">Unlock by earning 2,000 lifetime points. Points spent don't count down — only earned points matter.</p>
+          <p class="ftc-desc">Earn 2,000 lifetime points to unlock. Points spent don't count down — only points earned matter.</p>
           <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Everything in Standard</div>
-          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><strong>5% discount</strong> on first 10 rides each month</div>
-          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Early access to new features</div>
-          <div class="ftc-unlock" id="tier2UnlockMsg">Earn <strong id="tier2PtsNeeded">—</strong> more lifetime pts to unlock</div>
+          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><strong>5% off</strong> first 10 rides / month</div>
+          <div class="ftc-benefit"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Early feature access</div>
+          <div class="ftc-unlock" id="tier2UnlockMsg">Earn <strong id="tier2PtsNeeded">—</strong> more pts to unlock</div>
         </div>
       </div>
 
-      <!-- Partner coupons (Standard tier benefit) -->
+      <!-- Partner coupons -->
       <div class="card" id="partnerCouponsCard">
         <div class="card-hd">
-          <span class="card-title">🎟️ Partner Coupons</span>
-          <span class="pill blue" id="couponsAvail">3 available</span>
+          <span class="card-title">Partner Coupons</span>
+          <span class="pill brand" id="couponsAvail">6 available</span>
         </div>
-        <div class="coupon-list" id="partnerCouponList"></div>
+        <div class="coupon-grid" id="partnerCouponList"></div>
+        <button class="coupon-see-all" id="seeAllCoupons">See all rewards →</button>
       </div>
 
-      <div class="fid-stats-grid">
-        <div class="fid-stat"><div class="fid-stat-val" id="fsAvailable" style="color:var(--brand)">—</div><div class="fid-stat-label">Available points</div></div>
-        <div class="fid-stat"><div class="fid-stat-val" id="fsTotal" style="color:var(--yellow)">—</div><div class="fid-stat-label">Lifetime earned</div></div>
-        <div class="fid-stat"><div class="fid-stat-val" id="fsRedeemed" style="color:var(--muted)">—</div><div class="fid-stat-label">Points redeemed</div></div>
-        <div class="fid-stat"><div class="fid-stat-val" id="fsTier" style="color:var(--green)">Standard</div><div class="fid-stat-label" data-i18n="fidelityTier">Current tier</div></div>
-      </div>
-
+      <!-- Points history -->
       <div class="card">
         <div class="card-hd"><span class="card-title" data-i18n="pointsHistory">Points History</span></div>
         <div class="fid-history" id="fidHistory"></div>
@@ -813,16 +833,27 @@ function renderFidelity(uid){
   const isGold=fid.totalEarned>=GOLD_THRESHOLD;
   const pct=Math.min((fid.totalEarned/GOLD_THRESHOLD)*100,100);
 
+  // Hero card
   document.getElementById('fidHeroPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidHeroBar').style.width=pct+'%';
   document.getElementById('fhTierBadge').textContent=isGold?'✦ Gold Tier':'✦ Standard Tier';
-  document.getElementById('fidHeroNext').textContent=isGold?`Gold (${GOLD_THRESHOLD})`:`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} pts to Gold (${GOLD_THRESHOLD})`;
+  document.getElementById('fidHeroNext').textContent=isGold
+    ?`Gold unlocked ✦`
+    :`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned).toLocaleString()} pts to Gold`;
 
+  // Physical card preview
+  const fcpPts=document.getElementById('fcpPts');
+  const fcpTier=document.getElementById('fcpTier');
+  if(fcpPts) fcpPts.textContent=fid.pts.toLocaleString()+' pts';
+  if(fcpTier) fcpTier.textContent=isGold?'GOLD':'STANDARD';
+
+  // Stats
   document.getElementById('fsAvailable').textContent=fid.pts.toLocaleString();
   document.getElementById('fsTotal').textContent=fid.totalEarned.toLocaleString();
   document.getElementById('fsRedeemed').textContent=fid.redeemed.toLocaleString();
   document.getElementById('fsTier').textContent=isGold?'Gold ✦':'Standard';
-  document.getElementById('infoTier').textContent=isGold?'Gold ✦':'Standard';
+  const infoTier=document.getElementById('infoTier');
+  if(infoTier) infoTier.textContent=isGold?'Gold ✦':'Standard';
 
   // Tier cards
   const t2=document.getElementById('tier2Card');
@@ -832,27 +863,54 @@ function renderFidelity(uid){
   if(isGold){
     t2.classList.remove('locked'); t2.classList.add('active-tier');
     t2badge.textContent='Active'; t2badge.className='ftc-badge active';
-    t2msg.style.display='none';
+    if(t2msg) t2msg.style.display='none';
   } else {
     t2.classList.add('locked'); t2.classList.remove('active-tier');
     t2badge.textContent='Locked'; t2badge.className='ftc-badge locked';
-    t2msg.style.display='';
-    t2ptsNeeded.textContent=(GOLD_THRESHOLD-fid.totalEarned).toLocaleString();
+    if(t2msg) t2msg.style.display='';
+    if(t2ptsNeeded) t2ptsNeeded.textContent=(GOLD_THRESHOLD-fid.totalEarned).toLocaleString();
   }
 
-  // Partner coupons
-  renderPartnerCoupons(fid.pts);
+  // Partner coupons grid (show 4 in grid)
+  const grid=document.getElementById('partnerCouponList');
+  if(grid){
+    const shown=PARTNER_COUPONS.slice(0,4);
+    grid.innerHTML=shown.map(cp=>`
+      <div class="coupon-item" data-id="${cp.id}">
+        <div class="coupon-item-top">
+          <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+          <span class="coupon-cost-tag">${cp.cost} pts</span>
+        </div>
+        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-desc-short">${cp.desc}</div>
+      </div>`).join('');
+    grid.querySelectorAll('.coupon-item').forEach(item=>{
+      item.addEventListener('click',()=>{
+        const cp=PARTNER_COUPONS.find(x=>x.id===item.dataset.id);
+        if(!cp) return;
+        if(fid.pts<cp.cost){toast('Not enough points to redeem this coupon.');return;}
+        if(confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) toast(`✓ Coupon redeemed: ${cp.name}`);
+      });
+    });
+    document.getElementById('couponsAvail').textContent=PARTNER_COUPONS.length+' available';
+  }
 
-  // Wire "Explore rewards" → full coupon modal
-  document.querySelector('.fh-btn.secondary')?.addEventListener('click', e => {
-    e.preventDefault();
-    openCouponModal('Explore Rewards', PARTNER_COUPONS, fid.pts);
-  });
-  // Wire "Redeem points" → modal filtered to affordable
-  document.querySelector('.fh-btn.primary')?.addEventListener('click', e => {
-    e.preventDefault();
-    openCouponModal('Redeem Points', PARTNER_COUPONS, fid.pts);
-  });
+  // See all / wire buttons (remove old listeners by cloning)
+  const exploreBtn=document.getElementById('exploreBtn');
+  const redeemBtn=document.getElementById('redeemBtn');
+  const seeAllBtn=document.getElementById('seeAllCoupons');
+  if(exploreBtn){
+    const e2=exploreBtn.cloneNode(true);exploreBtn.replaceWith(e2);
+    e2.addEventListener('click',ev=>{ev.preventDefault();openCouponModal('Explore Rewards',PARTNER_COUPONS,fid.pts);});
+  }
+  if(redeemBtn){
+    const r2=redeemBtn.cloneNode(true);redeemBtn.replaceWith(r2);
+    r2.addEventListener('click',ev=>{ev.preventDefault();openCouponModal('Redeem Points',PARTNER_COUPONS,fid.pts);});
+  }
+  if(seeAllBtn){
+    const s2=seeAllBtn.cloneNode(true);seeAllBtn.replaceWith(s2);
+    s2.addEventListener('click',()=>openCouponModal('All Rewards',PARTNER_COUPONS,fid.pts));
+  }
 
   // History
   const histEl=document.getElementById('fidHistory');
@@ -1004,9 +1062,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Topbar buttons
   document.getElementById('themeBtn').addEventListener('click',()=>Theme.toggle());
   document.getElementById('notifBtn').addEventListener('click',()=>toggleDropdown('notifDropdown'));
-  document.getElementById('tbAvatar').addEventListener('click',()=>{
-    window.location.href='settings.html';
-  });
+  document.getElementById('tbAvatar').addEventListener('click',()=>toggleDropdown('profileDropdown'));
 
   // Profile dropdown actions
   document.getElementById('ddDashboard').addEventListener('click',()=>{switchPanel('dashboard');});

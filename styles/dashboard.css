@@ -40,6 +40,7 @@ img{display:block;max-width:100%}
   --topbar-h:    56px;
   --radius:      14px;
   --radius-sm:   10px;
+  --topbar-bg:   rgba(7,7,15,0.92);
 }
 
 [data-theme="light"]{
@@ -67,6 +68,7 @@ img{display:block;max-width:100%}
   --text-2:      rgba(10,10,24,.78);
   --muted:       rgba(10,10,24,.48);
   --faint:       rgba(10,10,24,.26);
+  --topbar-bg:   rgba(240,241,248,0.95);
 }
 
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{
@@ -163,9 +165,11 @@ html,body{
   top:0; left:var(--sidebar-w); right:0;
   height:var(--topbar-h);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;
+  padding:0 20px;
   border-bottom:1px solid var(--border);
-  background:var(--bg);
+  background:var(--topbar-bg);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
   z-index:100;
   transition:left .2s;
 }
@@ -523,11 +527,11 @@ html,body{
 .chart-tooltip.show{opacity:1}
 
 /* ══════════════════════════════════
-   FIDELITY PANEL  (2 tiers)
+   FIDELITY PANEL
    ══════════════════════════════════ */
 .fid-hero{
   background:linear-gradient(135deg,#141840 0%,#0e0e28 55%,#1a0d2e 100%);
-  border:1px solid rgba(61,94,255,.22);border-radius:var(--radius);padding:26px;
+  border:1px solid rgba(61,94,255,.22);border-radius:var(--radius);padding:24px;
   position:relative;overflow:hidden;
 }
 [data-theme="light"] .fid-hero{background:linear-gradient(135deg,#2651f0,#1e3ed8 55%,#6d28d9)}
@@ -536,31 +540,90 @@ html,body{
   width:200px;height:200px;border-radius:50%;
   background:radial-gradient(circle,rgba(61,94,255,.25),transparent 70%);pointer-events:none;
 }
-.fid-hero::after{
-  content:"";position:absolute;bottom:-50px;left:30px;
-  width:150px;height:150px;border-radius:50%;
-  background:radial-gradient(circle,rgba(168,85,247,.18),transparent 70%);pointer-events:none;
+/* Top row: text left + card right */
+.fh-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;margin-bottom:18px;position:relative;z-index:1;
 }
 .fh-tier-badge{
   display:inline-flex;align-items:center;gap:6px;
   font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(255,255,255,.5);background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.14);padding:4px 10px;border-radius:999px;margin-bottom:14px;
+  color:rgba(255,255,255,.55);background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);padding:4px 10px;border-radius:999px;
+  margin-bottom:10px;
 }
-.fh-pts{font-family:'DM Mono',monospace;font-size:44px;font-weight:500;color:#fff;line-height:1;position:relative;z-index:1}
-.fh-pts-label{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;margin-bottom:18px;position:relative;z-index:1}
-.fh-progress{position:relative;z-index:1}
-.fh-bar-track{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.fh-pts{font-family:'DM Mono',monospace;font-size:40px;font-weight:500;color:#fff;line-height:1}
+.fh-pts-label{font-size:12px;color:rgba(255,255,255,.48);margin-top:4px}
+
+/* Physical card preview */
+.fid-card-preview{
+  width:160px;flex-shrink:0;
+  background:linear-gradient(135deg,#1e2a80 0%,#0a0f40 50%,#2d1060 100%);
+  border-radius:12px;padding:14px;
+  position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.06) inset;
+  aspect-ratio:1.586;display:flex;flex-direction:column;justify-content:space-between;
+  flex-shrink:0;
+}
+.fcp-shine{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 40%,rgba(255,255,255,.04) 70%,transparent 100%);
+}
+.fcp-top{display:flex;justify-content:space-between;align-items:flex-start}
+.fcp-brand{font-size:11px;font-weight:900;letter-spacing:.18em;color:rgba(255,255,255,.9)}
+.fcp-tier{font-size:8.5px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.45);text-transform:uppercase}
+.fcp-pts{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#fff;text-align:center;margin-top:2px}
+.fcp-bottom{display:flex;justify-content:space-between;align-items:flex-end}
+.fcp-label{font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.fcp-wave{font-size:18px;color:rgba(255,255,255,.25);line-height:1}
+
+.fh-progress{position:relative;z-index:1;margin-bottom:14px}
+.fh-bar-track{height:4px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:5px}
 .fh-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3d5eff,#a855f7)}
-.fh-bar-labels{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);margin-bottom:16px}
+.fh-bar-labels{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.38)}
 .fh-actions{display:flex;gap:10px;position:relative;z-index:1}
 .fh-btn{
   flex:1;padding:10px 0;border-radius:10px;font-size:13px;font-weight:600;
-  text-align:center;transition:opacity .14s;
+  text-align:center;transition:opacity .14s;cursor:pointer;
 }
 .fh-btn.primary{background:rgba(255,255,255,.18);color:#fff}
 .fh-btn.secondary{background:rgba(255,255,255,.06);color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.12)}
 .fh-btn:hover{opacity:.8}
+
+/* Coupon grid */
+.coupon-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  margin-bottom:12px;
+}
+.coupon-see-all{
+  width:100%;padding:9px;border-radius:9px;
+  font-size:13px;font-weight:600;color:var(--brand);
+  background:var(--brand-dim);border:1px solid var(--border);
+  transition:background .14s;cursor:pointer;
+}
+.coupon-see-all:hover{background:var(--brand-glow)}
+
+/* Coupon item (grid variant) */
+.coupon-item{
+  border:1px solid var(--border-md);border-radius:11px;padding:12px;
+  background:var(--surface);cursor:pointer;
+  transition:border-color .14s,background .14s;
+  display:flex;flex-direction:column;gap:6px;
+}
+.coupon-item:hover{border-color:var(--brand);background:var(--brand-dim)}
+.coupon-item-top{display:flex;align-items:center;justify-content:space-between}
+.coupon-badge{
+  font-size:10px;font-weight:700;letter-spacing:.04em;
+  padding:2px 8px;border-radius:999px;
+}
+.coupon-badge.discount{background:var(--green-dim);color:var(--green)}
+.coupon-badge.free{background:var(--brand-dim);color:var(--brand)}
+.coupon-badge.partner{background:var(--yellow-dim);color:var(--yellow)}
+.coupon-cost-tag{font-size:11px;font-weight:700;color:var(--brand)}
+.coupon-name{font-size:12.5px;font-weight:700;color:var(--text-2)}
+.coupon-desc-short{font-size:11.5px;color:var(--muted);line-height:1.4}
+.pill.brand{background:var(--brand-dim);color:var(--brand)}
 
 /* Tier info cards */
 .fid-tiers{display:grid;grid-template-columns:1fr 1fr;gap:14px}

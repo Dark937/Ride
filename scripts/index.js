@@ -98,56 +98,54 @@ function _buildSignOutModal() {
 function applyLandingTranslations() {
   const t = LANGS[Lang.get()] || LANGS.en;
 
-  // ── Hero CTA buttons ──
-  document.querySelectorAll(".btn-primary  span").forEach(el => { el.textContent = t.getStarted || el.textContent; });
-  document.querySelectorAll(".btn-secondary span").forEach(el => { el.textContent = t.viewPlans  || el.textContent; });
+  // All elements with data-i18n-key — single stable pass, never breaks on re-translate
+  document.querySelectorAll("[data-i18n-key]").forEach(el => {
+    const v = t[el.dataset.i18nKey];
+    if (!v) return;
+    const svgs = [...el.querySelectorAll("svg")];
+    el.textContent = v;
+    svgs.forEach(s => el.insertBefore(s, el.firstChild));
+  });
 
-  // ── Hamburger nav links (nav-link inside nav-overlay) ──
+  // CTA spans (children of buttons, no direct data-i18n-key)
+  document.querySelectorAll(".btn-primary span").forEach(el => { if (t.getStarted) el.textContent = t.getStarted; });
+  document.querySelectorAll(".btn-secondary span").forEach(el => { if (t.viewPlans) el.textContent = t.viewPlans; });
+
+  // Driver section CTA spans
+  const dBtns = document.querySelectorAll(".driver-actions .btn span");
+  if (dBtns[0] && t.driverApply) dBtns[0].textContent = t.driverApply;
+  if (dBtns[1] && t.driverLearn) dBtns[1].textContent = t.driverLearn;
+
+  // Fidelity CTA span
+  const fidBtn = document.querySelector(".fidelity-copy .btn-primary span");
+  if (fidBtn && t.fidGetCard) fidBtn.textContent = t.fidGetCard;
+
+  // Hamburger nav links
   const navLinks = document.querySelectorAll(".nav-overlay .nav-link");
   const navKeys  = ["home","features","vehicles","fidelity","drive"];
   navLinks.forEach((a, i) => { if (navKeys[i] && t[navKeys[i]]) a.textContent = t[navKeys[i]]; });
 
-  // ── Helper: replace text but preserve child SVG ──
+  // Profile dropdown — preserve SVG children
   const _set = (el, text) => {
     if (!el || !text) return;
     const svgs = [...el.querySelectorAll("svg")];
     el.textContent = text;
-    svgs.forEach(svg => el.insertBefore(svg, el.firstChild));
+    svgs.forEach(s => el.insertBefore(s, el.firstChild));
   };
-
-  // ── Profile dropdown — logged in ──
   const ui = [...document.querySelectorAll("[data-user] .dd-item")];
-  if (ui[0]) _set(ui[0], t.myDashboard    || "My Dashboard");
-  if (ui[1]) _set(ui[1], t.myFidelityLink || "My Fidelity");
-  if (ui[2]) _set(ui[2], t.settings       || "Settings");
+  if (ui[0]) _set(ui[0], t.myDashboard    || t.myRides || "My Dashboard");
+  if (ui[1]) _set(ui[1], t.myFidelityLink || t.fidelityPoints || "My Fidelity");
+  if (ui[2]) _set(ui[2], t.settings || "Settings");
   _set(document.querySelector(".dd-signout"), t.signOut || "Sign out");
-
-  // ── Profile dropdown — guest ──
   const gi = [...document.querySelectorAll("[data-guest] .dd-item")];
-  if (gi[0]) _set(gi[0], t.signIn        || "Sign in");
+  if (gi[0]) _set(gi[0], t.signIn || "Sign in");
   if (gi[1]) _set(gi[1], t.createAccount || "Create account");
 
-  // ── Section kickers (data-i18n-key = stable across re-translates) ──
-  document.querySelectorAll(".section-kicker[data-i18n-key]").forEach(k => {
-    const v = t[k.dataset.i18nKey];
-    if (v) k.textContent = v;
-  });
-
-  // ── Footer column headings (data-i18n-key = stable) ──
-  document.querySelectorAll(".footer-grid h4[data-i18n-key]").forEach(h => {
-    const v = t[h.dataset.i18nKey];
-    if (v) h.textContent = v;
-  });
-
-  // ── Footer bottom copyright ──
+  // Footer copyright
   const ftCopy = document.querySelector(".footer-bottom p");
   if (ftCopy && t.footerCopyright) ftCopy.textContent = t.footerCopyright;
 
-  // ── Nav social links (footer) ──
-  const ftSocials = document.querySelector(".footer-bottom");
-  // leave as-is, platform names don't translate
-
-  // ── data-i18n attributes (shared.js handles these) ──
+  // data-i18n attributes handled by shared.js
   Lang.apply();
 }
 

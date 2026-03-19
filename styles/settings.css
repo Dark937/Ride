@@ -391,9 +391,6 @@ body {
   .driver-promo {
     flex: none;
   }
-  .account-left-col {
-    gap: 16px;
-  }
 }
 
 /* ── AVATAR ──────────────────────────────────────────────────────────── */
@@ -714,73 +711,11 @@ body {
 @media (max-width: 1100px) {
   .form-grid { grid-template-columns:1fr 1fr; }
 }
-
-/* Mobile nav — hidden by default, shown at <=768px */
-#mobileNav { display: none; }
-
 @media (max-width: 768px) {
   .sidebar { display:none; }
-  .content {
-    padding: 0 0 60px;   /* mobile nav bar sits at top, panels below */
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-  }
+  .content { padding:24px 20px 60px; }
   .form-grid { grid-template-columns:1fr; }
   .field.span2 { grid-column:span 1; }
-
-  /* Mobile nav bar */
-  #mobileNav {
-    display: flex;
-    overflow-x: auto;
-    gap: 4px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--card-border);
-    background: var(--sidebar-bg);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    flex-shrink: 0;
-  }
-  #mobileNav::-webkit-scrollbar { display: none; }
-
-  .mn-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted, rgba(255,255,255,.5));
-    white-space: nowrap;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background .14s, color .14s;
-  }
-  .mn-item.active {
-    background: var(--brand-dim, rgba(61,94,255,.12));
-    color: var(--brand);
-  }
-  .mn-item svg {
-    width: 13px; height: 13px;
-    stroke: currentColor; fill: none;
-    stroke-width: 1.8; stroke-linecap: round;
-    flex-shrink: 0;
-  }
-
-  /* Panels scroll inside content below the nav bar */
-  .panel, .panel.active {
-    padding: 20px 16px 28px;
-    flex: 1;
-  }
-
-  /* driver promo gap from personal info on mobile */
-  .account-left-col {
-    gap: 20px;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -834,4 +769,61 @@ body {
 .driver-promo:hover .dp-stat-val {
   color: var(--brand);
   transition: color .2s ease;
+}
+
+/* ── Settings topbar profile dropdown ──────────────────────────────── */
+.settings-profile-dd {
+  position: fixed;
+  top: calc(var(--topbar-h) + 6px);
+  right: 12px;
+  width: 240px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.28);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(.97);
+  transition: opacity .18s, transform .18s cubic-bezier(.22,1,.36,1);
+}
+.settings-profile-dd.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.spd-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--card-border);
+}
+.spd-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg,#3d5eff,#e03050);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; overflow: hidden;
+}
+.spd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.spd-name  { font-size: 13px; font-weight: 600; color: var(--text); }
+.spd-email { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.spd-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 500; color: var(--text-muted);
+  transition: background .12s, color .12s;
+  cursor: pointer; text-decoration: none;
+}
+.spd-item:hover { background: var(--surface); color: var(--text); }
+.spd-item svg {
+  width: 14px; height: 14px; stroke: currentColor; fill: none;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.spd-item.danger { color: var(--accent, #e03050); }
+.spd-item.danger:hover { background: rgba(224,48,80,.08); }
+.spd-divider { height: 1px; background: var(--card-border); margin: 3px 0; }
+
+/* Light mode */
+[data-theme="light"] .settings-profile-dd {
+  box-shadow: 0 12px 36px rgba(0,0,30,.14);
 }

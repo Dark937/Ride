@@ -483,7 +483,7 @@
 [data-theme="light"] .auth-submit      { background: var(--text); color: var(--bg); }
 [data-theme="light"] .auth-legal       { color: var(--muted-2); }
 [data-theme="light"] .auth-legal a     { color: var(--muted); }
-[data-theme="light"] .strength-bar span { background: var(--border); }
+[data-theme="light"] .strength-bar span:not(.weak):not(.fair):not(.good):not(.strong) { background: var(--border-md); }
 [data-theme="light"] .auth-checkbox span { color: var(--muted); }
 [data-theme="light"] .auth-right-tag h2 { color: var(--text); }
 [data-theme="light"] .auth-right-tag p  { color: var(--muted); }
@@ -529,7 +529,7 @@
 [data-theme="light"] .auth-submit         { background: var(--text); color: var(--bg); }
 [data-theme="light"] .auth-legal          { color: var(--muted-2); }
 [data-theme="light"] .auth-legal a        { color: var(--muted); }
-[data-theme="light"] .strength-bar span   { background: var(--border); }
+[data-theme="light"] .strength-bar span:not(.weak):not(.fair):not(.good):not(.strong) { background: var(--border-md); }
 [data-theme="light"] .auth-checkbox span  { color: var(--muted); }
 
 /* Right panel cards — stat */
