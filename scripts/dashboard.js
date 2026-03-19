@@ -142,7 +142,7 @@ function renderNextRide(bookings,uid) {
   const next=bookings[0];
   badge.style.display=''; badge.textContent=bookings.length+' upcoming';
   const more=bookings.length>1?`<div class="nr-more" id="seeAllUpcoming">+ ${bookings.length-1} more — tap to manage</div>`:'';
-  body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${next.from}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${next.to}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${fmtDatetime(next.datetime)}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${next.car}</span><span class="nr-meta-item" style="color:var(--brand)">€${next.fare.toFixed(2)}</span></div><div class="nr-actions"><button class="nr-btn primary" onclick="window.location.href='index.html'">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" data-cancel="${next.id}" data-uid="${uid}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
+  body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${esc(next.from)}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${esc(next.to)}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(fmtDatetime(next.datetime))}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${esc(next.car)}</span><span class="nr-meta-item" style="color:var(--brand)">€${esc(next.fare.toFixed(2))}</span></div><div class="nr-actions"><button class="nr-btn primary" onclick="window.location.href='index.html'">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" data-cancel="${esc(next.id)}" data-uid="${esc(uid)}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
   document.getElementById('seeAllUpcoming')?.addEventListener('click',()=>openUpcoming(bookings,uid));
   document.querySelector(`[data-cancel="${next.id}"]`)?.addEventListener('click',()=>cancelBooking(next.id,uid));
 }
@@ -155,7 +155,7 @@ function cancelBooking(id,uid) {
 }
 function openUpcoming(bookings,uid) {
   const ol=document.getElementById('upcomingList');
-  ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${fmtDatetime(b.datetime)}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${b.from}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${b.to}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${b.car} · €${b.fare.toFixed(2)}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${b.id}" data-uid="${uid}">Cancel</button><button class="ui-btn edit">Edit (soon)</button></div></div>`).join('');
+  ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${esc(fmtDatetime(b.datetime))}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${esc(b.from)}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${esc(b.to)}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${esc(b.car)} · €${esc(b.fare.toFixed(2))}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${esc(b.id)}" data-uid="${esc(uid)}">Cancel</button><button class="ui-btn edit">Edit (soon)</button></div></div>`).join('');
   ol.querySelectorAll('[data-cancel]').forEach(btn=>btn.addEventListener('click',()=>cancelBooking(btn.dataset.cancel,btn.dataset.uid)));
   document.getElementById('upcomingOverlay').classList.add('open');
 }
@@ -221,7 +221,7 @@ function renderReviews(uid) {
 function renderRecentRides(rides) {
   const tb=document.getElementById('recentRidesTbody');
   if(!rides.length){tb.innerHTML=`<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px 0">No rides yet.</td></tr>`;return;}
-  tb.innerHTML=rides.map(r=>`<tr><td><div class="ride-route-cell"><div class="rr-from"><span class="rd from"></span>${r.from}</div><div class="rr-conn"></div><div class="rr-to"><span class="rd to"></span>${r.to}</div></div></td><td class="ride-date">${fmtDate(r.date,true)}</td><td>${statusPill(r.status)}</td><td class="ride-fare">${r.status==='cancelled'?'<span style="color:var(--faint)">—</span>':'€'+r.fare.toFixed(2)}</td></tr>`).join('');
+  tb.innerHTML=rides.map(r=>`<tr><td><div class="ride-route-cell"><div class="rr-from"><span class="rd from"></span>${esc(r.from)}</div><div class="rr-conn"></div><div class="rr-to"><span class="rd to"></span>${esc(r.to)}</div></div></td><td class="ride-date">${esc(fmtDate(r.date,true))}</td><td>${statusPill(r.status)}</td><td class="ride-fare">${r.status==='cancelled'?'<span style="color:var(--faint)">—</span>':'€'+esc(String(r.fare.toFixed(2)))}</td></tr>`).join('');
 }
 
 /* ── CHART — SVG cartesian grid ── */
@@ -490,9 +490,9 @@ function renderFidelity(uid){
 
   // History
   const histEl=document.getElementById('fidHistory');
-  const entries=rides.slice(0,8).map(r=>({title:`Ride to ${r.to}`,date:r.date,pts:'+'+r.pts,plus:true}));
+  const entries=rides.slice(0,8).map(r=>({title:'Ride to '+esc(r.to),date:r.date,pts:'+'+esc(String(r.pts)),plus:true}));
   entries.splice(2,0,{title:'Points redeemed — discount applied',date:new Date(Date.now()-10*86400000).toISOString(),pts:'-120',plus:false});
-  histEl.innerHTML=entries.map(e=>`<div class="fid-row"><div class="fid-row-icon" style="background:${e.plus?'var(--green-dim)':'var(--accent-dim)'};color:${e.plus?'var(--green)':'var(--accent)'}"><svg viewBox="0 0 24 24">${e.plus?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg></div><div class="fid-row-info"><div class="fid-row-title">${e.title}</div><div class="fid-row-date">${fmtDate(e.date)}</div></div><div class="fid-row-pts ${e.plus?'plus':'minus'}">${e.pts} pts</div></div>`).join('');
+  histEl.innerHTML=entries.map(e=>`<div class="fid-row"><div class="fid-row-icon" style="background:${e.plus?'var(--green-dim)':'var(--accent-dim)'};color:${e.plus?'var(--green)':'var(--accent)'}"><svg viewBox="0 0 24 24">${e.plus?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg></div><div class="fid-row-info"><div class="fid-row-title">${e.title}</div><div class="fid-row-date">${esc(fmtDate(e.date))}</div></div><div class="fid-row-pts ${e.plus?'plus':'minus'}">${e.pts} pts</div></div>`).join('');
 }
 
 /* ════════════════════════════════════════════════════════
@@ -502,7 +502,7 @@ function renderPayments(uid){renderCards(uid);renderTransactions(uid);initAddCar
 function renderCards(uid){
   let cards=RideData.getCards(uid);
   const list=document.getElementById('cardsList');
-  list.innerHTML=cards.map((c,i)=>`<div class="pay-card-item${c.dflt?' default':''}"><div class="pay-card-brand ${c.cls}">${c.brand}</div><div class="pay-card-info"><div class="pay-card-num">${c.num}</div><div class="pay-card-exp">Expires ${c.exp} · ${c.name}</div></div><div class="pay-card-actions">${c.dflt?'<span class="pay-dflt-badge">Default</span>':`<button class="pay-set-dflt" data-idx="${i}">Set default</button>`}<button class="pay-card-del" data-idx="${i}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`).join('');
+  list.innerHTML=cards.map((c,i)=>`<div class="pay-card-item${c.dflt?' default':''}"><div class="pay-card-brand ${esc(c.cls)}">${esc(c.brand)}</div><div class="pay-card-info"><div class="pay-card-num">${esc(c.num)}</div><div class="pay-card-exp">Expires ${esc(c.exp)} · ${esc(c.name)}</div></div><div class="pay-card-actions">${c.dflt?'<span class="pay-dflt-badge">Default</span>':`<button class="pay-set-dflt" data-idx="${i}">Set default</button>`}<button class="pay-card-del" data-idx="${i}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`).join('');
   list.addEventListener('click',e=>{
     const dflt=e.target.closest('.pay-set-dflt');
     if(dflt){const idx=+dflt.dataset.idx;cards.forEach((c,i)=>c.dflt=(i===idx));RideData.saveCards(uid,cards);renderCards(uid);toast('Default card updated.');return;}
@@ -513,7 +513,7 @@ function renderCards(uid){
 function renderTransactions(uid){
   const rides=RideData.getRides(uid);
   const tb=document.getElementById('txTbody');
-  tb.innerHTML=rides.slice(0,10).map(r=>`<tr><td class="tx-desc">Ride to ${r.to}</td><td class="tx-date">${fmtDate(r.date)}</td><td class="tx-amt" style="text-align:right">${r.status==='cancelled'?'—':'€'+r.fare.toFixed(2)}</td><td>${statusPill(r.status)}</td></tr>`).join('');
+  tb.innerHTML=rides.slice(0,10).map(r=>`<tr><td class="tx-desc">Ride to ${esc(r.to)}</td><td class="tx-date">${esc(fmtDate(r.date))}</td><td class="tx-amt" style="text-align:right">${r.status==='cancelled'?'—':'€'+esc(String(r.fare.toFixed(2)))}</td><td>${statusPill(r.status)}</td></tr>`).join('');
 }
 function initAddCard(uid){
   const toggle=document.getElementById('addCardToggle'),form=document.getElementById('addCardForm'),

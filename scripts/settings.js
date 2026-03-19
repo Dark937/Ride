@@ -281,7 +281,7 @@ async function initSecurity() {
       return `<div class="sess-row" data-id="${d.id}">
         <div class="sess-icon">${d.type === "mobile" ? iconMobile : iconDesktop}</div>
         <div class="sess-info">
-          <div class="sess-name">${d.brand} on ${d.os}${d.current ? ' <span class="badge-brand" style="font-size:10px;padding:1px 7px;margin-left:6px;border-radius:999px">This device</span>' : ''}</div>
+          <div class="sess-name">${esc(d.brand)} on ${esc(d.os)}${d.current ? ' <span class="badge-brand" style="font-size:10px;padding:1px 7px;margin-left:6px;border-radius:999px">This device</span>' : ''}</div>
           <div class="sess-meta">${timeStr}</div>
         </div>
         ${d.current ? '' : `<button class="sess-revoke" data-id="${d.id}" title="Revoke">
@@ -389,10 +389,10 @@ function initBilling() {
       const cards = loadCards();
       cardsList.innerHTML = cards.map((card, i) => `
         <div class="card-item${card.dflt ? " dflt" : ""}" data-idx="${i}">
-          <span class="cbrand ${card.cls}">${card.brand}</span>
+          <span class="cbrand ${esc(card.cls)}">${esc(card.brand)}</span>
           <div class="cinfo">
             <div class="cnum">${card.num}</div>
-            <div class="cmeta">Expires ${card.exp} · ${card.name}</div>
+            <div class="cmeta">Expires ${esc(card.exp)} · ${esc(card.name)}</div>
           </div>
           <div class="cbadges">
             ${card.dflt
@@ -435,7 +435,7 @@ function initBilling() {
     if (rides.length) {
       billTbody.innerHTML = rides.slice(0, 8).map(r => `
         <tr>
-          <td>Ride to ${r.to || "—"}</td>
+          <td>Ride to ${esc(r.to || "—")}</td>
           <td>${r.date ? new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—"}</td>
           <td>${r.status === "cancelled" ? "—" : "€" + (r.fare || 0).toFixed(2)}</td>
           <td><span class="badge ${r.status==="completed"?"badge-green":r.status==="cancelled"?"badge-red":"badge-yellow"}">${r.status||"—"}</span></td>

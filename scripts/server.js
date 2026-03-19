@@ -7,9 +7,67 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 // FIX V-01: added security middleware
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+/* ── INLINE SECURITY (no extra deps) ──────────────────────────────── */
+
+// Helmet equivalent: set all critical security headers manually
+function applySecurityHeaders(req, res, next) {
+  res.setHeader('X-Content-Type-Options',    'nosniff');
+  res.setHeader('X-Frame-Options',           'DENY');
+  res.setHeader('X-XSS-Protection',          '0'); // disabled in favour of CSP
+  res.setHeader('Referrer-Policy',           'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy',        'geolocation=(), camera=(), microphone=()');
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+  );
+  // HSTS only over HTTPS
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+}
+
+// express-rate-limit equivalent: simple in-memory IP rate limiter
+function makeRateLimiter(max, windowMs, message) {
+  const store = new Map();
+  setInterval(() => {
+    const now = Date.now();
+    store.forEach((v, k) => { if (now - v.start > windowMs) store.delete(k); });
+  }, windowMs).unref();
+
+  return function rateLimiter(req, res, next) {
+    const ip  = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const rec = store.get(ip);
+    if (!rec || now - rec.start > windowMs) {
+      store.set(ip, { count: 1, start: now });
+      return next();
+    }
+    rec.count++;
+    if (rec.count > max) {
+      return res.status(429).json({ error: message });
+    }
+    next();
+  };
+}
+
+// express-mongo-sanitize equivalent: strip keys starting with $ or containing .
+function sanitizeBody(obj) {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$') || key.includes('.')) {
+      delete obj[key];
+    } else {
+      obj[key] = sanitizeBody(obj[key]);
+    }
+  }
+  return obj;
+}
+function mongoSanitizeMiddleware(req, res, next) {
+  if (req.body)   req.body   = sanitizeBody(req.body);
+  if (req.params) req.params = sanitizeBody(req.params);
+  next();
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,8 +85,8 @@ app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on ${port}`);
 });
 
-// FIX V-03: security headers via helmet
-app.use(helmet());
+// Security headers (inline, no dep)
+app.use(applySecurityHeaders);
 
 // FIX V-04: restrict CORS to known origin(s); never use '*' in production
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -50,21 +108,19 @@ app.use(cors({
 // FIX V-05: limit JSON body size to prevent payload attacks
 app.use(express.json({ limit: '16kb' }));
 
-// FIX V-06: sanitize MongoDB operators from req.body/params ($where, $gt injection)
-app.use(mongoSanitize());
+// NoSQL injection sanitization (inline, no dep)
+app.use(mongoSanitizeMiddleware);
 
 // FIX V-07: serve static files from explicit 'public' subfolder,
 // NOT '.' which exposes .env, server.js, node_modules, etc.
 app.use(express.static(path.join(__dirname, 'public')));
 
 // FIX V-08: rate limiters — brute-force protection on auth endpoints
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 10,                      // 10 attempts per IP per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many attempts. Please try again later.' },
-});
+const authLimiter = makeRateLimiter(
+  10,                                          // 10 attempts per IP
+  15 * 60 * 1000,                              // per 15-minute window
+  'Too many attempts. Please try again later.' // message
+);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride')

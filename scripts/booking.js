@@ -568,13 +568,13 @@ function initAutocomplete(inputId, acId, onSelect) {
     if (!results.length || !input.value.trim()) { ac.classList.remove("open"); ac.innerHTML = ""; return; }
 
     ac.innerHTML = results.map(p => `
-      <div class="bk-ac-item" data-main="${p.main}" data-sub="${p.sub}" data-x="${p.x}" data-y="${p.y}">
+      <div class="bk-ac-item" data-main="${esc(p.main)}" data-sub="${esc(p.sub)}" data-x="${Number(p.x)}" data-y="${Number(p.y)}">
         <div class="bk-ac-icon">
           <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="currentColor"/></svg>
         </div>
         <div>
-          <div class="bk-ac-main">${p.main}</div>
-          <div class="bk-ac-sub">${p.sub}</div>
+          <div class="bk-ac-main">${esc(p.main)}</div>
+          <div class="bk-ac-sub">${esc(p.sub)}</div>
         </div>
       </div>`).join("");
     ac.classList.add("open");
@@ -667,7 +667,7 @@ function assignDriver() {
   ).join("");
 
   document.getElementById("reviewText").textContent = d.review;
-  document.getElementById("reviewMeta").innerHTML   = `<strong>${d.reviewer}</strong> · ${d.reviewDate}`;
+  document.getElementById("reviewMeta").innerHTML   = `<strong>${esc(d.reviewer)}</strong> · ${esc(d.reviewDate)}`;
 
   document.getElementById("recapGreeting").classList.add("hidden");
   document.getElementById("recapDriver").classList.remove("hidden");
@@ -885,12 +885,12 @@ function confirmBooking() {
   msg.textContent = t("confirmMsg");
 
   details.innerHTML = [
-    { k: "Vehicle",     v: veh.name },
-    { k: "Fare",        v: "€" + trip.fare.toFixed(2) },
-    { k: "Route",       v: state.pickup.main + " → " + state.dropoff.main },
-    { k: "Driver",      v: state.driver?.name || "—" },
-    { k: "ETA",         v: veh.eta + " min" },
-    { k: "Points",      v: "+" + Math.round(trip.fare) + " pts" },
+    { k: "Vehicle",     v: esc(veh.name) },
+    { k: "Fare",        v: "€" + esc(trip.fare.toFixed(2)) },
+    { k: "Route",       v: esc(state.pickup.main) + " → " + esc(state.dropoff.main) },
+    { k: "Driver",      v: esc(state.driver?.name || "—") },
+    { k: "ETA",         v: esc(String(veh.eta)) + " min" },
+    { k: "Points",      v: "+" + esc(String(Math.round(trip.fare))) + " pts" },
   ].map(i => `<div class="bk-conf-item"><span class="bk-conf-key">${i.k}</span><span class="bk-conf-val">${i.v}</span></div>`).join("");
 
   document.getElementById("confirmOverlay").classList.add("open");

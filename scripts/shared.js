@@ -145,6 +145,10 @@ const Session = {
       localStorage.removeItem("ride_theme");
       localStorage.removeItem("ride_reduce_motion");
       localStorage.removeItem("ride_lang");
+      // Expire cookies immediately so they don't persist across sessions
+      const expired = "expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";
+      document.cookie = "ride_lang=" + expired;
+      document.cookie = "ride_theme=" + expired;
       // Restore system theme and Italian default
       Theme.apply();
       Lang.apply();
@@ -1056,6 +1060,22 @@ function _setAvatarPhoto(el, src, altText) {
   img.src = src;
   img.alt = altText || '';
   el.appendChild(img);
+}
+
+
+/* ── HTML ESCAPE HELPER ──────────────────────────────────────────────
+   Use this for EVERY value that comes from user-controlled storage
+   (localStorage, IndexedDB, URL params) before inserting into innerHTML.
+   ─────────────────────────────────────────────────────────────────── */
+function esc(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/`/g, "&#96;");
 }
 
 /* ── INSTANT PREFS (prevent flash) ───────────────────────────────── */
