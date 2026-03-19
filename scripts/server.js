@@ -88,19 +88,37 @@ app.listen(port, "0.0.0.0", () => {
 // Security headers (inline, no dep)
 app.use(applySecurityHeaders);
 
-// FIX V-04: restrict CORS to known origin(s); never use '*' in production
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000'];
+// CORS: build allowed-origins list from env + auto-detect Render URL
+const allowedOrigins = (() => {
+  const list = [];
+  // Explicit list from env (comma-separated)
+  if (process.env.ALLOWED_ORIGINS) {
+    process.env.ALLOWED_ORIGINS.split(',').forEach(o => list.push(o.trim()));
+  }
+  // Render auto-injects RENDER_EXTERNAL_URL with the primary service URL
+  if (process.env.RENDER_EXTERNAL_URL) {
+    list.push(process.env.RENDER_EXTERNAL_URL.replace(/\/$/, ''));
+  }
+  // Always allow localhost for local development
+  list.push('http://localhost:3000');
+  list.push('http://localhost:8080');
+  list.push('http://127.0.0.1:3000');
+  return list;
+})();
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl) only in dev
-    if (!origin && process.env.NODE_ENV !== 'production') return cb(null, true);
+    // No Origin header = same-origin request (browser page load, curl, Postman)
+    // Always allow — these cannot be cross-site forged
+    if (!origin) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
+    // In production log the blocked origin to help diagnose misconfiguration
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[CORS] blocked origin:', origin, '| add to ALLOWED_ORIGINS env var');
+    }
     cb(new Error('CORS: origin not allowed'));
   },
-  methods: ['GET', 'POST'],          // removed PUT/DELETE/OPTIONS — not used
+  methods: ['GET', 'POST'],
   credentials: false,
   optionsSuccessStatus: 200
 }));
@@ -111,9 +129,24 @@ app.use(express.json({ limit: '16kb' }));
 // NoSQL injection sanitization (inline, no dep)
 app.use(mongoSanitizeMiddleware);
 
-// FIX V-07: serve static files from explicit 'public' subfolder,
-// NOT '.' which exposes .env, server.js, node_modules, etc.
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files: serve from project root (one level above scripts/)
+// Block direct access to server.js, .env, and node_modules
+const ROOT = path.resolve(__dirname, '..');
+app.use(express.static(ROOT, {
+  // Never serve sensitive files
+  setHeaders(res, filePath) {
+    const rel = path.relative(ROOT, filePath).replace(/\\/g, '/');
+    const blocked = [
+      /^scripts\/.*\.js$/,   // server-side JS
+      /^\.env/,                // env files
+      /^node_modules/,          // dependencies
+      /^package(-lock)?\.json$/ // package manifests
+    ];
+    if (blocked.some(re => re.test(rel))) {
+      res.statusCode = 403;
+    }
+  }
+}));
 
 // FIX V-08: rate limiters — brute-force protection on auth endpoints
 const authLimiter = makeRateLimiter(
@@ -309,13 +342,19 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
 // FIX V-07: serve HTML pages from explicit paths within 'public'
 // (express.static already handles this; these routes remain for clean URLs)
-const PAGES = { login:'login.html', register:'register.html',
-                settings:'settings.html', privacy:'privacy.html', tos:'tos.html' };
+const ROOT_DIR = path.resolve(__dirname, '..');
+const PAGES = {
+  login:'login.html', register:'register.html', settings:'settings.html',
+  privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
+  booking:'booking.html'
+};
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {
-    res.sendFile(path.join(__dirname, 'public', file));
+    res.sendFile(path.join(ROOT_DIR, file));
   });
 });
+// Serve index.html for the root path explicitly
+app.get('/', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
 
 if (process.env.NODE_ENV === 'production') {
   module.exports = app;
