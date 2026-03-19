@@ -144,14 +144,20 @@ async function initAccount() {
     if (!ok) return;
     setLoading(saveBtn, true);
     const current = await Session.get();
+    const newFirst = document.getElementById("dFirst")?.value.trim() || current.firstName;
+    const newLast  = document.getElementById("dLast")?.value.trim()  || current.lastName;
+    // Recompute initials whenever name changes
+    const newInitials = ((newFirst[0]||"") + (newLast[0]||"")).toUpperCase() || current.initials || "R";
     await Session.save({
       ...current,
-      firstName: document.getElementById("dFirst")?.value.trim() || current.firstName,
-      lastName:  document.getElementById("dLast")?.value.trim()  || current.lastName,
-      phone:     document.getElementById("dPhone")?.value.trim()  || null,
-      city:      document.getElementById("dCity")?.value.trim()   || null,
-      country:   document.getElementById("dCountry")?.value.trim()|| null,
-      birthday:  document.getElementById("dBirthday")?.value      || null
+      firstName: newFirst,
+      lastName:  newLast,
+      initials:  newInitials,
+      email:     document.getElementById("dEmail")?.value.trim()   || current.email,
+      phone:     document.getElementById("dPhone")?.value.trim()   || null,
+      city:      document.getElementById("dCity")?.value.trim()    || null,
+      country:   document.getElementById("dCountry")?.value.trim() || null,
+      birthday:  document.getElementById("dBirthday")?.value       || null,
     });
     setLoading(saveBtn, false);
     await populateUserUI(await Session.get());
@@ -175,6 +181,8 @@ async function initAccount() {
     Session.clear(true);
     window.location.href = "index.html";
   });
+
+  return user;
 }
 
 /* ── SECURITY PANEL ──────────────────────────────────────────────── */
@@ -335,11 +343,18 @@ function initAppearance() {
     });
   }
 
-  document.getElementById("saveLang")?.addEventListener("click", () => {
+  document.getElementById("saveLang")?.addEventListener("click", async () => {
     const sel = document.querySelector("#langGrid .lang-card.sel");
     if (!sel) return;
-    Lang.set(sel.dataset.lang);
+    const newLang = sel.dataset.lang;
+    Lang.set(newLang);
     Lang.apply();
+    // Persist to user account so it loads on next login
+    const user = await Session.get();
+    if (user) {
+      user.lang = newLang;
+      await Session.save(user);
+    }
     showToast("Language saved!");
   });
 }
@@ -521,7 +536,73 @@ function initPrivacy() {
   });
 }
 
-/* ── LOGOUT MODAL ────────────────────────────────────────────────── */
+/* ── PROFILE DROPDOWN (topbar) ───────────────────────────────────── */
+function initProfileDropdown(user) {
+  const avatar   = document.getElementById("tbAvatar");
+  const dropdown = document.getElementById("profileDropdown");
+  if (!avatar || !dropdown) return;
+
+  // Populate dropdown user info
+  const ddAv    = document.getElementById("ddAvatar");
+  const ddName  = document.getElementById("ddName");
+  const ddEmail = document.getElementById("ddEmail");
+  const full    = `${user.firstName||""} ${user.lastName||""}`.trim() || "Rider";
+  if (ddName)  ddName.textContent  = full;
+  if (ddEmail) ddEmail.textContent = user.email || "";
+  if (ddAv) {
+    if (user.photo) { ddAv.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`; ddAv.style.background = "transparent"; }
+    else ddAv.textContent = user.initials || full[0] || "R";
+  }
+
+  let isOpen = false;
+  const open  = () => { dropdown.style.display = "block"; isOpen = true; };
+  const close = () => { dropdown.style.display = "none";  isOpen = false; };
+
+  avatar.addEventListener("click", e => { e.stopPropagation(); isOpen ? close() : open(); });
+  document.addEventListener("click", e => {
+    if (!dropdown.contains(e.target) && e.target !== avatar) close();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+
+  document.getElementById("ddSignOut")?.addEventListener("click", () => {
+    close();
+    document.getElementById("soModal")?.classList.add("open");
+  });
+}
+
+
+/* ── DYNAMIC BACK BUTTON ─────────────────────────────────────────── */
+function initBackBtn() {
+  const backEl  = document.getElementById("tbBack");
+  const backLbl = document.getElementById("tbBackLabel");
+  if (!backEl || !backLbl) return;
+
+  const PAGE_LABELS = {
+    "index.html": "Home",   "index": "Home",   "/": "Home",
+    "dashboard.html": "Dashboard", "dashboard": "Dashboard",
+    "login.html": "Sign in",  "login": "Sign in",
+  };
+
+  const ref = document.referrer;
+  let label = "Home";
+  let href  = "index.html";
+
+  if (ref) {
+    try {
+      const u    = new URL(ref);
+      const page = u.pathname.split("/").pop().replace(".html", "") || "index";
+      const key  = Object.keys(PAGE_LABELS).find(k => k.replace(".html","") === page);
+      if (key) { label = PAGE_LABELS[key]; href = ref; }
+    } catch(_) {}
+  }
+
+  backLbl.textContent = label;
+  backEl.href = href;
+  backEl.addEventListener("click", e => {
+    if (ref && href === ref) { e.preventDefault(); history.back(); }
+  });
+}
+
 function initLogout() {
   const modal      = document.getElementById("soModal");
   const btnOpen    = document.getElementById("btnLogout");
@@ -552,7 +633,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   initNav();
   initLogout();
-  await initAccount();
+  initBackBtn();
+  const _user = await initAccount();
+  if (_user) initProfileDropdown(_user);
   await initSecurity();
   initAppearance();
   initBilling();

@@ -20,10 +20,11 @@ const dbReady = (async () => {
         email TEXT UNIQUE, password TEXT,
         initials TEXT, createdAt TEXT,
         photo TEXT, phone TEXT,
-        city TEXT, country TEXT, birthday TEXT
+        city TEXT, country TEXT, birthday TEXT,
+        lang TEXT
       )
     `);
-    ["photo","phone","city","country","birthday"].forEach(col => {
+    ["photo","phone","city","country","birthday","lang"].forEach(col => {
       try { db.run("ALTER TABLE users ADD COLUMN " + col + " TEXT"); } catch(_){}
     });
     await _idbSave();
@@ -72,23 +73,44 @@ const Session = {
   async save(user) {
     await dbReady;
     if (!db) throw new Error("DB not ready");
-    let existingPassword = user.password || "";
-    if (!user.password) {
-      try {
-        const sr = db.prepare("SELECT password FROM users WHERE id=?");
-        const ex = sr.getAsObject([user.id]); sr.free();
-        if (ex && ex.password) existingPassword = ex.password;
-      } catch(_) {}
-    }
+
+    // Fetch the full existing record so we never overwrite fields with null
+    let existing = {};
+    try {
+      const sr = db.prepare("SELECT * FROM users WHERE id=?");
+      const ex = sr.getAsObject([user.id]); sr.free();
+      if (ex && ex.id) existing = ex;
+    } catch(_) {}
+
+    // Preserve password from DB if not supplied on the incoming object
+    const existingPassword = user.password || existing.password || "";
+
+    // Merge: incoming values take priority; fall back to existing DB values
+    const merged = {
+      id:        user.id,
+      firstName: user.firstName  ?? existing.firstName  ?? "",
+      lastName:  user.lastName   ?? existing.lastName   ?? "",
+      email:     user.email      ?? existing.email      ?? "",
+      password:  existingPassword,
+      initials:  user.initials   ?? existing.initials   ?? "",
+      createdAt: user.createdAt  ?? existing.createdAt  ?? new Date().toISOString(),
+      photo:     user.photo      !== undefined ? user.photo    : (existing.photo    ?? null),
+      phone:     user.phone      !== undefined ? user.phone    : (existing.phone    ?? null),
+      city:      user.city       !== undefined ? user.city     : (existing.city     ?? null),
+      country:   user.country    !== undefined ? user.country  : (existing.country  ?? null),
+      birthday:  user.birthday   !== undefined ? user.birthday : (existing.birthday ?? null),
+      lang:      user.lang       !== undefined ? user.lang     : (existing.lang     ?? null),
+    };
+
     const s = db.prepare(`
       INSERT OR REPLACE INTO users
-      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
     `);
-    s.run([user.id, user.firstName||"", user.lastName||"", user.email||"",
-           existingPassword, user.initials||"", user.createdAt||new Date().toISOString(),
-           user.photo||null, user.phone||null, user.city||null,
-           user.country||null, user.birthday||null]);
+    s.run([merged.id, merged.firstName, merged.lastName, merged.email,
+           merged.password, merged.initials, merged.createdAt,
+           merged.photo, merged.phone, merged.city,
+           merged.country, merged.birthday, merged.lang]);
     s.free();
     await _idbSave();
     localStorage.setItem("current_user_id", user.id);
@@ -101,7 +123,12 @@ const Session = {
       if (!uid || !db) return null;
       const s = db.prepare("SELECT * FROM users WHERE id = ?");
       const r = s.getAsObject([uid]); s.free();
-      if (r && r.id) { const safe = {...r}; delete safe.password; return safe; }
+      if (r && r.id) {
+        const safe = {...r}; delete safe.password;
+        // Apply user's preferred language if set in their account
+        if (safe.lang) Lang.set(safe.lang);
+        return safe;
+      }
       return null;
     } catch(e) { console.error("Session.get error:", e); return null; }
   },
@@ -147,45 +174,61 @@ const Session = {
 
 /* ── MOCK AUTH ────────────────────────────────────────────────────── */
 const Auth = {
-  getApiBase() {
-    return `${window.location.protocol}//${window.location.hostname}`;
+  /* simple bcrypt-free hash — good enough for a local demo DB */
+  _hash(pw) {
+    let h = 5381;
+    for (let i = 0; i < pw.length; i++) h = ((h << 5) + h) ^ pw.charCodeAt(i);
+    return (h >>> 0).toString(16);
   },
 
   async register({ firstName, lastName, email, password }) {
+    await dbReady;
+    if (!db) return { ok: false, error: "Database not ready." };
     try {
-      const response = await fetch(`${this.getApiBase()}/api/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        return { ok: false, error: data.error };
-      }
-      localStorage.setItem('auth_token', data.token);
-      return { ok: true, user: data.user };
-    } catch (error) {
-      return { ok: false, error: 'Registration failed.' };
+      // Check duplicate email
+      const chk = db.prepare("SELECT id FROM users WHERE email = ?");
+      const ex  = chk.getAsObject([email.trim().toLowerCase()]); chk.free();
+      if (ex && ex.id) return { ok: false, error: "An account with this email already exists." };
+
+      const id       = "u_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+      const initials = ((firstName[0]||"") + (lastName[0]||"")).toUpperCase();
+      const user = {
+        id, firstName, lastName,
+        email:     email.trim().toLowerCase(),
+        password:  this._hash(password),
+        initials,
+        createdAt: new Date().toISOString(),
+        photo: null, phone: null, city: null, country: null, birthday: null, lang: null,
+      };
+      const s = db.prepare(
+        `INSERT INTO users (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      );
+      s.run([user.id, user.firstName, user.lastName, user.email, user.password,
+             user.initials, user.createdAt, null, null, null, null, null, null]);
+      s.free();
+      await _idbSave();
+      const safe = {...user}; delete safe.password;
+      return { ok: true, user: safe };
+    } catch(e) {
+      return { ok: false, error: "Registration failed: " + e.message };
     }
   },
 
   async login({ email, password }) {
+    await dbReady;
+    if (!db) return { ok: false, error: "Database not ready." };
     try {
-      const response = await fetch(`${this.getApiBase()}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        return { ok: false, error: data.error };
-      }
-      localStorage.setItem('auth_token', data.token);
-      return { ok: true, user: data.user };
-    } catch (error) {
-      return { ok: false, error: 'Login failed.' };
+      const s = db.prepare("SELECT * FROM users WHERE email = ?");
+      const r = s.getAsObject([email.trim().toLowerCase()]); s.free();
+      if (!r || !r.id) return { ok: false, error: "No account found with this email address." };
+      if (r.password !== this._hash(password)) return { ok: false, error: "Incorrect password." };
+      const safe = {...r}; delete safe.password;
+      return { ok: true, user: safe };
+    } catch(e) {
+      return { ok: false, error: "Login failed: " + e.message };
     }
-  }
+  },
 };
 
 /* ── LANGUAGES ────────────────────────────────────────────────────── */
@@ -207,6 +250,14 @@ const LANGS = {
     privacyPolicy:"Privacy Policy", bySigningIn:"By signing in you agree to our",
     myRides:"My rides", fidelityPoints:"Fidelity points",
     settings:"Settings", signOut:"Sign out", langLabel:"EN",
+    // Dashboard keys
+    dashTitle:"Dashboard", myFidelityTitle:"My Fidelity", paymentsTitle:"Payments",
+    myAccountTitle:"My Account", totalRides:"Total rides", spentThisMonth:"Spent this month",
+    fidelityPts:"points available", nextRide:"Next Ride", recentRides:"Recent Rides",
+    recentReviews:"Recent Reviews", spendingOverview:"Spending Overview",
+    noUpcomingRides:"No upcoming rides", bookRide:"Book a ride",
+    bookAnother:"Book another", cancelRide:"Cancel ride",
+    myFidelityCard:"My Fidelity Card",
     account:"Account", security:"Security", appearance:"Appearance",
     billing:"Billing", notifications:"Notifications", logout:"Log out",
     personalInfo:"Personal information",
@@ -304,6 +355,14 @@ const LANGS = {
     privacyPolicy:"Privacy Policy", bySigningIn:"Accedendo accetti i nostri",
     myRides:"I miei viaggi", fidelityPoints:"Punti fedeltà",
     settings:"Impostazioni", signOut:"Esci", langLabel:"IT",
+    // Dashboard keys
+    dashTitle:"Dashboard", myFidelityTitle:"La mia Fedeltà", paymentsTitle:"Pagamenti",
+    myAccountTitle:"Il mio Account", totalRides:"Viaggi totali", spentThisMonth:"Speso questo mese",
+    fidelityPts:"punti disponibili", nextRide:"Prossimo Viaggio", recentRides:"Viaggi recenti",
+    recentReviews:"Recensioni recenti", spendingOverview:"Riepilogo spese",
+    noUpcomingRides:"Nessun viaggio programmato", bookRide:"Prenota un viaggio",
+    bookAnother:"Prenota un altro", cancelRide:"Cancella viaggio",
+    myFidelityCard:"La mia Carta Fedeltà",
     account:"Account", security:"Sicurezza", appearance:"Aspetto",
     billing:"Fatturazione", notifications:"Notifiche", logout:"Esci",
     personalInfo:"Informazioni personali",
@@ -399,6 +458,13 @@ const LANGS = {
     bySigningIn:"En vous connectant vous acceptez nos",
     myRides:"Mes trajets", fidelityPoints:"Points fidélité",
     settings:"Paramètres", signOut:"Déconnexion", langLabel:"FR",
+    dashTitle:"Tableau de bord", myFidelityTitle:"Ma Fidélité", paymentsTitle:"Paiements",
+    myAccountTitle:"Mon Compte", totalRides:"Trajets totaux", spentThisMonth:"Dépensé ce mois",
+    fidelityPts:"points disponibles", nextRide:"Prochain Trajet", recentRides:"Trajets récents",
+    recentReviews:"Avis récents", spendingOverview:"Aperçu des dépenses",
+    noUpcomingRides:"Aucun trajet prévu", bookRide:"Réserver un trajet",
+    bookAnother:"Réserver un autre", cancelRide:"Annuler le trajet",
+    myFidelityCard:"Ma Carte Fidélité",
     account:"Compte", security:"Sécurité", appearance:"Apparence",
     billing:"Facturation", notifications:"Notifications", logout:"Déconnexion",
     personalInfo:"Informations personnelles",
@@ -494,6 +560,13 @@ const LANGS = {
     bySigningIn:"Al iniciar sesión aceptas nuestros",
     myRides:"Mis viajes", fidelityPoints:"Puntos de fidelidad",
     settings:"Configuración", signOut:"Cerrar sesión", langLabel:"ES",
+    dashTitle:"Panel", myFidelityTitle:"Mi Fidelidad", paymentsTitle:"Pagos",
+    myAccountTitle:"Mi Cuenta", totalRides:"Viajes totales", spentThisMonth:"Gastado este mes",
+    fidelityPts:"puntos disponibles", nextRide:"Próximo Viaje", recentRides:"Viajes recientes",
+    recentReviews:"Reseñas recientes", spendingOverview:"Resumen de gastos",
+    noUpcomingRides:"Sin viajes programados", bookRide:"Reservar un viaje",
+    bookAnother:"Reservar otro", cancelRide:"Cancelar viaje",
+    myFidelityCard:"Mi Tarjeta Fidelidad",
     account:"Cuenta", security:"Seguridad", appearance:"Apariencia",
     billing:"Facturación", notifications:"Notificaciones", logout:"Cerrar sesión",
     personalInfo:"Información personal",
@@ -588,6 +661,13 @@ const LANGS = {
     privacyPolicy:"隐私政策", bySigningIn:"登录即表示您同意我们的",
     myRides:"我的行程", fidelityPoints:"忠诚积分",
     settings:"设置", signOut:"退出登录", langLabel:"ZH",
+    dashTitle:"仪表板", myFidelityTitle:"我的积分", paymentsTitle:"支付",
+    myAccountTitle:"我的账户", totalRides:"总行程", spentThisMonth:"本月消费",
+    fidelityPts:"可用积分", nextRide:"下次行程", recentRides:"最近行程",
+    recentReviews:"最近评价", spendingOverview:"消费概览",
+    noUpcomingRides:"暂无预约行程", bookRide:"预约行程",
+    bookAnother:"再次预约", cancelRide:"取消行程",
+    myFidelityCard:"我的积分卡",
     account:"账户", security:"安全", appearance:"外观",
     billing:"账单", notifications:"通知", logout:"退出登录",
     personalInfo:"个人信息",

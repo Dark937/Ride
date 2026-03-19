@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   Motion.apply();
   Lang.apply();
 
-  await initTopbarDropdown();
+  await initTopbarDropdown(); // Session.get() inside here sets Lang if user has a preference
+  Lang.apply();               // re-apply after user lang may have been loaded
   applyLandingTranslations();
 });

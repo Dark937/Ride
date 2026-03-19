@@ -103,11 +103,45 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Wire theme toggle button (present on tos/privacy pages)
   document.getElementById("legalThemeBtn")?.addEventListener("click", () => { Theme.toggle(); });
 
-  // Init profile dropdown (async — reads session)
+  // Init profile dropdown (async — reads session, may update Lang from user account)
   await initTopbarDropdown();
 
-  // Re-apply lang after dropdown init (translations on dropdown items)
+  // Re-apply lang after dropdown init (user account lang + dropdown items)
   Lang.apply();
+
+  // ── Dynamic back button ──────────────────────────────────────────
+  (function() {
+    const backEl  = document.getElementById("tbBack");
+    const backLbl = document.getElementById("tbBackLabel");
+    if (!backEl || !backLbl) return;
+
+    const PAGE_LABELS = {
+      "index.html": "Home",        "index": "Home",        "/": "Home",
+      "dashboard.html": "Dashboard", "dashboard": "Dashboard",
+      "settings.html": "Settings",  "settings": "Settings",
+      "login.html": "Sign in",     "login": "Sign in",
+      "register.html": "Sign up",  "register": "Sign up",
+    };
+
+    const ref = document.referrer;
+    let label = "Home";
+    let href  = "index.html";
+
+    if (ref) {
+      try {
+        const u    = new URL(ref);
+        const page = u.pathname.split("/").pop().replace(".html", "") || "index";
+        const key  = Object.keys(PAGE_LABELS).find(k => k.replace(".html","") === page);
+        if (key) { label = PAGE_LABELS[key]; href = ref; }
+      } catch(_) {}
+    }
+
+    backLbl.textContent = label;
+    backEl.href = href;
+    backEl.addEventListener("click", e => {
+      if (ref && href === ref) { e.preventDefault(); history.back(); }
+    });
+  })();
 
   // Re-apply prefs when changed in Settings tab
   window.addEventListener("storage", e => {

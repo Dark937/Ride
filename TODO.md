@@ -2,26 +2,24 @@
 - pagina per prenotare la corsa
 - rifare i bottoni della landing page 
 - trovare immagini
-- fare privacy policy
-- fare tos
 - rifare i testi della landing page
-- encryption del database
 - sistema dell'account del driver
 - pulire il codice
 - sistemare e riordinare il codice
+- rendere il codice k proof
 
 
-levare il tratteggio alle box dei partners coupons in dashboard, sistemare i menu che si aprono dall'icona profilo in index, tos, privacy, dashboard e settings - my rides diventa my dashboard e metti il collegamento, in alcune pagine non si apre proprio - my fidelity diventa my fidelity card e deve portare alla sezione my fidelity card della dashboard.
+il cambio lingua non funziona più su index, tos, privacy e dashboard. se ho l'account non mi carica la lingua di default dell'account.
+su dashboard la sezione next ride ha i messaggi di testi non funzionanti e rotti (come noUpcomingRides)
+su dashboard non mi apre il menu dropdown dell'icona profilo, idem su settings
+la sezione recent reviews sulla dashboard deve essere quelle che l'utente ha dato ai rider
+sistema il grafico in dashboard che non è coerente con i dati al lato e sotto
 
-il testo delle features in index html non cambia lingua col setting, nemmeno il testo sotto le immagini dei veicoli in our vehicles
-
-la lingua di default deve essere italiano
-
-lo scrolling delle features su mobile manda le immagini sotto il testo e non rimangono fermi fino al cambiamento
-
-su android i settings non hanno il menu di navigazione, non riesco a cambiare sezione dei settings, stessa cosa della dashboard
-
-in settings sezione pagamenti e in dashboard sezione pagamenti le cards sono rotte, non si salvano nel database e non le fa aggiungere, sistema
+la card della sezione payments in dashboard è troppo enorme rispetto a quella in settings
+leva il cambio dark light mode dalla dashboard, solo in settings se si ha fatto il login
+sistema i dati salvati nel database come l'immagine profilo (avatar) e tutti i dati che necessitano di essere salvati
+aggiunti un qualcosa per andare indietro in dashboard come è presente in settings. 
+modifica queste due sezioni per tornare indietro che portano alla pagina precedente e il testo cambia in base alla pagina precedente, non sempre a home.
 
 
 

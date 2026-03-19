@@ -85,8 +85,6 @@ function switchPanel(name) {
   document.getElementById('panel-'+name)?.classList.add('active');
   document.querySelector(`.sb-item[data-panel="${name}"]`)?.classList.add('active');
   document.querySelector(`.dmn-item[data-panel="${name}"]`)?.classList.add('active');
-  const t=document.getElementById('tbTitle');
-  if(t) t.textContent=PANEL_TITLES[name]||'';
   closeAllDropdowns();
 }
 
@@ -103,7 +101,7 @@ function toggleDropdown(id) {
   if(!wasOpen) dd.classList.add('open');
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('.tb-icon-btn')&&!e.target.closest('.tb-avatar')&&!e.target.closest('.tb-dropdown'))
+  if(!e.target.closest('.tb-icon-btn')&&!e.target.closest('.tb-avatar')&&!e.target.closest('.tb-dropdown')&&!e.target.closest('#tbAvatar'))
     closeAllDropdowns();
 });
 
@@ -123,76 +121,13 @@ function renderDashboard(user, uid) {
   document.getElementById('wsSpent').textContent='€'+monthSpent.toFixed(0);
   renderNextRide(bookings,uid);
   // Fidelity mini
-  
-const PARTNER_COUPONS = [
-  {id:'c1', badge:'partner', badgeLabel:'Partner', name:'20% off at Eataly', desc:'Valid on your next purchase over €30', cost:150, used:false},
-  {id:'c2', badge:'free',    badgeLabel:'Free ride', name:'Free ride up to €15', desc:'Redeem for any city ride', cost:200, used:false},
-  {id:'c3', badge:'discount', badgeLabel:'Discount', name:'€10 off next ride', desc:'Applied automatically at checkout', cost:100, used:false},
-  {id:'c4', badge:'partner', badgeLabel:'Partner', name:'Free coffee at Lavazza', desc:'One free espresso at any Lavazza café', cost:50, used:false},
-  {id:'c5', badge:'partner', badgeLabel:'Partner', name:'15% off at Trenitalia', desc:'On regional trains, valid 30 days', cost:300, used:false},
-  {id:'c6', badge:'discount', badgeLabel:'Discount', name:'€5 credit', desc:'Added to your Ride wallet instantly', cost:60, used:false},
-];
-
-function renderPartnerCoupons(pts) {
-  const el = document.getElementById('partnerCouponList');
-  if (!el) return;
-  const shown = PARTNER_COUPONS.slice(0, 3);
-  el.innerHTML = shown.map(cp => `
-    <div class="coupon-item" data-id="${cp.id}">
-      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
-      <div class="coupon-info">
-        <div class="coupon-name">${cp.name}</div>
-        <div class="coupon-desc">${cp.desc}</div>
-      </div>
-      <div class="coupon-cost">${cp.cost} pts</div>
-    </div>`).join('');
-  document.getElementById('couponsAvail').textContent = PARTNER_COUPONS.length + ' available';
-
-  el.querySelectorAll('.coupon-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const cp = PARTNER_COUPONS.find(x => x.id === item.dataset.id);
-      if (!cp) return;
-      if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return; }
-      if (confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) {
-        toast(`✓ Coupon redeemed: ${cp.name}`);
-      }
-    });
-  });
-}
-
-function openCouponModal(title, coupons, pts) {
-  document.getElementById('couponModalTitle').textContent = title;
-  const list = document.getElementById('couponModalList');
-  list.innerHTML = coupons.map(cp => `
-    <div class="coupon-item" data-cost="${cp.cost}" data-name="${cp.name}" data-pts="${pts}">
-      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
-      <div class="coupon-info">
-        <div class="coupon-name">${cp.name}</div>
-        <div class="coupon-desc">${cp.desc}</div>
-        ${pts < cp.cost ? '<div class="coupon-used">Need '+(cp.cost-pts)+' more pts</div>' : ''}
-      </div>
-      <div class="coupon-cost" style="color:${pts>=cp.cost?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
-    </div>`).join('');
-  list.querySelectorAll('.coupon-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const cost = +item.dataset.cost, name = item.dataset.name, avail = +item.dataset.pts;
-      if (avail < cost) { toast('Not enough points.'); return; }
-      if (confirm(`Redeem "${name}" for ${cost} points?`)) {
-        document.getElementById('couponOverlay').classList.remove('open');
-        toast(`✓ Coupon redeemed: ${name}`);
-      }
-    });
-  });
-  document.getElementById('couponOverlay').classList.add('open');
-}
-const GOLD_THRESHOLD=2000;
   const pct=Math.min((fid.totalEarned/GOLD_THRESHOLD)*100,100);
   document.getElementById('fidMiniPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidMiniBar').style.width=pct+'%';
   document.getElementById('fidMiniNext').textContent=
     fid.totalEarned>=GOLD_THRESHOLD?'Gold tier unlocked ✦':`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} pts to Gold`;
   renderRecentRides(rides.slice(0,5));
-  renderReviews();
+  renderReviews(uid);
   renderChart(rides,'week');
 }
 
@@ -225,22 +160,59 @@ function openUpcoming(bookings,uid) {
   document.getElementById('upcomingOverlay').classList.add('open');
 }
 
-function renderReviews() {
+function renderReviews(uid) {
   const el = document.getElementById('reviewsList');
   if (!el) return;
-  const reviews = [
-    {name:'Marco R.', rating:5, text:'Incredible service. The Ferrari was spotless.', time:'2 days ago'},
-    {name:'Giulia T.', rating:5, text:'On time and super professional driver.', time:'Last week'},
-    {name:'Luca B.',  rating:4, text:'Great ride, slightly late pickup.', time:'2 weeks ago'},
+  const rides = RideData.getRides(uid).filter(r => r.status === 'completed');
+
+  // Generate deterministic per-ride reviews the user gave to drivers
+  const DRIVER_NAMES = ['Luca B.','Marco V.','Giulia T.','Andrea C.','Sofia R.','Matteo F.','Elena M.','Roberto P.'];
+  const COMMENTS = [
+    'Excellent driver, very professional and on time.',
+    'Smooth ride, the car was spotless. Great experience.',
+    'Very punctual, knew the best routes to avoid traffic.',
+    'Friendly and professional. Would definitely book again.',
+    'Great ride overall, only slightly late on pickup.',
+    'Very comfortable trip. Driver was courteous throughout.',
+    'Perfect service. The car was immaculate.',
+    'Quick and efficient. Highly recommended.',
   ];
-  el.innerHTML = reviews.map(r => {
-    const stars = Array.from({length:5},(_,i)=>`<span class="review-star${i<r.rating?'':' empty'}">${i<r.rating?'★':'★'}</span>`).join('');
+
+  if (!rides.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">No reviews given yet.</div>`;
+    return;
+  }
+
+  const shown = rides.slice(0, 3).map((r, i) => {
+    // Deterministic but varied rating: mostly 5, occasional 4
+    const rating = (i % 5 === 2) ? 4 : 5;
+    const driverIdx = (r.id.charCodeAt(r.id.length - 1) + i) % DRIVER_NAMES.length;
+    const commentIdx = (r.id.charCodeAt(r.id.length - 1) * 3 + i) % COMMENTS.length;
+    return {
+      driver: DRIVER_NAMES[driverIdx],
+      rating,
+      text: COMMENTS[commentIdx],
+      route: r.to,
+      date: r.date,
+    };
+  });
+
+  const avgRating = (shown.reduce((s, r) => s + r.rating, 0) / shown.length).toFixed(1);
+  // Update the pill in the card header
+  const pill = document.querySelector('#nextRideCard')?.closest('.dash-row')
+    ?.querySelector('.card-sm .pill');
+  if (pill) pill.textContent = avgRating + ' ★';
+
+  el.innerHTML = shown.map(r => {
+    const stars = Array.from({length:5},(_,i) =>
+      `<span class="review-star${i < r.rating ? '' : ' empty'}">★</span>`
+    ).join('');
     return `<div class="review-item">
-      <div class="review-avatar">${r.name[0]}</div>
+      <div class="review-avatar">${r.driver[0]}</div>
       <div style="flex:1;min-width:0">
         <div class="review-stars">${stars}</div>
         <div class="review-text">${r.text}</div>
-        <div class="review-meta">${r.name} · ${r.time}</div>
+        <div class="review-meta">${r.driver} · Ride to ${r.route} · ${fmtDate(r.date, true)}</div>
       </div>
     </div>`;
   }).join('');
@@ -294,10 +266,32 @@ function renderChart(rides,range){
   const total=data.reduce((s,d)=>s+d.val,0);
   const nonZero=data.filter(d=>d.val>0);
   const avg=nonZero.length?nonZero.reduce((s,d)=>s+d.val,0)/nonZero.length:0;
+  // Count rides in this range (not all rides)
+  const rangeRideCount=data.reduce((s,d)=>s+(d.val>0?1:0),0); // periods with rides
+  // More accurate: sum actual ride counts per period
+  let rangeCompletedCount=0;
+  if(range==='week'){
+    const today=new Date(),dow=today.getDay()||7;
+    rangeCompletedCount=rides.filter(r=>{
+      if(r.status!=='completed') return false;
+      const rd=new Date(r.date);
+      const monday=new Date(today);monday.setDate(today.getDate()-(dow-1));monday.setHours(0,0,0,0);
+      const sunday=new Date(monday);sunday.setDate(monday.getDate()+7);
+      return rd>=monday&&rd<sunday;
+    }).length;
+  } else if(range==='month'){
+    const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
+    rangeCompletedCount=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=ms).length;
+  } else if(range==='year'){
+    const yr=new Date().getFullYear();
+    rangeCompletedCount=rides.filter(r=>r.status==='completed'&&new Date(r.date).getFullYear()===yr).length;
+  } else {
+    rangeCompletedCount=rides.filter(r=>r.status==='completed').length;
+  }
   document.getElementById('chartSummary').innerHTML=`
     <div class="cs-item"><div class="cs-val" style="color:var(--brand)">€${total.toFixed(0)}</div><div class="cs-label">Total</div></div>
     <div class="cs-item"><div class="cs-val" style="color:var(--muted)">€${avg.toFixed(0)}</div><div class="cs-label">Avg/period</div></div>
-    <div class="cs-item"><div class="cs-val" style="color:var(--green)">${rides.filter(r=>r.status==='completed').length}</div><div class="cs-label">Rides</div></div>`;
+    <div class="cs-item"><div class="cs-val" style="color:var(--green)">${rangeCompletedCount}</div><div class="cs-label">Rides</div></div>`;
 
   const svg=document.getElementById('chartSvg');
   const W=400,H=130,PAD={t:12,r:10,b:24,l:38};
@@ -590,6 +584,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   const user=await Session.get();
   if(!user){window.location.href='login.html?redirect=dashboard.html';return;}
+  // Session.get() may have loaded user's preferred lang — re-apply
+  Lang.apply();
   const uid=user.id;
   RideData.seed(uid);
 
@@ -652,8 +648,44 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     tab.addEventListener('click',()=>renderChart(RideData.getRides(uid),tab.dataset.range));
   });
 
+  // ── Dynamic back button ──────────────────────────────────────────
+  (function initBackBtn() {
+    const backEl   = document.getElementById('tbBack');
+    const backLbl  = document.getElementById('tbBackLabel');
+    if (!backEl || !backLbl) return;
+
+    // Pages that can link to dashboard
+    const PAGE_LABELS = {
+      'index.html':    'Home',
+      'index':         'Home',
+      '/':             'Home',
+      'settings.html': 'Settings',
+      'settings':      'Settings',
+      'login.html':    'Sign in',
+      'login':         'Sign in',
+    };
+
+    const ref = document.referrer;
+    let label = 'Home';
+    let href  = 'index.html';
+
+    if (ref) {
+      try {
+        const u    = new URL(ref);
+        const page = u.pathname.split('/').pop().replace('.html','') || 'index';
+        const key  = Object.keys(PAGE_LABELS).find(k => k.replace('.html','') === page);
+        if (key) { label = PAGE_LABELS[key]; href = ref; }
+      } catch(_) {}
+    }
+
+    backLbl.textContent = label;
+    backEl.href = href;
+    backEl.addEventListener('click', e => {
+      if (ref && href === ref) { e.preventDefault(); history.back(); }
+    });
+  })();
+
   // Topbar buttons
-  document.getElementById('themeBtn').addEventListener('click',()=>Theme.toggle());
   document.getElementById('notifBtn').addEventListener('click',()=>toggleDropdown('notifDropdown'));
   document.getElementById('tbAvatar').addEventListener('click',()=>toggleDropdown('profileDropdown'));
 
@@ -677,7 +709,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // Theme/lang sync from settings tab
   window.addEventListener('storage',e=>{
-    if(e.key==='ride_theme'){Theme.apply();}
     if(e.key==='ride_reduce_motion'){Motion.apply();}
     if(e.key==='ride_lang'){Lang.apply();}
   });

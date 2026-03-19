@@ -221,7 +221,7 @@ function initLoginForm() {
     if (!result.ok) { showBanner(result.error); return; }
     await Session.save(result.user);
     Session.saveDevice();
-    const redirect = new URLSearchParams(window.location.search).get("redirect") || "/";
+    const redirect = new URLSearchParams(window.location.search).get("redirect") || "index.html";
     window.location.href = redirect;
   });
 
@@ -276,7 +276,7 @@ function initRegisterForm() {
     if (!result.ok) { showBanner(result.error); return; }
     await Session.save(result.user);
     Session.saveDevice();
-    window.location.href = "/";
+    window.location.href = "index.html";
   });
 }
 
