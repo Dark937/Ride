@@ -11,18 +11,18 @@
 - sistemare e riordinare il codice
 
 
-sistema il cambio lingua in index html che non funziona (titolo, sottotitolo, testi delle features, titolo sottotitolo e testi di how it works, titolo e testo di our vehicles, tutta la parte di fidelity card, di drive with ride e i testi link del footer)
+levare il tratteggio alle box dei partners coupons in dashboard, sistemare i menu che si aprono dall'icona profilo in index, tos, privacy, dashboard e settings - my rides diventa my dashboard e metti il collegamento, in alcune pagine non si apre proprio - my fidelity diventa my fidelity card e deve portare alla sezione my fidelity card della dashboard.
 
-la prima feature scorrendo rimane troppo tempo ferma, fai cambiare alla seconda prima (stesso tempo di quando si scorre tra 2 e 3)
+il testo delle features in index html non cambia lingua col setting, nemmeno il testo sotto le immagini dei veicoli in our vehicles
 
-dashboard da sistemare (fidelity section - topbar uguale a settings - )
-sistema la dashboard, la sezione della fidelity non mi convince, migliora la parte partner coupons e la box dove bisogna mettere l'immagine della card.
+la lingua di default deve essere italiano
 
-inoltre sistema quando clicco sull'icona profilo in settings e dashboard che deve aprire il menu come in index, senza però ripetere collegamenti già presenti nella pagina
+lo scrolling delle features su mobile manda le immagini sotto il testo e non rimangono fermi fino al cambiamento
 
-nella pagina register se la vedo in light mode i colori che mi indicano la forza della password non si vedono, in dark mode si
+su android i settings non hanno il menu di navigazione, non riesco a cambiare sezione dei settings, stessa cosa della dashboard
 
-le immagini in login e register pages si vedono male quando metto la light mode
+in settings sezione pagamenti e in dashboard sezione pagamenti le cards sono rotte, non si salvano nel database e non le fa aggiungere, sistema
+
 
 
 

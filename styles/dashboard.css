@@ -918,7 +918,7 @@ html,body{
 .coupon-close svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 .coupon-list{display:flex;flex-direction:column;gap:10px}
 .coupon-item{
-  border:1px dashed var(--border-md);border-radius:12px;padding:14px 16px;
+  border:1px solid var(--border);border-radius:12px;padding:14px 16px;
   display:flex;align-items:center;gap:12px;
   background:var(--surface);cursor:pointer;transition:border-color .14s,background .14s;
 }
@@ -961,6 +961,41 @@ html,body{
 .review-avg-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--brand)}
 .review-avg-label{font-size:12px;color:var(--muted)}
 
+
+/* ── DASHBOARD MOBILE NAV ── */
+#dashMobileNav { display: none; }
+
+@media(max-width:720px){
+  #dashMobileNav{
+    display:flex;
+    overflow-x:auto;
+    gap:4px;
+    padding:8px 12px;
+    border-bottom:1px solid var(--border);
+    background:var(--bg);
+    position:sticky;
+    top:var(--topbar-h);
+    z-index:50;
+    flex-shrink:0;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  #dashMobileNav::-webkit-scrollbar{display:none}
+  .dmn-item{
+    display:flex;align-items:center;gap:5px;
+    padding:7px 12px;border-radius:8px;
+    font-size:12.5px;font-weight:600;
+    color:var(--muted);white-space:nowrap;cursor:pointer;
+    flex-shrink:0;background:none;border:none;
+    transition:background .12s,color .12s;font-family:inherit;
+  }
+  .dmn-item.active{background:var(--brand-dim);color:var(--brand)}
+  .dmn-item svg{
+    width:13px;height:13px;stroke:currentColor;fill:none;
+    stroke-width:1.8;stroke-linecap:round;flex-shrink:0;
+  }
+}
+
 /* ══════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════ */
@@ -975,9 +1010,10 @@ html,body{
   .account-grid{grid-template-columns:1fr}
 }
 @media(max-width:720px){
-  :root{--sidebar-w:54px}
-  .sb-item span,.sb-section,.sb-user-name,.sb-logo img{display:none}
-  .sb-item{justify-content:center;padding:10px}
+  :root{--sidebar-w:0px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{left:0}
   .dash-row{grid-template-columns:1fr}
   .dash-grid{grid-template-columns:1fr}
   .fid-stats-grid{grid-template-columns:1fr 1fr}

@@ -98,7 +98,7 @@ function _buildSignOutModal() {
 function applyLandingTranslations() {
   const t = LANGS[Lang.get()] || LANGS.en;
 
-  // All elements with data-i18n-key — single stable pass, never breaks on re-translate
+  // All data-i18n-key elements — stable single pass
   document.querySelectorAll("[data-i18n-key]").forEach(el => {
     const v = t[el.dataset.i18nKey];
     if (!v) return;
@@ -107,25 +107,21 @@ function applyLandingTranslations() {
     svgs.forEach(s => el.insertBefore(s, el.firstChild));
   });
 
-  // CTA spans (children of buttons, no direct data-i18n-key)
+  // CTA button spans
   document.querySelectorAll(".btn-primary span").forEach(el => { if (t.getStarted) el.textContent = t.getStarted; });
   document.querySelectorAll(".btn-secondary span").forEach(el => { if (t.viewPlans) el.textContent = t.viewPlans; });
-
-  // Driver section CTA spans
   const dBtns = document.querySelectorAll(".driver-actions .btn span");
   if (dBtns[0] && t.driverApply) dBtns[0].textContent = t.driverApply;
   if (dBtns[1] && t.driverLearn) dBtns[1].textContent = t.driverLearn;
-
-  // Fidelity CTA span
   const fidBtn = document.querySelector(".fidelity-copy .btn-primary span");
   if (fidBtn && t.fidGetCard) fidBtn.textContent = t.fidGetCard;
 
-  // Hamburger nav links
+  // Nav links
   const navLinks = document.querySelectorAll(".nav-overlay .nav-link");
   const navKeys  = ["home","features","vehicles","fidelity","drive"];
   navLinks.forEach((a, i) => { if (navKeys[i] && t[navKeys[i]]) a.textContent = t[navKeys[i]]; });
 
-  // Profile dropdown — preserve SVG children
+  // Profile dropdown
   const _set = (el, text) => {
     if (!el || !text) return;
     const svgs = [...el.querySelectorAll("svg")];
@@ -133,19 +129,37 @@ function applyLandingTranslations() {
     svgs.forEach(s => el.insertBefore(s, el.firstChild));
   };
   const ui = [...document.querySelectorAll("[data-user] .dd-item")];
-  if (ui[0]) _set(ui[0], t.myDashboard    || t.myRides || "My Dashboard");
-  if (ui[1]) _set(ui[1], t.myFidelityLink || t.fidelityPoints || "My Fidelity");
+  if (ui[0]) _set(ui[0], t.myDashboard   || "My Dashboard");
+  if (ui[1]) _set(ui[1], t.myFidelityCard || "My Fidelity Card");
   if (ui[2]) _set(ui[2], t.settings || "Settings");
   _set(document.querySelector(".dd-signout"), t.signOut || "Sign out");
   const gi = [...document.querySelectorAll("[data-guest] .dd-item")];
   if (gi[0]) _set(gi[0], t.signIn || "Sign in");
   if (gi[1]) _set(gi[1], t.createAccount || "Create account");
 
+  // Feature panels: translate data-title / data-text attributes
+  // (setActiveFeature reads these to update the sticky left panel)
+  document.querySelectorAll(".feature-panel[data-i18n-title]").forEach(panel => {
+    const tk = panel.dataset.i18nTitle;
+    const vk = panel.dataset.i18nText;
+    if (tk && t[tk]) panel.dataset.title = t[tk];
+    if (vk && t[vk]) panel.dataset.text  = t[vk];
+  });
+  // Also update the currently visible feature text immediately
+  const featureTitle = document.getElementById("featureTitle");
+  const featureText  = document.getElementById("featureText");
+  if (featureTitle && featureText) {
+    const activePanel = document.querySelector(".feature-panel.active");
+    if (activePanel) {
+      featureTitle.textContent = activePanel.dataset.title || featureTitle.textContent;
+      featureText.textContent  = activePanel.dataset.text  || featureText.textContent;
+    }
+  }
+
   // Footer copyright
   const ftCopy = document.querySelector(".footer-bottom p");
   if (ftCopy && t.footerCopyright) ftCopy.textContent = t.footerCopyright;
 
-  // data-i18n attributes handled by shared.js
   Lang.apply();
 }
 

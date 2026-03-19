@@ -42,6 +42,17 @@ function initNav() {
 
   items.forEach(i => i.addEventListener("click", () => activate(i.dataset.panel)));
 
+  // Mobile nav — mirrors sidebar nav
+  const mnItems = [...document.querySelectorAll(".mn-item[data-panel]")];
+  mnItems.forEach(btn => btn.addEventListener("click", () => activate(btn.dataset.panel)));
+
+  // Patch activate to also sync mobile nav active state
+  const _origActivate = activate;
+  activate = function(id) {
+    _origActivate(id);
+    mnItems.forEach(b => b.classList.toggle("active", b.dataset.panel === id));
+  };
+
   const hash  = location.hash.replace("#", "");
   const valid = [...panels].some(p => p.id === hash);
   activate(valid ? hash : "p-account");
@@ -59,17 +70,6 @@ async function populateUserUI(user) {
     if (user.photo) tbAvatar.innerHTML = `<img src="${user.photo}" alt="">`;
     else tbAvatar.textContent = user.initials || full[0] || "R";
   }
-
-  // Populate + wire settings profile dropdown
-  const spdAvatar = document.getElementById("spdAvatar");
-  const spdName   = document.getElementById("spdName");
-  const spdEmail  = document.getElementById("spdEmail");
-  if (spdAvatar) {
-    if (user.photo) spdAvatar.innerHTML = `<img src="${user.photo}" alt="">`;
-    else spdAvatar.textContent = user.initials || full[0] || "R";
-  }
-  if (spdName)  spdName.textContent  = full;
-  if (spdEmail) spdEmail.textContent = user.email || "";
 
   const sbAv     = document.getElementById("sbAv");
   const sbPname  = document.getElementById("sbPname");
@@ -346,23 +346,38 @@ function initAppearance() {
 
 /* ── BILLING PANEL ───────────────────────────────────────────────── */
 function initBilling() {
+  const uid = localStorage.getItem("current_user_id") || "guest";
+  const CARDS_KEY = "ride_cards_" + uid;
+
+  function loadCards() {
+    try { return JSON.parse(localStorage.getItem(CARDS_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function saveCards(cards) {
+    localStorage.setItem(CARDS_KEY, JSON.stringify(cards));
+  }
+
+  // Seed demo cards if none exist
+  if (!localStorage.getItem(CARDS_KEY)) {
+    saveCards([
+      { id:"c1", brand:"VISA", cls:"visa", num:"•••• •••• •••• 4242", exp:"12/26", name:"Marco Rossi", dflt:true  },
+      { id:"c2", brand:"MC",   cls:"mc",   num:"•••• •••• •••• 8888", exp:"09/25", name:"Marco Rossi", dflt:false }
+    ]);
+  }
+
   const cardsList = document.getElementById("cardsList");
   if (cardsList) {
-    let cards = [
-      { brand:"VISA", cls:"visa", num:"•••• •••• •••• 4242", exp:"12/26", name:"Marco Rossi", dflt:true  },
-      { brand:"MC",   cls:"mc",   num:"•••• •••• •••• 8888", exp:"09/25", name:"Marco Rossi", dflt:false }
-    ];
-
     function renderCards() {
-      cardsList.innerHTML = cards.map((c, i) => `
-        <div class="card-item${c.dflt ? " dflt" : ""}" data-idx="${i}">
-          <span class="cbrand ${c.cls}">${c.brand}</span>
+      const cards = loadCards();
+      cardsList.innerHTML = cards.map((card, i) => `
+        <div class="card-item${card.dflt ? " dflt" : ""}" data-idx="${i}">
+          <span class="cbrand ${card.cls}">${card.brand}</span>
           <div class="cinfo">
-            <div class="cnum">${c.num}</div>
-            <div class="cmeta">Expires ${c.exp} · ${c.name}</div>
+            <div class="cnum">${card.num}</div>
+            <div class="cmeta">Expires ${card.exp} · ${card.name}</div>
           </div>
           <div class="cbadges">
-            ${c.dflt
+            ${card.dflt
               ? '<span class="badge-brand">Default</span>'
               : `<button class="set-dflt" data-idx="${i}">Set default</button>`}
           </div>
@@ -375,12 +390,12 @@ function initBilling() {
     renderCards();
 
     cardsList.addEventListener("click", e => {
+      const cards = loadCards();
       const dfltBtn = e.target.closest(".set-dflt");
       if (dfltBtn) {
         const idx = parseInt(dfltBtn.dataset.idx, 10);
-        cards.forEach((c, i) => { c.dflt = (i === idx); });
-        renderCards();
-        showToast("Default card updated.");
+        cards.forEach((card, i) => { card.dflt = (i === idx); });
+        saveCards(cards); renderCards(); showToast("Default card updated.");
         return;
       }
       const delBtn = e.target.closest(".cbtn-del");
@@ -389,25 +404,37 @@ function initBilling() {
         const wasDflt = cards[idx]?.dflt;
         cards.splice(idx, 1);
         if (wasDflt && cards.length > 0) cards[0].dflt = true;
-        renderCards();
-        showToast("Card removed.");
+        saveCards(cards); renderCards(); showToast("Card removed.");
       }
     });
   }
 
   const billTbody = document.getElementById("billTbody");
   if (billTbody) {
-    const rows = [
-      { desc:"Ride to Termini Station",   date:"7 Mar 2026",  amt:"€8.50",  status:"Completed", cls:"badge-green"  },
-      { desc:"Ride to Fiumicino Airport", date:"5 Mar 2026",  amt:"€32.00", status:"Completed", cls:"badge-green"  },
-      { desc:"Ride to Testaccio",         date:"2 Mar 2026",  amt:"€6.20",  status:"Refunded",  cls:"badge-purple" },
-      { desc:"Ride to Prati",             date:"28 Feb 2026", amt:"€11.00", status:"Completed", cls:"badge-green"  },
-      { desc:"Ride to EUR",               date:"25 Feb 2026", amt:"€14.50", status:"Pending",   cls:"badge-yellow" }
-    ];
-    billTbody.innerHTML = rows.map(r =>
-      `<tr><td>${r.desc}</td><td>${r.date}</td><td>${r.amt}</td>
-       <td><span class="badge ${r.cls}">${r.status}</span></td></tr>`
-    ).join("");
+    const txKey = "ride_rides_" + uid;
+    let rides = [];
+    try { rides = JSON.parse(localStorage.getItem(txKey) || "[]"); } catch {}
+    if (rides.length) {
+      billTbody.innerHTML = rides.slice(0, 8).map(r => `
+        <tr>
+          <td>Ride to ${r.to || "—"}</td>
+          <td>${r.date ? new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—"}</td>
+          <td>${r.status === "cancelled" ? "—" : "€" + (r.fare || 0).toFixed(2)}</td>
+          <td><span class="badge ${r.status==="completed"?"badge-green":r.status==="cancelled"?"badge-red":"badge-yellow"}">${r.status||"—"}</span></td>
+        </tr>`).join("");
+    } else {
+      const rows = [
+        { desc:"Ride to Termini Station",   date:"7 Mar 2026",  amt:"€8.50",  status:"Completed", cls:"badge-green"  },
+        { desc:"Ride to Fiumicino Airport", date:"5 Mar 2026",  amt:"€32.00", status:"Completed", cls:"badge-green"  },
+        { desc:"Ride to Testaccio",         date:"2 Mar 2026",  amt:"€6.20",  status:"Refunded",  cls:"badge-purple" },
+        { desc:"Ride to Prati",             date:"28 Feb 2026", amt:"€11.00", status:"Completed", cls:"badge-green"  },
+        { desc:"Ride to EUR",               date:"25 Feb 2026", amt:"€14.50", status:"Pending",   cls:"badge-yellow" }
+      ];
+      billTbody.innerHTML = rows.map(r =>
+        `<tr><td>${r.desc}</td><td>${r.date}</td><td>${r.amt}</td>
+         <td><span class="badge ${r.cls}">${r.status}</span></td></tr>`
+      ).join("");
+    }
   }
 
   const addCardToggle = document.getElementById("addCardToggle");
@@ -416,11 +443,12 @@ function initBilling() {
   const addCardSave   = document.getElementById("addCardSave");
 
   addCardToggle?.addEventListener("click", () => addForm?.classList.toggle("show"));
-  addCardCancel?.addEventListener("click", () => addForm?.classList.remove("show"));
+  addCardCancel?.addEventListener("click", () => { addForm?.classList.remove("show"); clearForm(); });
 
   const cName = document.getElementById("cName");
   const cNum  = document.getElementById("cNum");
   const cExp  = document.getElementById("cExp");
+  const cCvv  = document.getElementById("cCvv");
 
   cName?.addEventListener("input", () => {
     const el = document.getElementById("cpHolder");
@@ -443,15 +471,39 @@ function initBilling() {
   });
 
   addCardSave?.addEventListener("click", () => {
-    showToast("Card added!");
+    const name = cName?.value.trim();
+    const num  = cNum?.value.replace(/\s/g,"");
+    const exp  = cExp?.value;
+    const cvv  = cCvv?.value;
+    if (!name || num.length < 15 || exp.length < 4 || !cvv) {
+      showToast("Please fill in all fields correctly."); return;
+    }
+    const brand = num.startsWith("4")?"VISA":num.startsWith("5")?"MC":num.startsWith("3")?"AMEX":"CARD";
+    const cls   = brand==="VISA"?"visa":brand==="MC"?"mc":brand==="AMEX"?"amex":"other";
+    const cards = loadCards();
+    cards.push({
+      id: "c" + Date.now(), brand, cls,
+      num: "•••• •••• •••• " + num.slice(-4),
+      exp: exp.replace(" ",""), name, dflt: cards.length === 0
+    });
+    saveCards(cards);
+    if (cardsList) renderCards();
     addForm?.classList.remove("show");
+    clearForm();
+    showToast("Card added!");
+  });
+
+  function clearForm() {
     if (cName) cName.value = "";
     if (cNum)  cNum.value  = "";
     if (cExp)  cExp.value  = "";
-    const cCvv = document.getElementById("cCvv"); if (cCvv) cCvv.value = "";
-  });
+    if (cCvv)  cCvv.value  = "";
+    const h = document.getElementById("cpHolder"); if (h) h.textContent = "CARDHOLDER NAME";
+    const n = document.getElementById("cpNum");    if (n) n.textContent = "•••• •••• •••• ••••";
+    const e = document.getElementById("cpExp");    if (e) e.textContent = "MM / YY";
+    const b = document.getElementById("cpBrand");  if (b) b.textContent = "";
+  }
 }
-
 /* ── NOTIFICATIONS PANEL ─────────────────────────────────────────── */
 function initNotifications() {
   document.getElementById("saveNotifs")?.addEventListener("click", () => {
@@ -500,27 +552,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   initNav();
   initLogout();
-
-  // Profile dropdown wiring
-  const profileDd = document.getElementById("settingsProfileDd");
-  const tbAv = document.getElementById("tbAvatar");
-  if (tbAv && profileDd) {
-    tbAv.addEventListener("click", e => {
-      e.stopPropagation();
-      profileDd.classList.toggle("open");
-    });
-    document.addEventListener("click", e => {
-      if (!profileDd.contains(e.target) && e.target !== tbAv)
-        profileDd.classList.remove("open");
-    });
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape") profileDd.classList.remove("open");
-    });
-    document.getElementById("spdSignOut")?.addEventListener("click", () => {
-      profileDd.classList.remove("open");
-      document.getElementById("soModal")?.classList.add("open");
-    });
-  }
   await initAccount();
   await initSecurity();
   initAppearance();

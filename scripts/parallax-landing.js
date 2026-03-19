@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const scrolled   = -secRect.top - ENTRY_BIAS * vpH;
       const panelIndex = Math.max(0, Math.min(
-        Math.floor(scrolled / vpH + 0.50),
+        Math.floor(scrolled / vpH + 0.08),
         featurePanels.length - 1
       ));
       setActiveFeature(panelIndex);
@@ -262,6 +262,67 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", onScrollEffects, { passive: true });
     window.addEventListener("resize", onScrollEffects);
     onScrollEffects();
+
+    // ── MOBILE PARALLAX  (<=1024px) ─────────────────────────────────
+    (function initMobileParallax() {
+      if (!featurePanels.length || !parallaxSection) return;
+      function isMob() { return window.innerWidth <= 1024; }
+
+      function buildImages() {
+        featurePanels.forEach(panel => {
+          if (panel.querySelector('.feature-panel-img')) return;
+          const img = panel.dataset.img || '';
+          const alt = panel.dataset.alt || '';
+          if (!img) return;
+          const w = document.createElement('div');
+          w.className = 'feature-panel-img is-inactive';
+          w.innerHTML = `<img src="${img}" alt="${alt}" loading="lazy">`;
+          panel.appendChild(w);
+        });
+      }
+
+      function activatePanel(idx) {
+        featurePanels.forEach((p, i) => {
+          const el = p.querySelector('.feature-panel-img');
+          if (el) el.classList.toggle('is-inactive', i !== idx);
+        });
+        setActiveFeature(idx);
+      }
+
+      let observer = null;
+
+      function attach() {
+        if (!isMob()) return;
+        buildImages();
+        if (observer) observer.disconnect();
+        observer = new IntersectionObserver(entries => {
+          entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            const idx = featurePanels.indexOf(e.target);
+            if (idx !== -1) activatePanel(idx);
+          });
+        }, { threshold: 0.45 });
+        featurePanels.forEach(p => observer.observe(p));
+      }
+
+      function detach() {
+        if (observer) { observer.disconnect(); observer = null; }
+        featurePanels.forEach(p => {
+          const img = p.querySelector('.feature-panel-img');
+          if (img) img.remove();
+        });
+      }
+
+      if (isMob()) attach();
+
+      let wasMob = isMob();
+      window.addEventListener('resize', () => {
+        const now = isMob();
+        if (now && !wasMob) attach();
+        else if (!now && wasMob) detach();
+        wasMob = now;
+      });
+    })();
 
     // Hero scroll
     const splineBg = document.querySelector(".spline-bg");
@@ -347,10 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openMenu() {
       savedScrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflowY = 'scroll';
+      document.documentElement.style.overflowY = 'hidden';
 
       navOverlay.classList.add("is-open");
       navOverlay.setAttribute("aria-hidden", "false");
@@ -363,11 +421,8 @@ document.addEventListener("DOMContentLoaded", () => {
       navOverlay.classList.remove("is-open");
       navOverlay.setAttribute("aria-hidden", "true");
 
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflowY = '';
-      window.scrollTo(0, savedScrollY);
+      document.documentElement.style.overflowY = '';
+      requestAnimationFrame(() => { onScrollEffects(); });
 
       menuBtn.innerHTML = HAMBURGER_SVG;
       menuBtn.setAttribute("aria-label", "Open menu");
