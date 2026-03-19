@@ -165,12 +165,12 @@ function applyLandingTranslations() {
 
 /* ── BOOTSTRAP ────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", async () => {
-  // NOTE: Theme.apply() intentionally NOT called here —
-  // theme cannot be changed on the landing page.
+  Theme.apply();   // apply system/stored theme on landing too
   Motion.apply();
   Lang.apply();
 
-  await initTopbarDropdown(); // Session.get() inside here sets Lang if user has a preference
-  Lang.apply();               // re-apply after user lang may have been loaded
+  await initTopbarDropdown(); // Session.get() may load user lang/theme from DB
+  Lang.apply();               // re-apply after user prefs loaded
+  Theme.apply();              // re-apply theme after user prefs loaded
   applyLandingTranslations();
 });

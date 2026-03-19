@@ -50,7 +50,7 @@
 .auth-theme-btn {
   position: absolute; top: 28px; right: 30px;
   display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: 5px;
   color: var(--muted); border: 1px solid var(--border);
   background: var(--surface); transition: background .2s, color .2s;
 }
@@ -89,7 +89,7 @@
 .auth-social-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; padding: 12px 20px;
-  border-radius: 12px; border: 1px solid var(--border);
+  border-radius: 7px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-2);
   font-size: 14px; font-weight: 500;
   transition: background .2s, border-color .2s, transform .2s;
@@ -170,7 +170,7 @@
 /* Submit button */
 .auth-submit {
   position: relative; width: 100%; padding: 14px 24px;
-  border-radius: 12px; background: var(--text); color: var(--bg);
+  border-radius: 7px; background: var(--text); color: var(--bg);
   font-size: 15px; font-weight: 600; letter-spacing: -.01em;
   margin-top: 8px; overflow: hidden;
   transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s, opacity .25s;
@@ -199,7 +199,7 @@
 /* Error banner */
 .auth-error-banner {
   display: none; align-items: center; gap: 9px;
-  padding: 11px 13px; border-radius: 10px;
+  padding: 11px 13px; border-radius: 7px;
   background: var(--accent-dim); border: 1px solid rgba(224,48,80,.22);
   margin-top: 12px;
 }
@@ -216,7 +216,7 @@
 .strength-wrap  { margin-top: 7px; }
 .strength-bar   { display: flex; gap: 4px; margin-bottom: 5px; }
 .strength-bar span {
-  flex: 1; height: 3px; border-radius: 999px;
+  flex: 1; height: 3px; border-radius: 2px;
   background: var(--border); transition: background .3s;
 }
 .strength-bar span.weak   { background: var(--accent); }
@@ -252,7 +252,7 @@
 }
 
 .ac {
-  border-radius: 18px; overflow: hidden;
+  border-radius: 7px; overflow: hidden;
   border: 1px solid rgba(255,255,255,.07);
   background: #111;
   opacity: 0;
@@ -386,7 +386,7 @@
   width: 100%; max-width: 420px;
   background: rgba(18, 18, 30, 0.97);
   border: 1px solid var(--border-md);
-  border-radius: 20px;
+  border-radius: 10px;
   padding: 40px 36px 36px;
   box-shadow: 0 32px 80px rgba(0,0,0,.6);
   transform: translateY(16px) scale(.97);
@@ -418,7 +418,7 @@
 .fm-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
 
 .fm-icon {
-  width: 48px; height: 48px; border-radius: 14px;
+  width: 48px; height: 48px; border-radius: 8px;
   background: var(--surface-2); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 20px;

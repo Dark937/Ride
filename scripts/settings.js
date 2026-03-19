@@ -67,7 +67,7 @@ async function populateUserUI(user) {
   const tbName   = document.getElementById("tbName");
   if (tbName)   tbName.textContent = full;
   if (tbAvatar) {
-    if (user.photo) tbAvatar.innerHTML = `<img src="${user.photo}" alt="">`;
+    if (user.photo) _setAvatarPhoto(tbAvatar, user.photo, "");
     else tbAvatar.textContent = user.initials || full[0] || "R";
   }
 
@@ -77,7 +77,7 @@ async function populateUserUI(user) {
   if (sbPname)  sbPname.textContent  = full;
   if (sbPemail) sbPemail.textContent = user.email || "—";
   if (sbAv) {
-    if (user.photo) sbAv.innerHTML = `<img src="${user.photo}" alt="">`;
+    if (user.photo) _setAvatarPhoto(sbAv, user.photo, "");
     else sbAv.textContent = user.initials || full[0] || "R";
   }
 
@@ -85,7 +85,7 @@ async function populateUserUI(user) {
   const avName   = document.getElementById("avName");
   if (avName)   avName.textContent = full;
   if (avCircle) {
-    if (user.photo) avCircle.innerHTML = `<img src="${user.photo}" alt="">`;
+    if (user.photo) _setAvatarPhoto(avCircle, user.photo, "");
     else avCircle.textContent = user.initials || full[0] || "R";
   }
 }
@@ -300,14 +300,17 @@ async function initSecurity() {
 }
 
 /* ── APPEARANCE PANEL ────────────────────────────────────────────── */
-function initAppearance() {
+async function initAppearance() {
   const themeToggle = document.getElementById("themeToggleInp");
   if (themeToggle) {
     themeToggle.checked = (Theme.get() === "dark");
-    themeToggle.addEventListener("change", () => {
+    themeToggle.addEventListener("change", async () => {
       const next = themeToggle.checked ? "dark" : "light";
       Theme.set(next);
       Theme.apply();
+      // Persist to account if logged in
+      const u = await Session.get();
+      if (u) await Session.save({ ...u, theme: next });
     });
   }
 
@@ -316,7 +319,7 @@ function initAppearance() {
     // Legge direttamente da localStorage per evitare desync con shared.js
     const reduceActive = localStorage.getItem("ride_reduce_motion") === "true";
     motionToggle.checked = reduceActive;
-    motionToggle.addEventListener("change", () => {
+    motionToggle.addEventListener("change", async () => {
       localStorage.setItem("ride_reduce_motion", motionToggle.checked ? "true" : "false");
       if (motionToggle.checked) {
         document.documentElement.classList.add("reduce-motion");
@@ -328,6 +331,9 @@ function initAppearance() {
         Motion.set(motionToggle.checked);
         Motion.apply();
       }
+      // Persist to account if logged in
+      const u = await Session.get();
+      if (u) await Session.save({ ...u, reduceMotion: String(motionToggle.checked) });
     });
   }
 
@@ -349,13 +355,10 @@ function initAppearance() {
     const newLang = sel.dataset.lang;
     Lang.set(newLang);
     Lang.apply();
-    // Persist to user account so it loads on next login
+    // Persist to account (if logged in) or stay in cookie (guest)
     const user = await Session.get();
-    if (user) {
-      user.lang = newLang;
-      await Session.save(user);
-    }
-    showToast("Language saved!");
+    if (user) await Session.save({ ...user, lang: newLang });
+    showToast(Lang.t("saveLanguage") || "Language saved!");
   });
 }
 
@@ -550,7 +553,7 @@ function initProfileDropdown(user) {
   if (ddName)  ddName.textContent  = full;
   if (ddEmail) ddEmail.textContent = user.email || "";
   if (ddAv) {
-    if (user.photo) { ddAv.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`; ddAv.style.background = "transparent"; }
+    if (user.photo) { _setAvatarPhoto(ddAv, user.photo, ""); ddAv.style.background = "transparent"; }
     else ddAv.textContent = user.initials || full[0] || "R";
   }
 

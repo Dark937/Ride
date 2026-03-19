@@ -554,7 +554,7 @@ spline-viewer {
   width: 224px;
   background: rgba(10,10,16,0.94);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
+  border-radius: 10px;
   box-shadow:
     0 24px 64px rgba(0,0,0,0.60),
     inset 0 1px 0 rgba(255,255,255,0.07);
@@ -821,7 +821,7 @@ spline-viewer {
 
 .feature-card {
   padding: 28px;
-  border-radius: 28px;
+  border-radius: 10px;
   min-height: 240px;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
@@ -838,7 +838,7 @@ spline-viewer {
 
 .step-card {
   padding: 36px 32px 32px;
-  border-radius: 32px;
+  border-radius: 10px;
   min-height: 280px;
   cursor: pointer;
   transition: transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s ease, border-color 0.35s ease;
@@ -917,7 +917,7 @@ spline-viewer {
 }
 
 .vehicle-card {
-  border-radius: 28px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
@@ -1016,7 +1016,7 @@ spline-viewer {
 }
 
 .fidelity-wrap {
-  border-radius: 34px;
+  border-radius: 10px;
   padding: 40px;
   display: grid;
   grid-template-columns: 1fr 0.9fr;
@@ -1064,7 +1064,7 @@ spline-viewer {
   width: min(100%, 430px);
   min-height: 260px;
   padding: 28px;
-  border-radius: 30px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   /* Image bg set via inline style; gradient is fallback overlay */
@@ -1265,7 +1265,7 @@ spline-viewer {
 .features-image-card {
   width: 100%;
   max-width: 520px;
-  border-radius: 28px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow:
@@ -1299,7 +1299,7 @@ spline-viewer {
   bottom: 4%;
   width: min(420px, 85%);
   padding: 22px 24px;
-  border-radius: 26px;
+  border-radius: 10px;
   background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
   border: 1px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(16px);
@@ -1381,7 +1381,7 @@ spline-viewer {
 
 .supercar-stage {
   min-height: 620px;
-  border-radius: 34px;
+  border-radius: 10px;
   background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
   border: 1px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(16px);
@@ -1399,7 +1399,7 @@ spline-viewer {
   width: calc(100% - 40px);
   height: calc(100% - 40px);
   min-height: 540px;
-  border-radius: 28px;
+  border-radius: 10px;
   border: 1px dashed rgba(255,255,255,0.18);
   display: flex;
   align-items: center;
@@ -1775,7 +1775,7 @@ spline-viewer {
   /* Per-panel image injected by mobile observer JS */
   .feature-panel-img {
     width: 100%;
-    border-radius: 18px;
+    border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,.08);
     box-shadow: 0 12px 40px rgba(0,0,0,.38);
@@ -1866,7 +1866,7 @@ spline-viewer {
   .feature-panel-media,
   .feature-panel-content,
   .supercar-stage {
-    border-radius: 24px;
+    border-radius: 12px;
   }
 
   .fidelity-wrap {

@@ -560,7 +560,7 @@ function renderAccount(user,uid){
   const rides=RideData.getRides(uid),fid=RideData.getFid(uid);
   const name=`${user.firstName||''} ${user.lastName||''}`.trim();
   const av=document.getElementById('profileAvatar');
-  if(av){if(user.photo){av.innerHTML=`<img src="${user.photo}" alt="">`;av.classList.add('has-photo');}else{av.textContent=user.initials||name[0]||'R';}}
+  if(av){if(user.photo){_setAvatarPhoto(av,user.photo,"");av.classList.add('has-photo');}else{av.textContent=user.initials||name[0]||'R';}}
   document.getElementById('profileName').textContent=name||'—';
   document.getElementById('profileEmail').textContent=user.email||'—';
   document.getElementById('profileSince').textContent=user.createdAt?'Member since '+fmtDate(user.createdAt):'';
@@ -584,8 +584,13 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   const user=await Session.get();
   if(!user){window.location.href='login.html?redirect=dashboard.html';return;}
-  // Session.get() may have loaded user's preferred lang — re-apply
+  // Apply user's saved preferences from DB
   Lang.apply();
+  Theme.apply();
+  if(user.reduceMotion !== undefined && user.reduceMotion !== null) {
+    Motion.set(user.reduceMotion === 'true');
+    Motion.apply();
+  }
   const uid=user.id;
   RideData.seed(uid);
 
@@ -594,14 +599,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Topbar avatar
   const tbAv=document.getElementById('tbAvatar');
   if(tbAv){
-    if(user.photo){tbAv.innerHTML=`<img src="${user.photo}" alt="">`;tbAv.classList.add('has-photo');}
+    if(user.photo){_setAvatarPhoto(tbAv,user.photo,"");tbAv.classList.add('has-photo');}
     else{tbAv.textContent=user.initials||name[0]||'R';}
   }
 
   // Profile dropdown user info
   const ddAv=document.getElementById('ddAvatar');
   if(ddAv){
-    if(user.photo){ddAv.innerHTML=`<img src="${user.photo}" alt="">`;ddAv.style.background='transparent';}
+    if(user.photo){_setAvatarPhoto(ddAv,user.photo,"");ddAv.style.background='transparent';}
     else{ddAv.textContent=user.initials||name[0]||'R';}
   }
   document.getElementById('ddName').textContent=name;

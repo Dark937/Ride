@@ -21,10 +21,10 @@ const dbReady = (async () => {
         initials TEXT, createdAt TEXT,
         photo TEXT, phone TEXT,
         city TEXT, country TEXT, birthday TEXT,
-        lang TEXT
+        lang TEXT, theme TEXT, reduceMotion TEXT
       )
     `);
-    ["photo","phone","city","country","birthday","lang"].forEach(col => {
+    ["photo","phone","city","country","birthday","lang","theme","reduceMotion"].forEach(col => {
       try { db.run("ALTER TABLE users ADD COLUMN " + col + " TEXT"); } catch(_){}
     });
     await _idbSave();
@@ -99,18 +99,21 @@ const Session = {
       city:      user.city       !== undefined ? user.city     : (existing.city     ?? null),
       country:   user.country    !== undefined ? user.country  : (existing.country  ?? null),
       birthday:  user.birthday   !== undefined ? user.birthday : (existing.birthday ?? null),
-      lang:      user.lang       !== undefined ? user.lang     : (existing.lang     ?? null),
+      lang:        user.lang        !== undefined ? user.lang        : (existing.lang        ?? null),
+      theme:       user.theme       !== undefined ? user.theme       : (existing.theme       ?? null),
+      reduceMotion:user.reduceMotion !== undefined ? user.reduceMotion: (existing.reduceMotion ?? null),
     };
 
     const s = db.prepare(`
       INSERT OR REPLACE INTO users
-      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang,theme,reduceMotion)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `);
     s.run([merged.id, merged.firstName, merged.lastName, merged.email,
            merged.password, merged.initials, merged.createdAt,
            merged.photo, merged.phone, merged.city,
-           merged.country, merged.birthday, merged.lang]);
+           merged.country, merged.birthday, merged.lang,
+           merged.theme ?? null, merged.reduceMotion ?? null]);
     s.free();
     await _idbSave();
     localStorage.setItem("current_user_id", user.id);
@@ -125,8 +128,10 @@ const Session = {
       const r = s.getAsObject([uid]); s.free();
       if (r && r.id) {
         const safe = {...r}; delete safe.password;
-        // Apply user's preferred language if set in their account
-        if (safe.lang) Lang.set(safe.lang);
+        // Apply user's preferred lang/theme/motion from account
+        if (safe.lang)  Lang.set(safe.lang);
+        if (safe.theme) Theme.set(safe.theme);
+        // reduceMotion is applied explicitly in bootstrap, not here
         return safe;
       }
       return null;
@@ -136,11 +141,14 @@ const Session = {
   clear(wipePrefs = false) {
     localStorage.removeItem("current_user_id");
     if (wipePrefs) {
+      // On logout: remove stored prefs so system defaults take over
       localStorage.removeItem("ride_theme");
       localStorage.removeItem("ride_reduce_motion");
       localStorage.removeItem("ride_lang");
-      document.documentElement.setAttribute("data-theme", "dark");
-      document.documentElement.classList.remove("reduce-motion");
+      // Restore system theme and Italian default
+      Theme.apply();
+      Lang.apply();
+      Motion.apply();
     }
   },
 
@@ -258,6 +266,23 @@ const LANGS = {
     noUpcomingRides:"No upcoming rides", bookRide:"Book a ride",
     bookAnother:"Book another", cancelRide:"Cancel ride",
     myFidelityCard:"My Fidelity Card",
+    settings:"Settings",
+    signOut:"Sign out",
+    cancel:"Cancel",
+    addNewCard:"Add new card",
+    cardNumber:"Card number",
+    cardholderName:"Cardholder name",
+    expiry:"Expiry",
+    saveCard:"Save card",
+    editInSettings:"Edit in Settings",
+    fidelityTier:"Current tier",
+    memberSince:"Member since",
+    paymentMethods2:"Payment Methods",
+    personalInfo2:"Personal Info",
+    pointsHistory:"Points History",
+    spending:"Spending",
+    upcomingAll:"See all",
+    recentReviews:"Recent Reviews",
     account:"Account", security:"Security", appearance:"Appearance",
     billing:"Billing", notifications:"Notifications", logout:"Log out",
     personalInfo:"Personal information",
@@ -363,6 +388,23 @@ const LANGS = {
     noUpcomingRides:"Nessun viaggio programmato", bookRide:"Prenota un viaggio",
     bookAnother:"Prenota un altro", cancelRide:"Cancella viaggio",
     myFidelityCard:"La mia Carta Fedeltà",
+    settings:"Impostazioni",
+    signOut:"Esci",
+    cancel:"Annulla",
+    addNewCard:"Aggiungi carta",
+    cardNumber:"Numero carta",
+    cardholderName:"Titolare",
+    expiry:"Scadenza",
+    saveCard:"Salva carta",
+    editInSettings:"Modifica in Impostazioni",
+    fidelityTier:"Livello attuale",
+    memberSince:"Membro dal",
+    paymentMethods2:"Metodi di pagamento",
+    personalInfo2:"Informazioni",
+    pointsHistory:"Storico punti",
+    spending:"Spese",
+    upcomingAll:"Vedi tutti",
+    recentReviews:"Recensioni recenti",
     account:"Account", security:"Sicurezza", appearance:"Aspetto",
     billing:"Fatturazione", notifications:"Notifiche", logout:"Esci",
     personalInfo:"Informazioni personali",
@@ -465,6 +507,23 @@ const LANGS = {
     noUpcomingRides:"Aucun trajet prévu", bookRide:"Réserver un trajet",
     bookAnother:"Réserver un autre", cancelRide:"Annuler le trajet",
     myFidelityCard:"Ma Carte Fidélité",
+    settings:"Paramètres",
+    signOut:"Déconnexion",
+    cancel:"Annuler",
+    addNewCard:"Ajouter une carte",
+    cardNumber:"Numéro de carte",
+    cardholderName:"Titulaire",
+    expiry:"Expiration",
+    saveCard:"Enregistrer",
+    editInSettings:"Modifier dans Paramètres",
+    fidelityTier:"Niveau actuel",
+    memberSince:"Membre depuis",
+    paymentMethods2:"Moyens de paiement",
+    personalInfo2:"Informations",
+    pointsHistory:"Historique",
+    spending:"Dépenses",
+    upcomingAll:"Voir tout",
+    recentReviews:"Avis récents",
     account:"Compte", security:"Sécurité", appearance:"Apparence",
     billing:"Facturation", notifications:"Notifications", logout:"Déconnexion",
     personalInfo:"Informations personnelles",
@@ -567,6 +626,23 @@ const LANGS = {
     noUpcomingRides:"Sin viajes programados", bookRide:"Reservar un viaje",
     bookAnother:"Reservar otro", cancelRide:"Cancelar viaje",
     myFidelityCard:"Mi Tarjeta Fidelidad",
+    settings:"Configuración",
+    signOut:"Cerrar sesión",
+    cancel:"Cancelar",
+    addNewCard:"Añadir tarjeta",
+    cardNumber:"Número de tarjeta",
+    cardholderName:"Titular",
+    expiry:"Caducidad",
+    saveCard:"Guardar",
+    editInSettings:"Editar en Configuración",
+    fidelityTier:"Nivel actual",
+    memberSince:"Miembro desde",
+    paymentMethods2:"Métodos de pago",
+    personalInfo2:"Información",
+    pointsHistory:"Historial",
+    spending:"Gastos",
+    upcomingAll:"Ver todo",
+    recentReviews:"Reseñas recientes",
     account:"Cuenta", security:"Seguridad", appearance:"Apariencia",
     billing:"Facturación", notifications:"Notificaciones", logout:"Cerrar sesión",
     personalInfo:"Información personal",
@@ -668,6 +744,23 @@ const LANGS = {
     noUpcomingRides:"暂无预约行程", bookRide:"预约行程",
     bookAnother:"再次预约", cancelRide:"取消行程",
     myFidelityCard:"我的积分卡",
+    settings:"设置",
+    signOut:"退出登录",
+    cancel:"取消",
+    addNewCard:"添加卡片",
+    cardNumber:"卡号",
+    cardholderName:"持卡人",
+    expiry:"有效期",
+    saveCard:"保存",
+    editInSettings:"在设置中编辑",
+    fidelityTier:"当前等级",
+    memberSince:"会员自",
+    paymentMethods2:"支付方式",
+    personalInfo2:"个人信息",
+    pointsHistory:"积分记录",
+    spending:"消费",
+    upcomingAll:"查看全部",
+    recentReviews:"最近评价",
     account:"账户", security:"安全", appearance:"外观",
     billing:"账单", notifications:"通知", logout:"退出登录",
     personalInfo:"个人信息",
@@ -748,25 +841,56 @@ const LANGS = {
 
 /* ── LANG ─────────────────────────────────────────────────────────── */
 const Lang = {
+  // Default: Italian. Detect from browser only if no stored pref.
   _detect() {
     const nav = (navigator.language || navigator.userLanguage || "it").toLowerCase();
-    if (nav.startsWith("it")) return "it";
     if (nav.startsWith("fr")) return "fr";
     if (nav.startsWith("es")) return "es";
     if (nav.startsWith("zh")) return "zh";
     if (nav.startsWith("en")) return "en";
-    return "it";
+    return "it"; // Italian as default
   },
-  get()  { return localStorage.getItem("ride_lang") || this._detect(); },
-  set(l) { localStorage.setItem("ride_lang", l); },
+  // Cookie helpers (for guest users without an account)
+  _getCookie() {
+    const m = document.cookie.match(/(?:^|;\s*)ride_lang=([^;]+)/);
+    return m ? m[1] : null;
+  },
+  _setCookie(l) {
+    // 1-year cookie, SameSite=Lax, no Secure flag needed for local
+    const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+    document.cookie = `ride_lang=${l};expires=${exp};path=/;SameSite=Lax`;
+  },
+  get() {
+    // Priority: 1) localStorage (set by logged-in user), 2) cookie (guest), 3) detect
+    return localStorage.getItem("ride_lang") || this._getCookie() || this._detect();
+  },
+  set(l) {
+    // Always write both so it persists across login/logout transitions
+    localStorage.setItem("ride_lang", l);
+    this._setCookie(l);
+  },
   t(key) { return (LANGS[this.get()] || LANGS.en)[key] || key; },
   apply() {
     const t = LANGS[this.get()] || LANGS.en;
+    // data-i18n (standard key)
     document.querySelectorAll("[data-i18n]").forEach(el => {
       const v = t[el.dataset.i18n]; if (v != null) el.textContent = v;
     });
+    // data-i18n-key (used on index.html sections)
+    document.querySelectorAll("[data-i18n-key]").forEach(el => {
+      const v = t[el.dataset.i18nKey];
+      if (v == null) return;
+      const svgs = [...el.querySelectorAll("svg")];
+      el.textContent = v;
+      svgs.forEach(s => el.insertBefore(s, el.firstChild));
+    });
+    // placeholders
     document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
       const v = t[el.dataset.i18nPlaceholder]; if (v != null) el.placeholder = v;
+    });
+    // aria-label
+    document.querySelectorAll("[data-i18n-aria]").forEach(el => {
+      const v = t[el.dataset.i18nAria]; if (v != null) el.setAttribute("aria-label", v);
     });
     document.querySelectorAll(".lang-label").forEach(el => {
       el.textContent = t.langLabel || this.get().toUpperCase();
@@ -845,8 +969,26 @@ function _applySettingsDescriptions(t) {
 
 /* ── THEME ────────────────────────────────────────────────────────── */
 const Theme = {
-  get()  { return localStorage.getItem("ride_theme") || "dark"; },
-  set(t) { localStorage.setItem("ride_theme", t); },
+  // Detect system preference as default
+  _detect() {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme:dark)").matches
+      ? "dark" : "light";
+  },
+  _getCookie() {
+    const m = document.cookie.match(/(?:^|;\s*)ride_theme=([^;]+)/);
+    return m ? m[1] : null;
+  },
+  _setCookie(t) {
+    const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+    document.cookie = `ride_theme=${t};expires=${exp};path=/;SameSite=Lax`;
+  },
+  get()  {
+    return localStorage.getItem("ride_theme") || this._getCookie() || this._detect();
+  },
+  set(t) {
+    localStorage.setItem("ride_theme", t);
+    this._setCookie(t);
+  },
 
   apply() {
     const t = this.get();
@@ -869,9 +1011,10 @@ const Theme = {
 
 /* ── REDUCE MOTION ────────────────────────────────────────────────── */
 const Motion = {
+  // Default: OFF (false). Only activated when user explicitly enables it in settings.
   get() {
     const s = localStorage.getItem("ride_reduce_motion");
-    return s !== null ? s === "true" : window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    return s === "true"; // never auto-detect — default is always false
   },
   set(v) { localStorage.setItem("ride_reduce_motion", String(v)); },
   apply() {
@@ -898,14 +1041,37 @@ function fieldOk(el) {
   if (e) e.classList.remove("visible");
 }
 
+
+/* ── SAFE PHOTO HELPER ────────────────────────────────────────────────
+   FIX C-02: use DOM API to set avatar photo — avoids innerHTML XSS
+   when a user sets a crafted data: URL as their profile photo.     */
+function _setAvatarPhoto(el, src, altText) {
+  if (!el) return;
+  // Only allow data: URLs (base64 uploads) or same-origin relative paths
+  const isSafe = /^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/.test(src)
+              || /^(?!javascript:)(?![/]{2})[\w\-./ ]+$/.test(src);
+  if (!isSafe) { console.warn('Avatar photo blocked — unsafe src'); return; }
+  el.textContent = '';
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = altText || '';
+  el.appendChild(img);
+}
+
 /* ── INSTANT PREFS (prevent flash) ───────────────────────────────── */
 (function() {
-  const isLanding = document.documentElement.hasAttribute("data-landing");
-  if (!isLanding) {
-    Theme.apply();
-  }
+  // Apply theme immediately to avoid FOUC
+  // Use stored pref, cookie, or fall back to system preference
+  const stored = localStorage.getItem("ride_theme");
+  const cookie = (document.cookie.match(/(?:^|;\s*)ride_theme=([^;]+)/) || [])[1];
+  const system = window.matchMedia && window.matchMedia("(prefers-color-scheme:dark)").matches
+    ? "dark" : "light";
+  const theme = stored || cookie || system;
+  document.documentElement.setAttribute("data-theme", theme);
+  // Motion: only from localStorage (account preference)
+  if (localStorage.getItem("ride_reduce_motion") === "true")
+    document.documentElement.classList.add("reduce-motion");
 })();
-Motion.apply();
 /* ── CLEAN URLS (remove .html from address bar) ─────────────────── */
 (function() {
   const path = window.location.pathname;

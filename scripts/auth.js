@@ -221,8 +221,11 @@ function initLoginForm() {
     if (!result.ok) { showBanner(result.error); return; }
     await Session.save(result.user);
     Session.saveDevice();
-    const redirect = new URLSearchParams(window.location.search).get("redirect") || "index.html";
-    window.location.href = redirect;
+    // FIX C-01: prevent open redirect — only allow same-origin relative paths
+    const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
+    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", ""];
+    const redirect = ALLOWED_REDIRECTS.includes(rawRedirect) ? rawRedirect : "index.html";
+    window.location.href = redirect || "index.html";
   });
 
   initForgotPassword();
@@ -276,7 +279,7 @@ function initRegisterForm() {
     if (!result.ok) { showBanner(result.error); return; }
     await Session.save(result.user);
     Session.saveDevice();
-    window.location.href = "index.html";
+    window.location.href = "/";
   });
 }
 
