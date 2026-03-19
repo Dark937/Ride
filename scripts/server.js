@@ -16,10 +16,35 @@ function applySecurityHeaders(req, res, next) {
   res.setHeader('X-XSS-Protection',          '0'); // disabled in favour of CSP
   res.setHeader('Referrer-Policy',           'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy',        'geolocation=(), camera=(), microphone=()');
-  res.setHeader('Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
-  );
+  // CSP: whitelist inline scripts by hash (no unsafe-inline needed),
+  // allow Google Fonts, unpkg CDN (spline viewer), and WASM execution.
+  const inlineScriptHashes = [
+    "'sha256-Cnvf4An+Z1PYTrc86hNsT128/nDRkkQHDoq7KJ781GM='", // index.html
+    "'sha256-5qOFzbSteATv9poShdvmMth/arfJmZdBhlcuffpYD1c='", // dashboard.html
+    "'sha256-WnvhjbPqxyliCkx0EZdyUKN6m5L360DNy6peJb86JHU='", // settings.html
+    "'sha256-ZlyzTylzriMqewO9P8iTDN96VchltcvA7jE6Xk/vb4Y='", // login.html + register.html
+    "'sha256-7h4N/XV4lF09Y30+EA2Ti3YBV2TboMwATObM6Mh4XUk='", // booking.html
+  ].join(' ');
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    // Client JS files (self) + CDN scripts (spline viewer) + WASM unsafe-eval
+    `script-src 'self' https://unpkg.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
+    // Google Fonts stylesheet + self styles + inline styles (needed for dynamic style attrs)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // Google Fonts binary files
+    "font-src 'self' https://fonts.gstatic.com data:",
+    // Images: self + data URIs (avatars) + blob (canvas exports)
+    "img-src 'self' data: blob:",
+    // API calls only to self (no third-party fetch)
+    "connect-src 'self'",
+    // WASM workers
+    "worker-src 'self' blob:",
+    // No iframes anywhere
+    "frame-ancestors 'none'",
+    // No plugins
+    "object-src 'none'",
+    "base-uri 'self'",
+  ].join('; '));
   // HSTS only over HTTPS
   if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -137,10 +162,11 @@ app.use(express.static(ROOT, {
   setHeaders(res, filePath) {
     const rel = path.relative(ROOT, filePath).replace(/\\/g, '/');
     const blocked = [
-      /^scripts\/.*\.js$/,   // server-side JS
-      /^\.env/,                // env files
-      /^node_modules/,          // dependencies
-      /^package(-lock)?\.json$/ // package manifests
+      /^scripts[\/\\]server\.js$/,    // only the server file itself
+      /^\.env/,                           // env files of any name
+      /^node_modules[\/\\]/,            // dependencies
+      /^package(-lock)?\.json$/,          // package manifests
+      /^\.git[\/\\]/,                  // git internals
     ];
     if (blocked.some(re => re.test(rel))) {
       res.statusCode = 403;
