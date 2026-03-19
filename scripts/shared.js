@@ -148,7 +148,7 @@ const Session = {
 /* ── MOCK AUTH ────────────────────────────────────────────────────── */
 const Auth = {
   getApiBase() {
-    return `${window.location.protocol}//${window.location.hostname}:3000`;
+    return `${window.location.protocol}//${window.location.hostname}`;
   },
 
   async register({ firstName, lastName, email, password }) {

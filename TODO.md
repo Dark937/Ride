@@ -9,3 +9,12 @@
 - sistema dell'account del driver
 - pulire il codice
 - sistemare e riordinare il codice
+
+
+sistemare linguaggio index html
+sistemare database che non funziona - ne login ne register (:3000/api/register:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT)
+tempo prima feature troppo lungo rispetto alle altre
+dashboard da sistemare (fidelity section - topbar uguale a settings - )
+register page sistemare colori livello password con light mode
+sistemare estetica immagini register/login con light mode
+
