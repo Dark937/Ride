@@ -1222,7 +1222,10 @@ function _applyDriverPromo(t) {
     if (svg) eyebrow.insertBefore(svg, eyebrow.firstChild);
   }
   if (headline && t.dpHeadline) {
-    headline.innerHTML = t.dpHeadline.replace("\n", "<br>");
+    // Safe: escape the translation value first, then restore only the
+    // intentional line-break tag. Translation strings are trusted static
+    // data but we escape anyway for defence-in-depth.
+    headline.innerHTML = esc(t.dpHeadline).replace("\n", "<br>");
   }
   if (body && t.dpBody) {
     body.textContent = t.dpBody;

@@ -37,7 +37,12 @@ async function initTopbarDropdown() {
       circle.classList.add("is-logged-in");
       if (user.photo) {
         circle.classList.add("has-photo");
-        circle.innerHTML = `<img src="${user.photo}" alt="Avatar">`;
+        // Use DOM API — avoids XSS if photo URL ever contains injected markup
+        const img = document.createElement("img");
+        img.src = user.photo;
+        img.alt = "Avatar";
+        circle.textContent = "";
+        circle.appendChild(img);
       } else {
         circle.textContent = user.initials || "R";
       }
