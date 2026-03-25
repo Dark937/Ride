@@ -28,19 +28,19 @@ function applySecurityHeaders(req, res, next) {
   ].join(' ');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    // Client JS + CDN (spline) + Google Maps JS API + WASM
-    `script-src 'self' https://unpkg.com https://maps.googleapis.com https://maps.gstatic.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
-    // Google Fonts stylesheet + Maps styles + self styles + inline styles (dynamic attrs)
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
-    // Google Fonts + Maps glyph fonts
+    // Client JS + unpkg CDN (Leaflet, Spline) + WASM
+    `script-src 'self' https://unpkg.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
+    // Google Fonts + unpkg (Leaflet CSS) + self styles + inline styles
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com",
+    // Google Fonts
     "font-src 'self' https://fonts.gstatic.com data:",
-    // Images: self + data URIs (avatars) + blob (canvas) + Google Maps tiles
-    "img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com",
-    // API calls: self + Google Maps Directions/Places/Geocode APIs
-    "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://places.googleapis.com",
+    // Images: self + data URIs + blob + CartoDB tiles + OSM tiles
+    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org",
+    // API calls: self + Nominatim (geocoding/autocomplete) + OSRM (routing) + unpkg
+    "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://unpkg.com",
     // WASM workers
     "worker-src 'self' blob:",
-    // No iframes anywhere (Maps JS API doesn't use iframes)
+    // No iframes
     "frame-ancestors 'none'",
     // No plugins
     "object-src 'none'",
