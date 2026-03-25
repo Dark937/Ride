@@ -215,11 +215,31 @@ function initLoginForm() {
     if (!valid) return;
 
     setLoading(true);
-    const result = await Auth.login({ email: emailIn.value.trim(), password: passIn.value });
-    setLoading(false);
+    let loggedIn = false;
 
-    if (!result.ok) { showBanner(result.error); return; }
-    await Session.save(result.user);
+    // Try server API first (enables cross-device sync via JWT)
+    try {
+      const resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailIn.value.trim(), password: passIn.value }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        localStorage.setItem('ride_token', data.token);
+        await Session.save({ ...data.user, id: data.user.id.toString() });
+        loggedIn = true;
+      }
+    } catch (_) { /* server unavailable — fall back to local */ }
+
+    if (!loggedIn) {
+      const result = await Auth.login({ email: emailIn.value.trim(), password: passIn.value });
+      if (!result.ok) { setLoading(false); showBanner(result.error); return; }
+      localStorage.removeItem('ride_token');
+      await Session.save(result.user);
+    }
+
+    setLoading(false);
     Session.saveDevice();
     // FIX C-01: prevent open redirect — only allow same-origin relative paths
     const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
@@ -268,16 +288,45 @@ function initRegisterForm() {
     if (!valid) return;
 
     setLoading(true);
-    const result = await Auth.register({
-      firstName: firstIn.value.trim(),
-      lastName:  lastIn.value.trim(),
-      email:     emailIn.value.trim(),
-      password:  passIn.value,
-    });
-    setLoading(false);
+    let serverRegistered = false;
 
-    if (!result.ok) { showBanner(result.error); return; }
-    await Session.save(result.user);
+    // Try server API first (enables cross-device sync)
+    try {
+      const resp = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstIn.value.trim(),
+          lastName:  lastIn.value.trim(),
+          email:     emailIn.value.trim(),
+          password:  passIn.value,
+        }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        localStorage.setItem('ride_token', data.token);
+        await Session.save({ ...data.user, id: data.user.id.toString() });
+        serverRegistered = true;
+      } else {
+        setLoading(false);
+        showBanner(data.error || 'Registration failed.');
+        return;
+      }
+    } catch (_) { /* server unavailable — fall back to local */ }
+
+    if (!serverRegistered) {
+      const result = await Auth.register({
+        firstName: firstIn.value.trim(),
+        lastName:  lastIn.value.trim(),
+        email:     emailIn.value.trim(),
+        password:  passIn.value,
+      });
+      if (!result.ok) { setLoading(false); showBanner(result.error); return; }
+      localStorage.removeItem('ride_token');
+      await Session.save(result.user);
+    }
+
+    setLoading(false);
     Session.saveDevice();
     window.location.href = "/";
   });

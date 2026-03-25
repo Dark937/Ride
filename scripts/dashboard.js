@@ -1,6 +1,64 @@
 "use strict";
 
 /* ════════════════════════════════════════════════════════
+   SERVER API HELPERS
+   ════════════════════════════════════════════════════════ */
+function getToken() { return localStorage.getItem('ride_token') || null; }
+
+async function apiRequest(method, path, body) {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    const r = await fetch(path, opts);
+    if (!r.ok) return null;
+    return r.json();
+  } catch (_) { return null; }
+}
+
+/* Sync server data → localStorage, auto-complete past rides, award points */
+async function syncFromServer(uid) {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const allBookings = await apiRequest('GET', '/api/bookings');
+    if (!allBookings) return;
+
+    const now = Date.now();
+    // Auto-complete upcoming rides whose end time has passed
+    const toComplete = allBookings.filter(b =>
+      b.status === 'upcoming' &&
+      new Date(b.datetime).getTime() + (b.durationMin || 30) * 60000 < now
+    );
+    await Promise.all(toComplete.map(b =>
+      apiRequest('POST', `/api/bookings/${b._id}/complete`)
+    ));
+
+    // Reload after completions
+    const refreshed = toComplete.length
+      ? (await apiRequest('GET', '/api/bookings'))
+      : allBookings;
+    if (!refreshed) return;
+
+    const upcoming   = refreshed.filter(b => b.status === 'upcoming').map(b => ({
+      id: b._id, from: b.from, to: b.to, datetime: b.datetime,
+      car: b.car, fare: b.fare, durationMin: b.durationMin, passengers: b.passengers, notes: b.notes,
+    }));
+    const completed  = refreshed.filter(b => b.status !== 'upcoming').map(b => ({
+      id: b._id, from: b.from, to: b.to, date: b.completedAt || b.datetime,
+      status: b.status, fare: b.fare, car: b.car, pts: b.pts || Math.round(b.fare),
+    }));
+
+    localStorage.setItem('ride_bookings_' + uid, JSON.stringify(upcoming));
+    if (completed.length) localStorage.setItem('ride_rides_' + uid, JSON.stringify(completed));
+
+    const fid = await apiRequest('GET', '/api/fidelity');
+    if (fid) localStorage.setItem('ride_fidelity_' + uid, JSON.stringify(fid));
+  } catch (_) {}
+}
+
+/* ════════════════════════════════════════════════════════
    DATA LAYER
    ════════════════════════════════════════════════════════ */
 const RideData = {
@@ -143,13 +201,16 @@ function renderNextRide(bookings,uid) {
   const next=bookings[0];
   badge.style.display=''; badge.textContent=bookings.length+' upcoming';
   const more=bookings.length>1?`<div class="nr-more" id="seeAllUpcoming">+ ${bookings.length-1} more — tap to manage</div>`:'';
-  body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${esc(next.from)}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${esc(next.to)}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(fmtDatetime(next.datetime))}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${esc(next.car)}</span><span class="nr-meta-item" style="color:var(--brand)">€${esc(next.fare.toFixed(2))}</span></div><div class="nr-actions"><button class="nr-btn primary" id="bookAnotherBtn">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" data-cancel="${esc(next.id)}" data-uid="${esc(uid)}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
+  body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${esc(next.from)}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${esc(next.to)}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(fmtDatetime(next.datetime))}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${esc(next.car)}</span><span class="nr-meta-item" style="color:var(--brand)">€${esc(next.fare.toFixed(2))}</span></div><div class="nr-actions"><button class="nr-btn primary" id="bookAnotherBtn">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" id="editNextRideBtn">Edit</button><button class="nr-btn ghost" data-cancel="${esc(next.id)}" data-uid="${esc(uid)}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
   document.getElementById('bookAnotherBtn')?.addEventListener('click', () => { window.location.href = 'booking.html'; });
+  document.getElementById('editNextRideBtn')?.addEventListener('click', () => openEditRide(next, uid));
   document.getElementById('seeAllUpcoming')?.addEventListener('click',()=>openUpcoming(bookings,uid));
   document.querySelector(`[data-cancel="${next.id}"]`)?.addEventListener('click',()=>cancelBooking(next.id,uid));
 }
 
-function cancelBooking(id,uid) {
+async function cancelBooking(id,uid) {
+  // Best-effort server cancel (id may be MongoDB _id)
+  await apiRequest('DELETE', `/api/bookings/${id}`);
   const b=RideData.getBookings(uid).filter(x=>x.id!==id);
   RideData.saveBookings(uid,b); renderNextRide(b,uid);
   if(document.getElementById('upcomingOverlay').classList.contains('open')) openUpcoming(b,uid);
@@ -157,9 +218,131 @@ function cancelBooking(id,uid) {
 }
 function openUpcoming(bookings,uid) {
   const ol=document.getElementById('upcomingList');
-  ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${esc(fmtDatetime(b.datetime))}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${esc(b.from)}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${esc(b.to)}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${esc(b.car)} · €${esc(b.fare.toFixed(2))}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${esc(b.id)}" data-uid="${esc(uid)}">Cancel</button><button class="ui-btn edit">Edit (soon)</button></div></div>`).join('');
+  ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${esc(fmtDatetime(b.datetime))}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${esc(b.from)}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${esc(b.to)}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${esc(b.car)} · €${esc(b.fare.toFixed(2))}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${esc(b.id)}" data-uid="${esc(uid)}">Cancel</button><button class="ui-btn edit" data-edit="${esc(b.id)}" data-uid="${esc(uid)}">Edit</button></div></div>`).join('');
   ol.querySelectorAll('[data-cancel]').forEach(btn=>btn.addEventListener('click',()=>cancelBooking(btn.dataset.cancel,btn.dataset.uid)));
+  ol.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
+    const booking=RideData.getBookings(uid).find(b=>b.id===btn.dataset.edit);
+    if(booking) openEditRide(booking, uid);
+  }));
   document.getElementById('upcomingOverlay').classList.add('open');
+}
+
+/* ════════════════════════════════════════════════════════
+   EDIT RIDE MODAL
+   ════════════════════════════════════════════════════════ */
+function openEditRide(booking, uid) {
+  // Remove any existing edit modal
+  document.getElementById('editRideOverlay')?.remove();
+
+  const dt = new Date(booking.datetime);
+  const pad = n => String(n).padStart(2,'0');
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const overlay = document.createElement('div');
+  overlay.id = 'editRideOverlay';
+  overlay.className = 'upcoming-overlay';
+  overlay.style.cssText = 'z-index:1100';
+  overlay.innerHTML = `
+    <div class="upcoming-modal" style="max-width:440px">
+      <div class="upcoming-modal-hd">
+        <span class="upcoming-modal-title">Edit Ride</span>
+        <button class="um-close" id="editRideClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div style="padding:0 20px 20px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
+          ${esc(booking.from)} → ${esc(booking.to)}
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Date &amp; Time</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <select id="erDay" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+              ${Array.from({length:31},(_,i)=>`<option value="${pad(i+1)}" ${i+1===dt.getDate()?'selected':''}>${i+1}</option>`).join('')}
+            </select>
+            <select id="erMonth" style="flex:1;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+              ${MONTHS.map((m,i)=>`<option value="${pad(i+1)}" ${i===dt.getMonth()?'selected':''}>${m}</option>`).join('')}
+            </select>
+            <select id="erYear" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+              ${[0,1,2].map(o=>{const y=new Date().getFullYear()+o;return`<option value="${y}" ${y===dt.getFullYear()?'selected':''}>${y}</option>`;}).join('')}
+            </select>
+            <select id="erHour" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+              ${Array.from({length:24},(_,i)=>`<option value="${pad(i)}" ${i===dt.getHours()?'selected':''}>${pad(i)}</option>`).join('')}
+            </select>
+            <select id="erMinute" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+              ${Array.from({length:12},(_,i)=>`<option value="${pad(i*5)}" ${Math.round(dt.getMinutes()/5)*5===i*5?'selected':''}>${pad(i*5)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Passengers</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button id="erPassMinus" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border-md);color:var(--fg);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+            <span id="erPassVal" style="font-size:16px;font-weight:600;min-width:20px;text-align:center">${booking.passengers||1}</span>
+            <button id="erPassPlus" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border-md);color:var(--fg);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Notes for driver</label>
+          <textarea id="erNotes" rows="3" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px;resize:vertical;box-sizing:border-box">${esc(booking.notes||'')}</textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button id="erSave" style="flex:1;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">Save changes</button>
+          <button id="erCancel" style="padding:12px 18px;background:var(--card);color:var(--fg);border:1px solid var(--border-md);border-radius:10px;font-size:15px;cursor:pointer">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.classList.add('open'), 10);
+
+  let passengers = booking.passengers || 1;
+  const passVal = overlay.querySelector('#erPassVal');
+  overlay.querySelector('#erPassMinus').addEventListener('click', () => { if(passengers>1){passengers--;passVal.textContent=passengers;} });
+  overlay.querySelector('#erPassPlus').addEventListener('click',  () => { if(passengers<7){passengers++;passVal.textContent=passengers;} });
+
+  const close = () => { overlay.classList.remove('open'); setTimeout(()=>overlay.remove(),300); };
+  overlay.querySelector('#editRideClose').addEventListener('click', close);
+  overlay.querySelector('#erCancel').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if(e.target===overlay) close(); });
+
+  overlay.querySelector('#erSave').addEventListener('click', async () => {
+    const day=overlay.querySelector('#erDay').value;
+    const mon=overlay.querySelector('#erMonth').value;
+    const yr =overlay.querySelector('#erYear').value;
+    const hr =overlay.querySelector('#erHour').value;
+    const mn =overlay.querySelector('#erMinute').value;
+    const notes=overlay.querySelector('#erNotes').value.trim();
+    const newDatetime = `${yr}-${mon}-${day}T${hr}:${mn}`;
+
+    // Conflict check (excluding current booking)
+    const others = RideData.getBookings(uid).filter(b=>b.id!==booking.id && b.status!=='cancelled');
+    const newStartMs = new Date(newDatetime).getTime();
+    const durationMin = booking.durationMin || 30;
+    const newEndMs = newStartMs + durationMin * 60000;
+    const conflict = others.find(b => {
+      const bS=new Date(b.datetime).getTime();
+      const bE=bS+(b.durationMin||30)*60000;
+      return newStartMs < bE && newEndMs > bS;
+    });
+    if(conflict) { toast('⚠ Conflict with ride to '+conflict.to); return; }
+
+    // Try server first
+    const saved = await apiRequest('PUT', `/api/bookings/${booking.id}`, {
+      datetime: new Date(newDatetime).toISOString(),
+      passengers,
+      notes,
+    });
+
+    // Update localStorage
+    const bookings = RideData.getBookings(uid).map(b =>
+      b.id===booking.id ? {...b, datetime:new Date(newDatetime).toISOString(), passengers, notes} : b
+    );
+    RideData.saveBookings(uid, bookings);
+
+    close();
+    renderNextRide(bookings, uid);
+    if(document.getElementById('upcomingOverlay').classList.contains('open')) openUpcoming(bookings, uid);
+    toast('Ride updated.');
+  });
 }
 
 function renderReviews(uid) {
@@ -594,6 +777,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     Motion.apply();
   }
   const uid=user.id;
+
+  // Sync server data → localStorage (auto-completes past rides, awards points)
+  await syncFromServer(uid);
+
   RideData.seed(uid);
 
   const name=`${user.firstName||''} ${user.lastName||''}`.trim()||'Rider';

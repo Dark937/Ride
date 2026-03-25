@@ -144,7 +144,7 @@ app.use(cors({
     }
     cb(new Error('CORS: origin not allowed'));
   },
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: false,
   optionsSuccessStatus: 200
 }));
@@ -158,7 +158,7 @@ app.use(express.json({ limit: '16kb' }));
 // an allowed origin. Browsers always send Origin on cross-origin POST; if it's
 // absent we allow it (same-origin request or server-to-server tool).
 app.use((req, res, next) => {
-  if (req.method !== 'POST') return next();
+  if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) return next();
   const origin  = req.headers['origin'];
   const referer = req.headers['referer'];
   const source  = origin || (referer ? new URL(referer).origin : null);
@@ -222,6 +222,40 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+
+// ── Booking schema ──────────────────────────────────────────────────────────
+const bookingSchema = new mongoose.Schema({
+  userId:      { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+  from:        { type: String, required: true, maxlength: 500 },
+  to:          { type: String, required: true, maxlength: 500 },
+  fromLat:     { type: Number, default: null },
+  fromLng:     { type: Number, default: null },
+  toLat:       { type: Number, default: null },
+  toLng:       { type: Number, default: null },
+  datetime:    { type: Date, required: true },
+  car:         { type: String, required: true, maxlength: 100 },
+  carId:       { type: String, maxlength: 50, default: '' },
+  fare:        { type: Number, required: true, min: 0 },
+  durationMin: { type: Number, min: 0, default: 30 },
+  distKm:      { type: Number, min: 0, default: null },
+  passengers:  { type: Number, default: 1, min: 1, max: 7 },
+  notes:       { type: String, maxlength: 500, default: '' },
+  driver:      { type: String, maxlength: 100, default: '' },
+  status:      { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
+  pts:         { type: Number, default: 0, min: 0 },
+  completedAt: { type: Date, default: null },
+  createdAt:   { type: Date, default: Date.now },
+});
+const Booking = mongoose.model('Booking', bookingSchema);
+
+// ── Fidelity schema ─────────────────────────────────────────────────────────
+const fidelitySchema = new mongoose.Schema({
+  userId:      { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
+  pts:         { type: Number, default: 0, min: 0 },
+  redeemed:    { type: Number, default: 0, min: 0 },
+  totalEarned: { type: Number, default: 0, min: 0 },
+});
+const Fidelity = mongoose.model('Fidelity', fidelitySchema);
 
 // ── Input validation helper ──────────────────────────────────────────────────
 // FIX V-10: centralised validation; rejects non-string types (NoSQL object injection)
@@ -380,6 +414,117 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     console.error('[profile]', error);
     res.status(500).json({ error: 'Failed to get profile.' });
   }
+});
+
+// ── Booking endpoints ────────────────────────────────────────────────────────
+app.get('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ userId: req.user.userId }).sort({ datetime: -1 }).limit(200);
+    res.json(bookings);
+  } catch (err) { console.error('[bookings GET]', err); res.status(500).json({ error: 'Failed to load bookings.' }); }
+});
+
+app.post('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const { from, to, fromLat, fromLng, toLat, toLng, datetime, car, carId,
+            fare, durationMin, distKm, passengers, notes, driver } = req.body;
+    if (!from || !to || !datetime || !car || fare === undefined)
+      return res.status(400).json({ error: 'Missing required fields.' });
+
+    const newStart = new Date(datetime);
+    if (isNaN(newStart.getTime())) return res.status(400).json({ error: 'Invalid datetime.' });
+    const dur = parseInt(durationMin) || 30;
+    const newEnd = new Date(newStart.getTime() + dur * 60000);
+
+    // Conflict check: overlapping upcoming bookings
+    const existing = await Booking.find({ userId: req.user.userId, status: 'upcoming' });
+    const conflict = existing.find(b => {
+      const bS = new Date(b.datetime).getTime();
+      const bE = bS + (b.durationMin || 30) * 60000;
+      return newStart.getTime() < bE && newEnd.getTime() > bS;
+    });
+    if (conflict) return res.status(409).json({ error: 'You already have a booking during this time.', conflict: conflict._id });
+
+    const booking = new Booking({
+      userId: req.user.userId,
+      from: String(from).slice(0, 500), to: String(to).slice(0, 500),
+      fromLat: fromLat ?? null, fromLng: fromLng ?? null,
+      toLat: toLat ?? null, toLng: toLng ?? null,
+      datetime: newStart, car: String(car).slice(0, 100),
+      carId: carId ? String(carId).slice(0, 50) : '',
+      fare: Math.max(0, parseFloat(fare)), durationMin: dur,
+      distKm: distKm ? parseFloat(distKm) : null,
+      passengers: Math.max(1, Math.min(7, parseInt(passengers) || 1)),
+      notes: notes ? String(notes).slice(0, 500) : '',
+      driver: driver ? String(driver).slice(0, 100) : '',
+      pts: Math.round(parseFloat(fare)),
+    });
+    await booking.save();
+    res.status(201).json(booking);
+  } catch (err) { console.error('[bookings POST]', err); res.status(500).json({ error: 'Failed to create booking.' }); }
+});
+
+app.put('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const booking = await Booking.findOne({ _id: req.params.id, userId: req.user.userId });
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status !== 'upcoming') return res.status(400).json({ error: 'Only upcoming bookings can be edited.' });
+
+    const { datetime, passengers, notes } = req.body;
+    if (datetime) {
+      const newStart = new Date(datetime);
+      if (isNaN(newStart.getTime())) return res.status(400).json({ error: 'Invalid datetime.' });
+      const newEnd = new Date(newStart.getTime() + (booking.durationMin || 30) * 60000);
+      const existing = await Booking.find({ userId: req.user.userId, status: 'upcoming', _id: { $ne: booking._id } });
+      const conflict = existing.find(b => {
+        const bS = new Date(b.datetime).getTime();
+        const bE = bS + (b.durationMin || 30) * 60000;
+        return newStart.getTime() < bE && newEnd.getTime() > bS;
+      });
+      if (conflict) return res.status(409).json({ error: 'Time conflicts with another booking.' });
+      booking.datetime = newStart;
+    }
+    if (passengers !== undefined) booking.passengers = Math.max(1, Math.min(7, parseInt(passengers) || 1));
+    if (notes !== undefined) booking.notes = String(notes).slice(0, 500);
+    await booking.save();
+    res.json(booking);
+  } catch (err) { console.error('[bookings PUT]', err); res.status(500).json({ error: 'Failed to update booking.' }); }
+});
+
+app.delete('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const booking = await Booking.findOne({ _id: req.params.id, userId: req.user.userId });
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status !== 'upcoming') return res.status(400).json({ error: 'Only upcoming bookings can be cancelled.' });
+    booking.status = 'cancelled';
+    await booking.save();
+    res.json({ ok: true });
+  } catch (err) { console.error('[bookings DELETE]', err); res.status(500).json({ error: 'Failed to cancel booking.' }); }
+});
+
+app.post('/api/bookings/:id/complete', authenticateToken, async (req, res) => {
+  try {
+    const booking = await Booking.findOne({ _id: req.params.id, userId: req.user.userId });
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status !== 'upcoming') return res.json({ ok: true, alreadyDone: true });
+    booking.status = 'completed';
+    booking.completedAt = new Date();
+    await booking.save();
+    const pts = booking.pts || Math.round(booking.fare);
+    let fid = await Fidelity.findOne({ userId: req.user.userId });
+    if (!fid) fid = new Fidelity({ userId: req.user.userId });
+    fid.pts += pts; fid.totalEarned += pts;
+    await fid.save();
+    res.json({ ok: true, pts, fidelity: { pts: fid.pts, redeemed: fid.redeemed, totalEarned: fid.totalEarned } });
+  } catch (err) { console.error('[bookings complete]', err); res.status(500).json({ error: 'Failed to complete booking.' }); }
+});
+
+// ── Fidelity endpoints ───────────────────────────────────────────────────────
+app.get('/api/fidelity', authenticateToken, async (req, res) => {
+  try {
+    let fid = await Fidelity.findOne({ userId: req.user.userId });
+    res.json({ pts: fid?.pts || 0, redeemed: fid?.redeemed || 0, totalEarned: fid?.totalEarned || 0 });
+  } catch (err) { console.error('[fidelity GET]', err); res.status(500).json({ error: 'Failed to load fidelity.' }); }
 });
 
 // FIX V-07: serve HTML pages from explicit paths within 'public'

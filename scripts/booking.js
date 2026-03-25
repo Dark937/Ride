@@ -248,7 +248,9 @@ function initLeaflet() {
            .setView([41.9, 12.49], 12);
 
   tileLayer = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT,
-    { attribution: TILE_ATTR, maxZoom: 19 }).addTo(gmap);
+    { attribution: TILE_ATTR, maxZoom: 19,
+      keepBuffer: 4, updateWhenZooming: false, updateWhenIdle: true,
+      crossOrigin: true }).addTo(gmap);
 
   new MutationObserver(() => {
     if (!gmap || !tileLayer) return;
@@ -393,9 +395,23 @@ function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
   async function fetchSuggestions(query) {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
-    const res = await fetch(url, { headers: { "Accept-Language": "it,en" } });
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}`
+      + `&format=jsonv2&limit=8&addressdetails=1&namedetails=1&dedupe=1`;
+    const res = await fetch(url, { headers: { "Accept-Language": "it,en;q=0.8" } });
     return res.json();
+  }
+
+  function formatResult(r) {
+    // Use namedetails.name if available, then first part of display_name
+    const name = r.namedetails?.name || r.display_name.split(", ")[0];
+    const a = r.address || {};
+    // Build a human-readable sub-label from structured address parts
+    const city    = a.city || a.town || a.village || a.municipality || a.county || "";
+    const region  = a.state || a.region || "";
+    const country = a.country_code ? a.country_code.toUpperCase() : (a.country || "");
+    const subParts = [city, region !== city ? region : "", country].filter(Boolean);
+    const sub = subParts.slice(0, 3).join(", ");
+    return { name, sub: sub || r.display_name.split(", ").slice(1, 3).join(", ") };
   }
 
   function setupInput(inputEl, acContainer, onSelect) {
@@ -405,7 +421,7 @@ function wireAutocomplete() {
       clearTimeout(debounceTimer);
       const val = inputEl.value.trim();
       acContainer.innerHTML = "";
-      if (val.length < 3) { acContainer.classList.remove("open"); return; }
+      if (val.length < 2) { acContainer.classList.remove("open"); return; }
 
       debounceTimer = setTimeout(async () => {
         try {
@@ -415,9 +431,7 @@ function wireAutocomplete() {
 
           acContainer.classList.add("open");
           results.forEach(r => {
-            const parts = r.display_name.split(", ");
-            const main  = parts[0];
-            const sub   = parts.slice(1, 3).join(", ");
+            const { name: main, sub } = formatResult(r);
 
             const item = document.createElement("div");
             item.className = "bk-ac-item";
@@ -434,7 +448,7 @@ function wireAutocomplete() {
             acContainer.appendChild(item);
           });
         } catch (_) { acContainer.classList.remove("open"); }
-      }, 300);
+      }, 250);
     });
 
     document.addEventListener("click", e => {
@@ -803,54 +817,104 @@ function initTimeToggle() {
 }
 
 /* ── BOOKING CONFIRMATION ────────────────────────────────────────────── */
-function confirmBooking() {
+async function confirmBooking() {
   if (!state.vehicle) { toast(t("selectVehicleFirst")); return; }
 
   const trip = calcTrip(state.pickup, state.dropoff, VEHICLES.find(v => v.id === state.vehicle));
   const veh  = VEHICLES.find(v => v.id === state.vehicle);
   const uid  = localStorage.getItem("current_user_id");
 
-  // Save booking to localStorage
-  if (uid) {
-    const bk   = "ride_bookings_" + uid;
-    const bookings = JSON.parse(localStorage.getItem(bk) || "[]");
-    const when = state.mode === "now"
-      ? new Date(Date.now() + trip.min * 60000).toISOString()
-      : new Date(`${state.date}T${state.time}`).toISOString();
-    bookings.unshift({
-      id: "b" + Date.now(),
-      from: state.pickup.main,
-      to:   state.dropoff.main,
-      datetime: when,
-      car:  veh.name,
-      fare: trip.fare,
-    });
-    localStorage.setItem(bk, JSON.stringify(bookings.slice(0, 20)));
+  const when = state.mode === "now"
+    ? new Date(Date.now() + (veh.eta || 5) * 60000)
+    : new Date(`${state.date}T${state.time}`);
+  const durationMin = state.durationMin || trip.min || 30;
+  const whenMs = when.getTime();
+  const endMs  = whenMs + durationMin * 60000;
 
-    // Update fidelity points
-    const fk  = "ride_fidelity_" + uid;
-    const fid = JSON.parse(localStorage.getItem(fk) || '{"pts":0,"redeemed":0,"totalEarned":0}');
-    const pts = Math.round(trip.fare);
-    fid.pts        += pts;
-    fid.totalEarned+= pts;
-    localStorage.setItem(fk, JSON.stringify(fid));
+  // ── Conflict check (local) ─────────────────────────────────────────
+  if (uid) {
+    const existing = JSON.parse(localStorage.getItem("ride_bookings_" + uid) || "[]")
+      .filter(b => b.status !== "cancelled");
+    const conflict = existing.find(b => {
+      const bS = new Date(b.datetime).getTime();
+      const bE = bS + (b.durationMin || 30) * 60000;
+      return whenMs < bE && endMs > bS;
+    });
+    if (conflict) {
+      const ct = new Date(conflict.datetime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      toast(`⚠ Conflict with your ride to ${conflict.to} at ${ct}`);
+      return;
+    }
   }
 
-  // Build confirmation details
+  const bookingData = {
+    id: "b" + Date.now(),
+    from: state.pickup.main,
+    to:   state.dropoff.main,
+    fromLat: state.pickup.lat, fromLng: state.pickup.lng,
+    toLat: state.dropoff.lat,  toLng:   state.dropoff.lng,
+    datetime: when.toISOString(),
+    car:  veh.name, carId: veh.id,
+    fare: trip.fare,
+    durationMin, distKm: state.distKm || trip.km || 0,
+    passengers: state.passengers,
+    notes: state.notes || "",
+    driver: state.driver?.name || "",
+    status: "upcoming",
+  };
+
+  const token = localStorage.getItem("ride_token");
+
+  if (uid && token) {
+    // ── Save to server (cross-device sync) ──────────────────────────
+    try {
+      const resp = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify(bookingData),
+      });
+      if (resp.status === 409) {
+        const data = await resp.json();
+        toast("⚠ " + (data.error || "Booking conflict with existing ride."));
+        return;
+      }
+      if (resp.ok) {
+        const saved = await resp.json();
+        // Cache locally with server _id as id
+        const bk = "ride_bookings_" + uid;
+        const bookings = JSON.parse(localStorage.getItem(bk) || "[]");
+        bookings.unshift({ ...bookingData, id: saved._id || bookingData.id });
+        localStorage.setItem(bk, JSON.stringify(bookings.slice(0, 20)));
+      } else {
+        throw new Error("Server error");
+      }
+    } catch (err) {
+      console.warn("Server save failed, saving locally:", err);
+      _saveBookingLocal(uid, bookingData);
+    }
+  } else if (uid) {
+    _saveBookingLocal(uid, bookingData);
+  }
+
+  // ── Confirmation modal ─────────────────────────────────────────────
   const details = document.getElementById("confirmDetails");
-  const msg     = document.getElementById("confirmMsg");
-  msg.textContent = t("confirmMsg");
-
+  document.getElementById("confirmMsg").textContent = t("confirmMsg");
   details.innerHTML = [
-    { k: "Vehicle",     v: esc(veh.name) },
-    { k: "Fare",        v: "€" + esc(trip.fare.toFixed(2)) },
-    { k: "Route",       v: esc(state.pickup.main) + " → " + esc(state.dropoff.main) },
-    { k: "Driver",      v: esc(state.driver?.name || "—") },
-    { k: "ETA",         v: esc(String(veh.eta)) + " min" },
-    { k: "Points",      v: "+" + esc(String(Math.round(trip.fare))) + " pts" },
+    { k: "Vehicle", v: esc(veh.name) },
+    { k: "Fare",    v: "€" + esc(trip.fare.toFixed(2)) },
+    { k: "Route",   v: esc(state.pickup.main) + " → " + esc(state.dropoff.main) },
+    { k: "Driver",  v: esc(state.driver?.name || "—") },
+    { k: "ETA",     v: esc(String(veh.eta)) + " min" },
+    { k: "Points",  v: "+" + esc(String(Math.round(trip.fare))) + " pts (awarded on arrival)" },
   ].map(i => `<div class="bk-conf-item"><span class="bk-conf-key">${i.k}</span><span class="bk-conf-val">${i.v}</span></div>`).join("");
-
   document.getElementById("confirmOverlay").classList.add("open");
+}
+
+function _saveBookingLocal(uid, bookingData) {
+  const bk = "ride_bookings_" + uid;
+  const bookings = JSON.parse(localStorage.getItem(bk) || "[]");
+  bookings.unshift(bookingData);
+  localStorage.setItem(bk, JSON.stringify(bookings.slice(0, 20)));
 }
 
 /* ── APPLY TRANSLATIONS ──────────────────────────────────────────────── */
