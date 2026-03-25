@@ -145,7 +145,7 @@ const VEHICLES = [
     id: "economy",
     name: "Porsche 718",
     sub: "Precision handling. City-ready performance.",
-    img: "assets/economy.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%233d5eff' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%233d5eff' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%233d5eff' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%233d5eff' fill-opacity='0.3'/></svg>",
     ratePerKm: 1.80,
     baseFare: 5.0,
     eta: 4,
@@ -158,7 +158,7 @@ const VEHICLES = [
     id: "business",
     name: "Mercedes S-Class",
     sub: "Flagship comfort for business and first-class travel.",
-    img: "assets/business.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%238b9ab5' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%238b9ab5' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%238b9ab5' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%238b9ab5' fill-opacity='0.3'/></svg>",
     ratePerKm: 2.20,
     baseFare: 8.0,
     eta: 6,
@@ -171,7 +171,7 @@ const VEHICLES = [
     id: "premium",
     name: "Rolls-Royce Ghost",
     sub: "Unmatched refinement. Silence as a feature.",
-    img: "assets/premium.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%23d4af37' fill-opacity='0.15'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%23d4af37' fill-opacity='0.22'/><circle cx='37' cy='58' r='10' fill='%23d4af37' fill-opacity='0.35'/><circle cx='103' cy='58' r='10' fill='%23d4af37' fill-opacity='0.35'/></svg>",
     ratePerKm: 4.50,
     baseFare: 20.0,
     eta: 10,
@@ -184,7 +184,7 @@ const VEHICLES = [
     id: "electric",
     name: "Tesla Model S Plaid",
     sub: "Zero emissions. Full performance. AI-native.",
-    img: "assets/electric.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%2322c55e' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%2322c55e' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%2322c55e' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%2322c55e' fill-opacity='0.3'/></svg>",
     ratePerKm: 1.60,
     baseFare: 5.5,
     eta: 5,
@@ -197,7 +197,7 @@ const VEHICLES = [
     id: "supercar",
     name: "Lamborghini Urus",
     sub: "The Ride signature. Raw presence, every arrival.",
-    img: "assets/supercar.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%23f59e0b' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%23f59e0b' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%23f59e0b' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%23f59e0b' fill-opacity='0.3'/></svg>",
     ratePerKm: 5.50,
     baseFare: 30.0,
     eta: 8,
@@ -210,7 +210,7 @@ const VEHICLES = [
     id: "xl",
     name: "Range Rover Autobiography",
     sub: "Group travel with no compromise on luxury.",
-    img: "assets/xl.jpg",
+    img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%23a78bfa' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%23a78bfa' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%23a78bfa' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%23a78bfa' fill-opacity='0.3'/></svg>",
     ratePerKm: 2.80,
     baseFare: 12.0,
     eta: 9,
@@ -251,24 +251,29 @@ const LIGHT_MAP_STYLE = [
 
 let gmap = null, directionsService = null, directionsRenderer = null, geocoder = null;
 
-window.initMap = function() {
-  const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-  geocoder           = new google.maps.Geocoder();
-  directionsService  = new google.maps.DirectionsService();
+window.initMap = async function() {
+  const { Map }                   = await google.maps.importLibrary("maps");
+  const { DirectionsService,
+          DirectionsRenderer }    = await google.maps.importLibrary("routes");
+  const { Geocoder }              = await google.maps.importLibrary("geocoding");
 
-  gmap = new google.maps.Map(document.getElementById("map"), {
-    center:         { lat: 41.9, lng: 12.49 },
-    zoom:           12,
-    styles:         isDark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
+  const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+  geocoder          = new Geocoder();
+  directionsService = new DirectionsService();
+
+  gmap = new Map(document.getElementById("map"), {
+    center:           { lat: 41.9, lng: 12.49 },
+    zoom:             12,
+    styles:           isDark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
     disableDefaultUI: true,
-    gestureHandling: "greedy",
-    clickableIcons: false,
+    gestureHandling:  "greedy",
+    clickableIcons:   false,
   });
 
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map:              gmap,
-    suppressMarkers:  false,
-    polylineOptions:  { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
+  directionsRenderer = new DirectionsRenderer({
+    map:             gmap,
+    suppressMarkers: false,
+    polylineOptions: { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
   });
 
   new MutationObserver(() => {
@@ -277,7 +282,6 @@ window.initMap = function() {
     gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-  // Wire autocomplete after API ready
   wireAutocomplete();
 };
 
@@ -383,34 +387,91 @@ function calcTrip(pickup, dropoff, vehicle) {
   return { km: parseFloat(km.toFixed(1)), min, fare: parseFloat(fare.toFixed(2)) };
 }
 
-/* ── AUTOCOMPLETE (Google Places) ────────────────────────────────────── */
-// Called by window.initMap after Google Maps API is ready
-function wireAutocomplete() {
-  const inPickup  = document.getElementById("inputPickup");
-  const inDropoff = document.getElementById("inputDropoff");
-  const opts = { componentRestrictions: { country: "it" }, fields: ["geometry", "name", "formatted_address"] };
+/* ── AUTOCOMPLETE (Google Places — AutocompleteSuggestion API) ────────── */
+async function wireAutocomplete() {
+  const { AutocompleteSuggestion } = await google.maps.importLibrary("places");
 
-  const acPickup  = new google.maps.places.Autocomplete(inPickup,  opts);
-  const acDropoff = new google.maps.places.Autocomplete(inDropoff, opts);
+  const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
-  acPickup.addListener("place_changed", () => {
-    const place = acPickup.getPlace();
-    if (!place.geometry) return;
-    const loc = place.geometry.location;
-    state.pickup = { main: place.name || inPickup.value, sub: place.formatted_address || "", lat: loc.lat(), lng: loc.lng() };
-    checkStep1();
-    if (state.dropoff) calcRoute();
-  });
+  function setupInput(inputEl, acContainer, onSelect) {
+    let debounceTimer = null;
 
-  acDropoff.addListener("place_changed", () => {
-    const place = acDropoff.getPlace();
-    if (!place.geometry) return;
-    const loc = place.geometry.location;
-    state.dropoff = { main: place.name || inDropoff.value, sub: place.formatted_address || "", lat: loc.lat(), lng: loc.lng() };
-    document.getElementById("clearDropoff").style.display = "flex";
-    checkStep1();
-    if (state.pickup) calcRoute();
-  });
+    inputEl.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const val = inputEl.value.trim();
+      acContainer.innerHTML = "";
+      if (val.length < 2) { acContainer.classList.remove("open"); return; }
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+            input: val,
+            includedRegionCodes: ["it"],
+          });
+          acContainer.innerHTML = "";
+          if (!suggestions.length) { acContainer.classList.remove("open"); return; }
+
+          acContainer.classList.add("open");
+          suggestions.slice(0, 5).forEach(s => {
+            const pred = s.placePrediction;
+            const item = document.createElement("div");
+            item.className = "bk-ac-item";
+            const icon = document.createElement("span");
+            icon.className = "bk-ac-icon";
+            icon.innerHTML = PIN_SVG;
+            const txt = document.createElement("span");
+            const main = document.createElement("div");
+            main.className = "bk-ac-main";
+            main.textContent = pred.mainText.toString();
+            const sub = document.createElement("div");
+            sub.className = "bk-ac-sub";
+            sub.textContent = pred.secondaryText ? pred.secondaryText.toString() : "";
+            txt.appendChild(main);
+            txt.appendChild(sub);
+            item.appendChild(icon);
+            item.appendChild(txt);
+            item.addEventListener("click", async () => {
+              inputEl.value = pred.mainText.toString();
+              acContainer.classList.remove("open");
+              acContainer.innerHTML = "";
+              const place = pred.toPlace();
+              await place.fetchFields({ fields: ["location", "displayName", "formattedAddress"] });
+              onSelect({
+                main: place.displayName || pred.mainText.toString(),
+                sub:  place.formattedAddress || (pred.secondaryText ? pred.secondaryText.toString() : ""),
+                lat:  place.location.lat(),
+                lng:  place.location.lng(),
+              });
+            });
+            acContainer.appendChild(item);
+          });
+        } catch (_) { acContainer.classList.remove("open"); }
+      }, 200);
+    });
+
+    document.addEventListener("click", e => {
+      if (!inputEl.contains(e.target) && !acContainer.contains(e.target)) {
+        acContainer.classList.remove("open");
+      }
+    });
+  }
+
+  setupInput(
+    document.getElementById("inputPickup"),
+    document.getElementById("acPickup"),
+    loc => { state.pickup = loc; checkStep1(); if (state.dropoff) calcRoute(); }
+  );
+
+  setupInput(
+    document.getElementById("inputDropoff"),
+    document.getElementById("acDropoff"),
+    loc => {
+      state.dropoff = loc;
+      document.getElementById("clearDropoff").style.display = "flex";
+      checkStep1();
+      if (state.pickup) calcRoute();
+    }
+  );
 }
 
 /* ── STEP NAVIGATION ─────────────────────────────────────────────────── */
@@ -441,7 +502,7 @@ function renderVehicles() {
       ${v.badge ? `<span class="bk-vc-badge ${v.badge.cls}">${v.badge.label}</span>` : ""}
       <div class="bk-vc-top">
         <div class="bk-vc-img">
-          <img src="${esc(v.img)}" alt="${esc(v.name)}" onerror="this.style.display='none'">
+          <img src="${esc(v.img)}" alt="${esc(v.name)}">
         </div>
         <div class="bk-vc-info">
           <div class="bk-vc-name">${esc(v.name)}</div>
@@ -458,6 +519,10 @@ function renderVehicles() {
       </div>
     </div>`;
   }).join("");
+
+  list.querySelectorAll(".bk-vc-img img").forEach(img => {
+    img.addEventListener("error", function() { this.style.display = "none"; });
+  });
 
   list.querySelectorAll(".bk-vehicle-card").forEach(card => {
     card.addEventListener("click", () => {
