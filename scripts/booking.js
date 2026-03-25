@@ -624,6 +624,14 @@ function initClearDropoff() {
     document.getElementById("clearDropoff").style.display = "none";
     if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
     document.getElementById("mapStats").classList.remove("visible");
+    // Reset mobile stats strip so stale values are not shown
+    const mob = document.getElementById("mobStats");
+    if (mob) {
+      mob.classList.remove("visible");
+      document.getElementById("mobTime").textContent = "—";
+      document.getElementById("mobDist").textContent = "—";
+      document.getElementById("mobFare").textContent = "—";
+    }
     checkStep1();
     document.getElementById("recapRoute").classList.add("hidden");
     document.getElementById("recapDriver").classList.add("hidden");
@@ -659,18 +667,14 @@ function initTimeToggle() {
     });
   });
 
-  // Populate day select (1–31)
-  const dayEl = document.getElementById("inputDay");
-  for (let d = 1; d <= 31; d++) {
-    const o = document.createElement("option");
-    o.value = String(d).padStart(2, "0");
-    o.textContent = d;
-    dayEl.appendChild(o);
-  }
+  const dayEl  = document.getElementById("inputDay");
+  const monEl  = document.getElementById("inputMonth");
+  const yearEl = document.getElementById("inputYear");
+  const hourEl = document.getElementById("inputHour");
+  const minEl  = document.getElementById("inputMinute");
 
   // Populate month select
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const monEl = document.getElementById("inputMonth");
   MONTHS.forEach((m, i) => {
     const o = document.createElement("option");
     o.value = String(i + 1).padStart(2, "0");
@@ -679,7 +683,6 @@ function initTimeToggle() {
   });
 
   // Populate year select (current + 2 years)
-  const yearEl = document.getElementById("inputYear");
   const curYear = new Date().getFullYear();
   for (let y = curYear; y <= curYear + 2; y++) {
     const o = document.createElement("option");
@@ -689,7 +692,6 @@ function initTimeToggle() {
   }
 
   // Populate hour select (00–23)
-  const hourEl = document.getElementById("inputHour");
   for (let h = 0; h < 24; h++) {
     const o = document.createElement("option");
     o.value = o.textContent = String(h).padStart(2, "0");
@@ -697,19 +699,38 @@ function initTimeToggle() {
   }
 
   // Populate minute select (every 5 min)
-  const minEl = document.getElementById("inputMinute");
   for (let m = 0; m < 60; m += 5) {
     const o = document.createElement("option");
     o.value = o.textContent = String(m).padStart(2, "0");
     minEl.appendChild(o);
   }
 
+  // Rebuild day options to match the real number of days for the selected month/year.
+  // new Date(year, month, 0) returns the last day of the previous month,
+  // so new Date(year, month, 0).getDate() gives the correct max day.
+  function updateDays() {
+    const month  = parseInt(monEl.value,  10);
+    const year   = parseInt(yearEl.value, 10);
+    const maxDay = new Date(year, month, 0).getDate();
+    const prevDay = parseInt(dayEl.value || "1", 10);
+    dayEl.innerHTML = "";
+    for (let d = 1; d <= maxDay; d++) {
+      const o = document.createElement("option");
+      o.value = String(d).padStart(2, "0");
+      o.textContent = d;
+      dayEl.appendChild(o);
+    }
+    // Clamp to last valid day (e.g. if Feb was selected when day was 31, cap to 28/29)
+    dayEl.value = String(Math.min(prevDay, maxDay)).padStart(2, "0");
+  }
+
   // Default: next rounded hour
   const now = new Date();
   now.setHours(now.getHours() + 1, 0, 0, 0);
-  dayEl.value  = String(now.getDate()).padStart(2, "0");
   monEl.value  = String(now.getMonth() + 1).padStart(2, "0");
   yearEl.value = now.getFullYear();
+  updateDays(); // must run after month/year are set
+  dayEl.value  = String(now.getDate()).padStart(2, "0");
   hourEl.value = String(now.getHours()).padStart(2, "0");
   minEl.value  = "00";
 
@@ -718,7 +739,11 @@ function initTimeToggle() {
     state.time = `${hourEl.value}:${minEl.value}`;
   }
   syncState();
-  [dayEl, monEl, yearEl, hourEl, minEl].forEach(el => el.addEventListener("change", syncState));
+
+  // Re-generate days whenever month or year changes, then sync
+  monEl.addEventListener("change",  () => { updateDays(); syncState(); });
+  yearEl.addEventListener("change", () => { updateDays(); syncState(); });
+  [dayEl, hourEl, minEl].forEach(el => el.addEventListener("change", syncState));
 }
 
 /* ── BOOKING CONFIRMATION ────────────────────────────────────────────── */
