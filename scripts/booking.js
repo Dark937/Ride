@@ -234,99 +234,55 @@ const DRIVERS = [
   { name: "Valentina F.", emoji: "👩", since: "2021", rating: 4.99, review: "The best Ride driver I've ever had. Impeccable service every time.", reviewer: "Roberto P.", reviewDate: "March 2026" },
 ];
 
-/* ── GOOGLE MAPS ──────────────────────────────────────────────────────── */
-const DARK_MAP_STYLE = [
-  { elementType: "geometry",            stylers: [{ color: "#0d1117" }] },
-  { elementType: "labels.text.fill",    stylers: [{ color: "#4a5568" }] },
-  { elementType: "labels.text.stroke",  stylers: [{ color: "#0d1117" }] },
-  { featureType: "road",                elementType: "geometry",        stylers: [{ color: "#1a1f2e" }] },
-  { featureType: "road",                elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-  { featureType: "road.highway",        elementType: "geometry",        stylers: [{ color: "#2c3347" }] },
-  { featureType: "road",                elementType: "labels.text.fill",stylers: [{ color: "#4a5568" }] },
-  { featureType: "water",               elementType: "geometry",        stylers: [{ color: "#0d1520" }] },
-  { featureType: "poi",                 stylers: [{ visibility: "off" }] },
-  { featureType: "transit",             stylers: [{ visibility: "off" }] },
-  { featureType: "administrative",      elementType: "geometry",        stylers: [{ color: "#1e2433" }] },
-  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
-];
+/* ── MAP (Leaflet + OpenStreetMap/CartoDB — free, no API key) ─────────── */
+let gmap = null, routePolyline = null, tileLayer = null;
 
-const LIGHT_MAP_STYLE = [
-  { featureType: "poi",     stylers: [{ visibility: "off" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-];
+const TILE_DARK  = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const TILE_ATTR  = '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>';
 
-let gmap = null, routePolyline = null, geocoder = null;
-
-window.initMap = async function() {
-  const { Map }      = await google.maps.importLibrary("maps");
-  const { Geocoder } = await google.maps.importLibrary("geocoding");
-
+function initLeaflet() {
   const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-  geocoder = new Geocoder();
 
-  gmap = new Map(document.getElementById("map"), {
-    center:           { lat: 41.9, lng: 12.49 },
-    zoom:             12,
-    styles:           isDark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
-    disableDefaultUI: true,
-    gestureHandling:  "greedy",
-    clickableIcons:   false,
-  });
+  gmap = L.map("map", { zoomControl: false, attributionControl: true })
+           .setView([41.9, 12.49], 12);
+
+  tileLayer = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT,
+    { attribution: TILE_ATTR, maxZoom: 19 }).addTo(gmap);
 
   new MutationObserver(() => {
-    if (!gmap) return;
+    if (!gmap || !tileLayer) return;
     const dark = document.documentElement.getAttribute("data-theme") !== "light";
-    gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
-    if (routePolyline) routePolyline.setOptions({ strokeColor: "#3d5eff" });
+    tileLayer.setUrl(dark ? TILE_DARK : TILE_LIGHT);
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   wireAutocomplete();
-};
+}
 
 async function calcRoute() {
   if (!state.pickup || !state.dropoff || !gmap) return;
   try {
-    const { Route }    = await google.maps.importLibrary("routes");
-    const { encoding } = await google.maps.importLibrary("geometry");
+    const { pickup: p, dropoff: d } = state;
+    const url = `https://router.project-osrm.org/route/v1/driving/${p.lng},${p.lat};${d.lng},${d.lat}?overview=full&geometries=geojson`;
+    const res  = await fetch(url);
+    const data = await res.json();
 
-    const response = await Route.computeRoutes(
-      {
-        origin:      { location: { latLng: { latitude: state.pickup.lat,  longitude: state.pickup.lng  } } },
-        destination: { location: { latLng: { latitude: state.dropoff.lat, longitude: state.dropoff.lng } } },
-        travelMode:  "DRIVE",
-        routingPreference: "TRAFFIC_AWARE",
-      },
-      { fields: ["routes.legs.distanceMeters", "routes.legs.duration", "routes.polyline.encodedPolyline"] }
-    );
+    if (!data.routes?.length) return;
+    const route = data.routes[0];
 
-    if (!response.routes || !response.routes.length) return;
-    const route = response.routes[0];
-    const leg   = route.legs[0];
+    // Draw polyline
+    if (routePolyline) { gmap.removeLayer(routePolyline); routePolyline = null; }
+    const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    routePolyline = L.polyline(coords, { color: "#3d5eff", weight: 5, opacity: 0.9 }).addTo(gmap);
+    gmap.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
 
-    // Decode and draw polyline
-    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
-    const path = encoding.decodePath(route.polyline.encodedPolyline);
-    routePolyline = new google.maps.Polyline({
-      path, map: gmap,
-      strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9,
-    });
-
-    // Fit map to route
-    const bounds = new google.maps.LatLngBounds();
-    path.forEach(p => bounds.extend(p));
-    gmap.fitBounds(bounds, { top: 60, right: 60, bottom: 120, left: 60 });
-
-    // duration from Routes API is "Xs" string (e.g. "721s") or Duration object
-    const rawSecs = typeof leg.duration === "string"
-      ? parseInt(leg.duration)
-      : (leg.duration?.seconds ?? leg.duration?.value ?? 0);
-    state.rawDurationSecs = rawSecs;
-    state.rawDistMeters   = leg.distanceMeters;
+    state.rawDurationSecs = Math.round(route.duration);
+    state.rawDistMeters   = Math.round(route.distance);
 
     updateRouteStats();
     assignDriver();
   } catch (err) {
-    console.warn("Routes API failed:", err);
+    console.warn("OSRM routing failed:", err);
   }
 }
 
@@ -351,7 +307,6 @@ function updateRouteStats() {
   const arrival = new Date(getRideBaseTime() + adjSecs * 1000);
   const arrStr  = arrival.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
   const fare = veh.baseFare + km * veh.ratePerKm;
   state.fareEur = parseFloat(fare.toFixed(2));
 
@@ -433,11 +388,15 @@ function calcTrip(pickup, dropoff, vehicle) {
   return { km: parseFloat(km.toFixed(1)), min, fare: parseFloat(fare.toFixed(2)) };
 }
 
-/* ── AUTOCOMPLETE (Google Places — AutocompleteSuggestion API) ────────── */
-async function wireAutocomplete() {
-  const { AutocompleteSuggestion } = await google.maps.importLibrary("places");
-
+/* ── AUTOCOMPLETE (Nominatim / OpenStreetMap — free, no API key) ──────── */
+function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
+
+  async function fetchSuggestions(query) {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
+    const res = await fetch(url, { headers: { "Accept-Language": "it,en" } });
+    return res.json();
+  }
 
   function setupInput(inputEl, acContainer, onSelect) {
     let debounceTimer = null;
@@ -446,59 +405,41 @@ async function wireAutocomplete() {
       clearTimeout(debounceTimer);
       const val = inputEl.value.trim();
       acContainer.innerHTML = "";
-      if (val.length < 2) { acContainer.classList.remove("open"); return; }
+      if (val.length < 3) { acContainer.classList.remove("open"); return; }
 
       debounceTimer = setTimeout(async () => {
         try {
-          const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-            input: val,
-            includedRegionCodes: ["it"],
-          });
+          const results = await fetchSuggestions(val);
           acContainer.innerHTML = "";
-          if (!suggestions.length) { acContainer.classList.remove("open"); return; }
+          if (!results.length) { acContainer.classList.remove("open"); return; }
 
           acContainer.classList.add("open");
-          suggestions.slice(0, 5).forEach(s => {
-            const pred = s.placePrediction;
+          results.forEach(r => {
+            const parts = r.display_name.split(", ");
+            const main  = parts[0];
+            const sub   = parts.slice(1, 3).join(", ");
+
             const item = document.createElement("div");
             item.className = "bk-ac-item";
-            const icon = document.createElement("span");
-            icon.className = "bk-ac-icon";
-            icon.innerHTML = PIN_SVG;
-            const txt = document.createElement("span");
-            const main = document.createElement("div");
-            main.className = "bk-ac-main";
-            main.textContent = pred.mainText.toString();
-            const sub = document.createElement("div");
-            sub.className = "bk-ac-sub";
-            sub.textContent = pred.secondaryText ? pred.secondaryText.toString() : "";
-            txt.appendChild(main);
-            txt.appendChild(sub);
-            item.appendChild(icon);
-            item.appendChild(txt);
-            item.addEventListener("click", async () => {
-              inputEl.value = pred.mainText.toString();
+            item.innerHTML = `<span class="bk-ac-icon">${PIN_SVG}</span>`
+              + `<span><div class="bk-ac-main">${esc(main)}</div>`
+              + `<div class="bk-ac-sub">${esc(sub)}</div></span>`;
+
+            item.addEventListener("click", () => {
+              inputEl.value = main;
               acContainer.classList.remove("open");
               acContainer.innerHTML = "";
-              const place = pred.toPlace();
-              await place.fetchFields({ fields: ["location", "displayName", "formattedAddress"] });
-              onSelect({
-                main: place.displayName || pred.mainText.toString(),
-                sub:  place.formattedAddress || (pred.secondaryText ? pred.secondaryText.toString() : ""),
-                lat:  place.location.lat(),
-                lng:  place.location.lng(),
-              });
+              onSelect({ main, sub: r.display_name, lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
             });
             acContainer.appendChild(item);
           });
         } catch (_) { acContainer.classList.remove("open"); }
-      }, 200);
+      }, 300);
     });
 
     document.addEventListener("click", e => {
-      if (!inputEl.contains(e.target) && !acContainer.contains(e.target)) {
+      if (!inputEl.contains(e.target) && !acContainer.contains(e.target))
         acContainer.classList.remove("open");
-      }
     });
   }
 
@@ -696,33 +637,34 @@ function initFidelityMini(uid) {
     : `${Math.max(0, GOLD - fid.totalEarned)} pts to Gold`;
 }
 
-/* ── LOCATE ME ───────────────────────────────────────────────────────── */
+/* ── LOCATE ME (high-accuracy + Nominatim reverse geocoding) ─────────── */
 function initLocateBtn() {
   document.getElementById("locateBtn").addEventListener("click", () => {
     if (!navigator.geolocation) { toast("Geolocation not supported"); return; }
-    navigator.geolocation.getCurrentPosition(pos => {
-      const latLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      if (geocoder) {
-        geocoder.geocode({ location: latLng }, (results, status) => {
-          if (status === "OK" && results[0]) {
-            const res  = results[0];
-            const name = res.address_components?.find(c => c.types.includes("route"))?.long_name
-                      || res.formatted_address;
-            state.pickup = { main: name, sub: res.formatted_address, lat: latLng.lat, lng: latLng.lng };
-            document.getElementById("inputPickup").value = name;
-            checkStep1();
-            toast("📍 " + name);
-            if (state.dropoff) calcRoute();
-          }
-        });
-      } else {
-        // Maps not loaded yet — use coords as label
-        state.pickup = { main: "My location", sub: "", lat: latLng.lat, lng: latLng.lng };
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
+        const res  = await fetch(url, { headers: { "Accept-Language": "it,en" } });
+        const data = await res.json();
+        const name = data.address?.road
+                  || data.address?.suburb
+                  || data.address?.quarter
+                  || data.display_name.split(",")[0];
+        state.pickup = { main: name, sub: data.display_name, lat, lng };
+        document.getElementById("inputPickup").value = name;
+        checkStep1();
+        toast("📍 " + name);
+        if (state.dropoff) calcRoute();
+      } catch (_) {
+        state.pickup = { main: "My location", sub: "", lat, lng };
         document.getElementById("inputPickup").value = "My location";
         checkStep1();
-        toast("📍 My location");
+        toast("📍 Located");
+        if (state.dropoff) calcRoute();
       }
-    }, () => toast("Could not get your location"));
+    }, () => toast("Could not get your location"),
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
   });
 }
 
@@ -734,7 +676,7 @@ function initClearDropoff() {
     state.distKm = 0; state.durationMin = 0;
     state.rawDurationSecs = 0; state.rawDistMeters = 0;
     document.getElementById("clearDropoff").style.display = "none";
-    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+    if (routePolyline) { gmap && gmap.removeLayer(routePolyline); routePolyline = null; }
     document.getElementById("mapStats").classList.remove("visible");
     // Reset mobile stats strip so stale values are not shown
     const mob = document.getElementById("mobStats");
@@ -945,7 +887,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   applyBookingTranslations();
 
-  // Init UI components (map initialised via window.initMap Google Maps callback)
+  // Init map and UI components
+  initLeaflet();
   initDropdown(user);
   initBackBtn();
   initFidelityMini(user?.id);
