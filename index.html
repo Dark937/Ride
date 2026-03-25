@@ -8,7 +8,13 @@
 
   <link rel="stylesheet" href="styles/landing.css">
   <script>
-    (function(){var m=localStorage.getItem("ride_reduce_motion")==="true";if(m)document.documentElement.classList.add("reduce-motion");})();
+    (function(){
+      var s=localStorage.getItem("ride_theme");
+      var c=(document.cookie.match(/(?:^|;\s*)ride_theme=([^;]+)/)||[])[1];
+      document.documentElement.setAttribute("data-theme",s||c||"dark");
+      var m=localStorage.getItem("ride_reduce_motion")==="true";
+      if(m)document.documentElement.classList.add("reduce-motion");
+    })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -119,18 +125,18 @@
   <section class="hero">
     <div class="content">
       <div class="content-inner">
-        <h1 class="title">Move Faster. Ride Smarter</h1>
-        <h2 class="subtitle">Powered By AI</h2>
+        <h1 class="title" data-i18n-key="heroTitle">Move Faster. Ride Smarter.</h1>
+        <h2 class="subtitle" data-i18n-key="heroSubtitle">Powered by AI</h2>
 
-        <p class="desc">
-          From quick city rides to daily commuting, RideNow delivers a smooth
+        <p class="desc" data-i18n-key="heroDesc">
+          From quick city rides to daily commuting, Ride delivers a smooth
           and reliable experience powered by modern technology and intuitive
           design.
         </p>
 
         <div class="actions">
-          <a href="#" class="btn btn-primary"><span>Get started</span></a>
-          <a href="#" class="btn btn-secondary"><span>View plans</span></a>
+          <a href="register.html" class="btn btn-primary"><span data-i18n-key="getStarted">Get started</span></a>
+          <a href="#vehicles" class="btn btn-secondary"><span data-i18n-key="viewPlans">View plans</span></a>
         </div>
       </div>
     </div>
@@ -142,12 +148,6 @@
     <!-- Hamburger Menu Overlay -->
     <div class="nav-overlay" id="navOverlay" aria-hidden="true">
       <div class="nav-overlay-inner">
-        <button class="nav-close-btn" id="navClose" aria-label="Close menu">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M5 5L19 19" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            <path d="M19 5L5 19" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
 
         <nav class="nav-links">
           <a href="#" class="nav-link nav-active">Home</a>
@@ -169,7 +169,8 @@
     </div>
 
     <!-- ── PARTNERS ──────────────────────────────────────────────── -->
-    <div class="partners-strip" aria-hidden="true">
+    <div class="partners-strip">
+      <p class="partners-label" data-i18n-key="partnersTrustedBy">Trusted by</p>
       <div class="partners-inner">
         <div class="marquee-track">
           <div class="marquee-content">
@@ -213,13 +214,12 @@
     <div class="features-layout">
       <aside class="features-left">
         <div class="features-left-inner">
-          <span class="section-kicker">Core Features</span>
-          <h2 class="section-title parallax-title" id="featureTitle">
-            AI routes that think before traffic does.
+          <span class="section-kicker" data-i18n-key="sectionCoreFeatures">Core Features</span>
+          <h2 class="section-title parallax-title" id="featureTitle" data-i18n-key="f1Title">
+            Your route is ready before traffic gets a vote.
           </h2>
-          <p class="section-text parallax-text" id="featureText">
-            Ride uses live traffic, demand patterns, and predictive intelligence
-            to optimize each route before delays become a problem.
+          <p class="section-text parallax-text" id="featureText" data-i18n-key="f1Text">
+            Ride tracks live traffic, demand patterns, and predictive data to optimize every journey before delays become your problem.
           </p>
 
           <div class="feature-progress">
@@ -239,32 +239,32 @@
 
       <div class="features-right">
         <article class="feature-panel active"
-          data-title="AI routes that think before traffic does." data-i18n-title="f1Title" data-i18n-text="f1Text"
-          data-text="Ride uses live traffic, demand patterns, and predictive intelligence to optimize each route before delays become a problem."
+          data-title="Your route is ready before traffic gets a vote." data-i18n-title="f1Title" data-i18n-text="f1Text"
+          data-text="Ride tracks live traffic, demand patterns, and predictive data to optimize every journey before delays become your problem."
           data-bg="bg-1"
           data-img="assets/feature-route.jpg"
           data-alt="AI route optimization">
         </article>
 
         <article class="feature-panel"
-          data-title="Cleaner mobility with less wasted movement." data-i18n-title="f2Title" data-i18n-text="f2Text"
-          data-text="AI minimizes useless mileage, reduces empty trips, and builds a more efficient urban transport model with lower environmental impact."
+          data-title="Your trip leaves a lighter footprint." data-i18n-title="f2Title" data-i18n-text="f2Text"
+          data-text="Smarter dispatch means fewer empty vehicles, less wasted mileage, and a city that moves cleaner — because your ride is part of a better system."
           data-bg="bg-2"
           data-img="assets/feature-eco.jpg"
-          data-alt="Environmental impact optimization">
+          data-alt="Eco-smart mobility">
         </article>
 
         <article class="feature-panel"
-          data-title="Customer assistance that feels immediate and intelligent." data-i18n-title="f3Title" data-i18n-text="f3Text"
-          data-text="Ride supports users before, during, and after the trip with AI-powered guidance, assistance, and personalized updates."
+          data-title="Support that's already there when you need it." data-i18n-title="f3Title" data-i18n-text="f3Text"
+          data-text="Before pickup, during the ride, and after drop-off — real-time AI guidance and personalized updates keep you in control at every step."
           data-bg="bg-3"
           data-img="assets/feature-support.jpg"
           data-alt="AI customer support">
         </article>
 
         <article class="feature-panel"
-          data-title="Supercars turn every ride into a statement." data-i18n-title="f4Title" data-i18n-text="f4Text"
-          data-text="Ride is not built around generic fleet vehicles. Supercars and high-performance design are part of the brand, the experience, and the identity."
+          data-title="You don't just arrive. You make an entrance." data-i18n-title="f4Title" data-i18n-text="f4Text"
+          data-text="Supercars and high-performance vehicles are part of every Ride experience — not an upgrade. This is what transport looks like when it's built around identity."
           data-bg="bg-4"
           data-img="assets/feature-supercar.jpg"
           data-alt="Ride supercar experience">
@@ -277,44 +277,41 @@
     <section class="section section-process reveal" data-theme="blue" id="how-it-works">
       <div class="container">
         <div class="section-center">
-          <span class="section-kicker">How It Works</span>
-          <h2 class="section-title centered">
-Every ride, engineered before it begins.
+          <span class="section-kicker" data-i18n-key="sectionHowItWorks">How It Works</span>
+          <h2 class="section-title centered" data-i18n-key="howItWorksTitle">
+            Every ride, engineered before it begins.
           </h2>
-          <p class="section-text centered narrow">
-Book, and let the system take care of everything else.
+          <p class="section-text centered narrow" data-i18n-key="howItWorksDesc">
+            Book in seconds. The system handles everything else.
           </p>
         </div>
 
         <div class="steps-grid">
-          <article class="glass-card step-card reveal scroll-slide-right">
+          <article class="step-card reveal scroll-slide-right">
+            <div class="step-number">01</div>
             <div class="step-icon">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.58 2 4 5.58 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.42-3.58-8-8-8z"/></svg>
             </div>
-            <h3>Choose your class</h3>
-            <p>
-Pick your vehicle class. The system locks in your preferences and handles the rest.
-            </p>
+            <h3 data-i18n-key="step1Title">Choose your class</h3>
+            <p data-i18n-key="step1Text">Select the vehicle that matches your style and destination. The system locks in your preferences instantly.</p>
           </article>
 
-          <article class="glass-card step-card reveal scroll-fade-up">
+          <article class="step-card reveal scroll-fade-up">
+            <div class="step-number">02</div>
             <div class="step-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5 5 5 0 0 1-5-5V7a5 5 0 0 1 5-5z"/><path d="M2 20c0-4 4-7 10-7s10 3 10 7"/><path d="M17 8h2a2 2 0 0 1 0 4h-2"/><path d="M7 8H5a2 2 0 0 0 0 4h2"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M16.5 7.5A7 7 0 1 1 7.5 16.5"/></svg>
             </div>
-            <h3>AI prepares the trip</h3>
-            <p>
-Before the car arrives, AI has already solved the route, the timing, and the conditions.
-            </p>
+            <h3 data-i18n-key="step2Title">AI prepares the route</h3>
+            <p data-i18n-key="step2Text">Before the car arrives, AI has already solved the route, timing, and road conditions. Nothing left to chance.</p>
           </article>
 
-          <article class="glass-card step-card reveal scroll-slide-left">
+          <article class="step-card reveal scroll-slide-left">
+            <div class="step-number">03</div>
             <div class="step-icon">
-              <svg viewBox="0 0 24 24"><path d="M5 3v18"/><path d="M5 3h14l-3 5 3 5H5"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
             </div>
-            <h3>Ride at a different level</h3>
-            <p>
-Your driver arrives on time, in the right car, on the optimized path. No friction.
-            </p>
+            <h3 data-i18n-key="step3Title">Ride without friction</h3>
+            <p data-i18n-key="step3Text">Your driver arrives on time, in the right car, on the optimized path. Door to door, exactly as planned.</p>
           </article>
         </div>
       </div>
@@ -324,15 +321,14 @@ Your driver arrives on time, in the right car, on the optimized path. No frictio
       <div class="container">
         <div class="section-top split vehicles-head">
           <div>
-            <span class="section-kicker">Our Vehicles</span>
-            <h2 class="section-title">
-              Supercars are not a side feature. They are part of the identity.
+            <span class="section-kicker" data-i18n-key="sectionOurVehicles">Our Vehicles</span>
+            <h2 class="section-title" data-i18n-key="vehiclesTitle">
+              Supercars are not a side feature. They are the identity.
             </h2>
           </div>
-          <p class="section-text">
+          <p class="section-text" data-i18n-key="vehiclesDesc">
             Ride is built around high-performance design, premium comfort,
-            and unforgettable presence. This is not generic ride-hailing dressed
-            in black. This is mobility with actual character.
+            and unforgettable presence. This is mobility with actual character.
           </p>
         </div>
 
@@ -404,24 +400,24 @@ Your driver arrives on time, in the right car, on the optimized path. No frictio
       <div class="container">
         <div class="fidelity-wrap glass-panel scroll-fade-up">
           <div class="fidelity-copy">
-            <span class="section-kicker">Fidelity Card</span>
-            <h2 class="section-title">
+            <span class="section-kicker" data-i18n-key="sectionFidelityCard">Fidelity Card</span>
+            <h2 class="section-title" data-i18n-key="fidelityTitle">
               Rewards that make premium mobility worth repeating.
             </h2>
-            <p class="section-text">
+            <p class="section-text" data-i18n-key="fidelityText">
               The Ride Fidelity Card turns every journey into long-term value.
               Earn points, unlock exclusive discounts, access priority booking,
               and get benefits designed for frequent premium riders.
             </p>
 
             <ul class="benefit-list">
-              <li>Earn points on every ride</li>
-              <li>Priority access during peak hours</li>
-              <li>Exclusive monthly discounts</li>
-              <li>Members-only offers and upgrades</li>
+              <li data-i18n-key="benefitItem1">Earn points on every ride</li>
+              <li data-i18n-key="benefitItem2">Priority access during peak hours</li>
+              <li data-i18n-key="benefitItem3">Exclusive monthly discounts</li>
+              <li data-i18n-key="benefitItem4">Members-only offers and upgrades</li>
             </ul>
 
-            <a href="#" class="btn btn-primary"><span>Get your card</span></a>
+            <a href="register.html" class="btn btn-primary"><span data-i18n-key="fidGetCard">Get your card</span></a>
           </div>
 
           <div class="fidelity-visual">
@@ -444,28 +440,28 @@ Your driver arrives on time, in the right car, on the optimized path. No frictio
       <div class="container">
         <div class="driver-layout">
           <div class="driver-copy scroll-fade-up reveal">
-            <span class="section-kicker">Drive with Ride</span>
-            <h2 class="section-title">Turn your car into something that works for you.</h2>
-            <p class="section-text">
+            <span class="section-kicker" data-i18n-key="sectionDriveWithRide">Drive with Ride</span>
+            <h2 class="section-title" data-i18n-key="driverTitle">Turn your car into something that works for you.</h2>
+            <p class="section-text" data-i18n-key="driverText">
               Join the Ride driver network. Set your hours, choose your rides, and earn more with a platform built around performance — not just availability.
             </p>
             <div class="driver-actions">
-              <a href="#" class="btn btn-primary"><span>Apply to drive</span></a>
-              <a href="#" class="btn btn-secondary"><span>Learn more</span></a>
+              <a href="register.html?role=driver" class="btn btn-primary"><span data-i18n-key="driverApply">Apply to drive</span></a>
+              <a href="#how-it-works" class="btn btn-secondary"><span data-i18n-key="driverLearn">Learn more</span></a>
             </div>
           </div>
           <div class="driver-stats scroll-slide-left reveal">
             <div class="driver-stat">
-              <span class="stat-value">+40%</span>
-              <span class="stat-label">Average earnings vs standard platforms</span>
+              <span class="stat-value" data-i18n-key="stat1Val">+40%</span>
+              <span class="stat-label" data-i18n-key="stat1Label">Average earnings vs standard platforms</span>
             </div>
             <div class="driver-stat">
-              <span class="stat-value">Full flex</span>
-              <span class="stat-label">No minimums, no schedules, no pressure</span>
+              <span class="stat-value" data-i18n-key="stat2Val">Full flex</span>
+              <span class="stat-label" data-i18n-key="stat2Label">No minimums, no schedules, no pressure</span>
             </div>
             <div class="driver-stat">
-              <span class="stat-value">AI dispatch</span>
-              <span class="stat-label">Smarter routing means less dead mileage</span>
+              <span class="stat-value" data-i18n-key="stat3Val">AI dispatch</span>
+              <span class="stat-label" data-i18n-key="stat3Label">Smarter routing means less dead mileage</span>
             </div>
           </div>
         </div>
@@ -477,39 +473,37 @@ Your driver arrives on time, in the right car, on the optimized path. No frictio
         <div class="footer-grid">
           <div class="footer-brand">
             <img src="assets/logo.png" alt="Ride logo" class="footer-logo">
-            <p>
+            <p data-i18n-key="footerTagline">
               Ride merges AI, premium service, and high-performance vehicles to
               redefine what urban mobility can feel like.
             </p>
           </div>
 
           <div>
-            <h4>Product</h4>
+            <h4 data-i18n-key="footerProduct">Product</h4>
             <ul>
-              <li><a href="#">Features</a></li>
-              <li><a href="#">Vehicles</a></li>
-              <li><a href="#">Pricing</a></li>
-              <li><a href="#">Rewards</a></li>
+              <li><a href="#features-parallax" data-i18n-key="features">Features</a></li>
+              <li><a href="#vehicles" data-i18n-key="vehicles">Vehicles</a></li>
+              <li><a href="#fidelity" data-i18n-key="fidelity">Rewards</a></li>
+              <li><a href="booking.html" data-i18n-key="bookRide">Book a ride</a></li>
             </ul>
           </div>
 
           <div>
-            <h4>Company</h4>
+            <h4 data-i18n-key="footerCompany">Company</h4>
             <ul>
-              <li><a href="#">About</a></li>
-              <li><a href="#">Contact</a></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="#">Partners</a></li>
+              <li><a href="#become-driver" data-i18n-key="drive">Drive with us</a></li>
+              <li><a href="register.html" data-i18n-key="createAccount">Create account</a></li>
+              <li><a href="login.html" data-i18n-key="signIn">Sign in</a></li>
+              <li><a href="dashboard.html" data-i18n-key="dashTitle">Dashboard</a></li>
             </ul>
           </div>
 
           <div>
-            <h4>Legal</h4>
+            <h4 data-i18n-key="footerLegal">Legal</h4>
             <ul>
-              <li><a href="privacy.html">Privacy Policy</a></li>
-              <li><a href="tos.html">Terms of Service</a></li>
-              <li><a href="#">Cookies</a></li>
-              <li><a href="#">Licenses</a></li>
+              <li><a href="privacy.html" data-i18n-key="privacyPolicy">Privacy Policy</a></li>
+              <li><a href="tos.html" data-i18n-key="termsOfService">Terms of Service</a></li>
             </ul>
           </div>
         </div>

@@ -299,14 +299,15 @@ button {
   align-items: center;
   justify-content: center;
   min-width: 145px;
-  padding: 15px 26px;
-  border-radius: 999px;
+  padding: 14px 26px;
+  border-radius: 5px;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   color: #fff;
   overflow: hidden;
   cursor: pointer;
+  letter-spacing: 0.01em;
   transition:
     transform 0.32s cubic-bezier(.22,1,.36,1),
     box-shadow 0.32s ease,
@@ -328,7 +329,7 @@ button {
     0 0 0 1px rgba(255,255,255,0.06);
 }
 
-/* iOS 26 btn: linea speculare orizzontale 1px + micro-glow */
+/* btn: top specular line */
 .btn::before {
   content: "";
   position: absolute;
@@ -336,7 +337,7 @@ button {
   left: 10%;
   width: 80%;
   height: 1px;
-  border-radius: 999px;
+  border-radius: 0;
   background: linear-gradient(
     90deg,
     rgba(255,255,255,0.0)  0%,
@@ -426,27 +427,25 @@ button {
 }
 
 .spline-bg {
-  position: fixed;
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.92;
   overflow: hidden;
-  will-change: transform;
-  mask-image: linear-gradient(to top, transparent 0%, #000 30%, #000 70%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to top, transparent 0%, #000 25%, #000 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 25%, #000 75%, transparent 100%);
 }
 
 spline-viewer {
   width: 100%;
   height: 100%;
   background: transparent !important;
-  mix-blend-mode: screen;
   filter:
-    saturate(0.85)
-    brightness(0.70);
+    saturate(0.90)
+    brightness(0.80);
   overflow: hidden;
 }
 
@@ -476,22 +475,35 @@ spline-viewer {
 
 .partners-strip {
   position: absolute;
-  bottom: 8vh;
+  bottom: 7vh;
   left: 50%;
   transform: translateX(-50%);
-  width: min(820px, 84vw);
+  width: min(860px, 88vw);
   z-index: 3;
-  overflow: hidden;
-  /* lateral fade */
-  mask-image: linear-gradient(to right,
-    transparent 0%, #000 9%, #000 91%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right,
-    transparent 0%, #000 9%, #000 91%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.partners-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
 }
 
 .partners-inner {
   display: flex;
   align-items: center;
+  width: 100%;
+  overflow: hidden;
+  /* lateral fade */
+  mask-image: linear-gradient(to right,
+    transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%, #000 8%, #000 92%, transparent 100%);
 }
 
 .marquee-track {
@@ -504,10 +516,10 @@ spline-viewer {
 .marquee-content {
   display: flex;
   align-items: center;
-  gap: 64px;
-  padding-right: 64px;
+  gap: 56px;
+  padding-right: 56px;
   flex-shrink: 0;
-  animation: marquee-scroll 28s linear infinite;
+  animation: marquee-scroll 32s linear infinite;
 }
 
 .marquee-track:hover .marquee-content {
@@ -515,15 +527,15 @@ spline-viewer {
 }
 
 .partner-logo {
-  height: 18px;
+  height: 16px;
   width: auto;
-  opacity: 0.22;
-  transition: opacity 0.4s ease;
+  opacity: 0.30;
+  transition: opacity 0.3s ease;
   flex-shrink: 0;
   display: block;
 }
 
-.partner-logo:hover { opacity: 0.50; }
+.partner-logo:hover { opacity: 0.60; }
 
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
@@ -554,7 +566,7 @@ spline-viewer {
   width: 224px;
   background: rgba(10,10,16,0.94);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
+  border-radius: 4px;
   box-shadow:
     0 24px 64px rgba(0,0,0,0.60),
     inset 0 1px 0 rgba(255,255,255,0.07);
@@ -606,7 +618,7 @@ spline-viewer {
   gap: 10px;
   width: 100%;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: 3px;
   font-size: 13px;
   font-weight: 500;
   color: rgba(255,255,255,0.72);
@@ -821,7 +833,7 @@ spline-viewer {
 
 .feature-card {
   padding: 28px;
-  border-radius: 10px;
+  border-radius: 4px;
   min-height: 240px;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
@@ -830,69 +842,68 @@ spline-viewer {
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px;
+  gap: 1px;
   position: relative;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
 }
-
-
 
 .step-card {
-  padding: 36px 32px 32px;
-  border-radius: 10px;
-  min-height: 280px;
-  cursor: pointer;
-  transition: transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s ease, border-color 0.35s ease;
+  padding: 48px 36px 40px;
+  border-radius: 0;
+  min-height: 300px;
+  cursor: default;
+  transition: background 0.3s ease;
   position: relative;
   overflow: hidden;
-  transform-origin: center bottom;
+  background: rgba(255,255,255,0.02);
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-/* Gradient top accent per card */
-.step-card:nth-child(1)::after { background: radial-gradient(ellipse at 30% 0%, rgba(200,80,255,0.07), transparent 60%); }
-.step-card:nth-child(2)::after { background: radial-gradient(ellipse at 50% 0%, rgba(130,80,255,0.07), transparent 60%); }
-.step-card:nth-child(3)::after { background: radial-gradient(ellipse at 70% 0%, rgba(60,120,255,0.07), transparent 60%); }
-.step-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: inherit;
+/* Subtle right border between step cards */
+.step-card:not(:last-child) {
+  border-right: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Step icon circle */
+.step-card:hover {
+  background: rgba(255,255,255,0.04) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Step number */
+.step-number {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.22);
+  margin-bottom: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Step icon */
 .step-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-}
-.step-card:nth-child(1) .step-icon {
-  background: linear-gradient(135deg, rgba(220,80,255,0.20), rgba(180,60,255,0.10));
-  border: 1px solid rgba(220,80,255,0.18);
-  box-shadow: none;
-}
-.step-card:nth-child(2) .step-icon {
-  background: linear-gradient(135deg, rgba(140,80,255,0.20), rgba(100,60,255,0.10));
-  border: 1px solid rgba(140,80,255,0.18);
-  box-shadow: none;
-}
-.step-card:nth-child(3) .step-icon {
-  background: linear-gradient(135deg, rgba(60,120,255,0.20), rgba(40,100,255,0.10));
-  border: 1px solid rgba(60,120,255,0.18);
-  box-shadow: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
 }
 
 .step-icon svg {
-  width: 20px;
-  height: 20px;
-  stroke: rgba(255,255,255,0.85);
+  width: 16px;
+  height: 16px;
+  stroke: rgba(255,255,255,0.80);
   fill: none;
   stroke-width: 1.8;
   stroke-linecap: round;
@@ -906,8 +917,16 @@ spline-viewer {
 }
 
 .step-card h3 {
-  font-size: 22px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   margin-bottom: 12px;
+  color: #fff;
+}
+
+.step-card p {
+  font-size: 15px;
+  line-height: 1.65;
 }
 
 .vehicle-grid {
@@ -917,7 +936,7 @@ spline-viewer {
 }
 
 .vehicle-card {
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
@@ -1016,7 +1035,7 @@ spline-viewer {
 }
 
 .fidelity-wrap {
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 40px;
   display: grid;
   grid-template-columns: 1fr 0.9fr;
@@ -1064,7 +1083,7 @@ spline-viewer {
   width: min(100%, 430px);
   min-height: 260px;
   padding: 28px;
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   /* Image bg set via inline style; gradient is fallback overlay */
@@ -1265,7 +1284,7 @@ spline-viewer {
 .features-image-card {
   width: 100%;
   max-width: 520px;
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow:
@@ -1860,13 +1879,12 @@ spline-viewer {
   }
 
   .feature-card,
-  .step-card,
   .vehicle-card,
   .fidelity-wrap,
   .feature-panel-media,
   .feature-panel-content,
   .supercar-stage {
-    border-radius: 12px;
+    border-radius: 4px;
   }
 
   .fidelity-wrap {
@@ -1926,7 +1944,7 @@ spline-viewer {
 }
 .theme-toggle-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: 3px;
   color: rgba(255,255,255,0.72);
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.06);
@@ -1956,7 +1974,7 @@ spline-viewer {
 .so-overlay.is-open { opacity: 1; pointer-events: auto; }
 .so-box {
   background: #13131e; border: 1px solid rgba(255,255,255,.10);
-  border-radius: 20px; padding: 32px 28px 26px;
+  border-radius: 6px; padding: 32px 28px 26px;
   max-width: 360px; width: 100%;
   transform: translateY(12px) scale(.97);
   transition: transform .25s cubic-bezier(.22,1,.36,1);
@@ -1964,7 +1982,7 @@ spline-viewer {
 }
 .so-overlay.is-open .so-box { transform: none; }
 .so-icon {
-  width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 18px;
+  width: 52px; height: 52px; border-radius: 6px; margin: 0 auto 18px;
   background: rgba(61,94,255,.10); border: 1px solid rgba(61,94,255,.18);
   display: flex; align-items: center; justify-content: center;
 }
@@ -1973,13 +1991,13 @@ spline-viewer {
 .so-box p  { font-size: 13.5px; color: rgba(255,255,255,.55); line-height: 1.6; margin-bottom: 22px; }
 .so-actions { display: flex; gap: 10px; justify-content: center; }
 .so-cancel  {
-  padding: 9px 22px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  padding: 9px 22px; border-radius: 4px; font-size: 13px; font-weight: 500;
   border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.65);
   transition: background .15s, color .15s;
 }
 .so-cancel:hover  { background: rgba(255,255,255,.07); color: #fff; }
 .so-confirm {
-  padding: 9px 22px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  padding: 9px 22px; border-radius: 4px; font-size: 13px; font-weight: 600;
   background: rgba(224,48,80,.14); color: #e03050;
   border: 1px solid rgba(224,48,80,.25);
   transition: background .15s;
@@ -1997,7 +2015,7 @@ spline-viewer {
 .fm-box {
   position: relative; width: 100%; max-width: 400px;
   background: rgba(12,12,18,0.97); border: 1px solid rgba(255,255,255,.10);
-  border-radius: 22px; padding: 40px 36px 36px;
+  border-radius: 6px; padding: 40px 36px 36px;
   box-shadow: 0 32px 80px rgba(0,0,0,.6);
   transform: translateY(20px) scale(.97);
   transition: transform .3s cubic-bezier(.22,1,.36,1);
@@ -2005,14 +2023,14 @@ spline-viewer {
 .fm-overlay.is-open .fm-box { transform: none; }
 .fm-close {
   position: absolute; top: 14px; right: 14px;
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 32px; height: 32px; border-radius: 3px;
   display: flex; align-items: center; justify-content: center;
   color: rgba(255,255,255,.42); transition: color .2s, background .2s;
 }
 .fm-close:hover { color: #fff; background: rgba(255,255,255,.07); }
 .fm-close svg   { width: 15px; height: 15px; }
 .fm-icon {
-  width: 50px; height: 50px; border-radius: 13px; margin-bottom: 18px;
+  width: 50px; height: 50px; border-radius: 5px; margin-bottom: 18px;
   background: rgba(61,94,255,.10); border: 1px solid rgba(61,94,255,.18);
   display: flex; align-items: center; justify-content: center;
 }
@@ -2031,7 +2049,7 @@ spline-viewer {
 /* ── LANG-TOGGLE BUTTON ────────────────────────────────────────────── */
 .lang-toggle-btn {
   display: flex; align-items: center; gap: 5px;
-  padding: 6px 10px; border-radius: 8px;
+  padding: 6px 10px; border-radius: 3px;
   font-size: 11.5px; font-weight: 600; letter-spacing: .06em;
   color: rgba(255,255,255,.72);
   border: 1px solid rgba(255,255,255,.14);
