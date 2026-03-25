@@ -20,7 +20,7 @@ input, select, textarea { font:inherit; }
   --yellow:      #eab308;
   --orange:      #f97316;
 
-  --bg:          #09090f;
+  --bg:          #000000;
   --surface:     rgba(255,255,255,0.04);
   --surface-2:   rgba(255,255,255,0.07);
   --surface-3:   rgba(255,255,255,0.10);
@@ -32,10 +32,10 @@ input, select, textarea { font:inherit; }
   --text-muted:  rgba(255,255,255,0.46);
   --text-faint:  rgba(255,255,255,0.28);
 
-  --topbar-bg:   rgba(9,9,15,0.92);
-  --sidebar-bg:  #0c0c14;
+  --topbar-bg:   rgba(0,0,0,0.92);
+  --sidebar-bg:  #080808;
   --sidebar-border: rgba(255,255,255,0.07);
-  --card-bg:     #0f0f18;
+  --card-bg:     #0d0d0d;
   --card-border: rgba(255,255,255,0.08);
 
   --sidebar-w:   220px;

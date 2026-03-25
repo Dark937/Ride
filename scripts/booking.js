@@ -249,16 +249,20 @@ const LIGHT_MAP_STYLE = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-let gmap = null, routesService = null, routePolyline = null, geocoder = null;
+let gmap = null, directionsService = null, directionsRenderer = null, geocoder = null;
 
 window.initMap = async function() {
-  const { Map }          = await google.maps.importLibrary("maps");
-  const { RoutesService } = await google.maps.importLibrary("routes");
-  const { Geocoder }     = await google.maps.importLibrary("geocoding");
+  const { Map }                              = await google.maps.importLibrary("maps");
+  const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("routes");
+  const { Geocoder }                         = await google.maps.importLibrary("geocoding");
 
   const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-  geocoder      = new Geocoder();
-  routesService = new RoutesService();
+  geocoder           = new Geocoder();
+  directionsService  = new DirectionsService();
+  directionsRenderer = new DirectionsRenderer({
+    suppressMarkers: false,
+    polylineOptions: { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
+  });
 
   gmap = new Map(document.getElementById("map"), {
     center:           { lat: 41.9, lng: 12.49 },
@@ -269,55 +273,38 @@ window.initMap = async function() {
     clickableIcons:   false,
   });
 
+  directionsRenderer.setMap(gmap);
+
   new MutationObserver(() => {
     if (!gmap) return;
     const dark = document.documentElement.getAttribute("data-theme") !== "light";
     gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
-    if (routePolyline) routePolyline.setOptions({ strokeColor: "#3d5eff" });
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   wireAutocomplete();
 };
 
 async function calcRoute() {
-  if (!state.pickup || !state.dropoff || !routesService) return;
-  const { encoding } = await google.maps.importLibrary("geometry");
+  if (!state.pickup || !state.dropoff || !directionsService) return;
   try {
-    const { routes } = await routesService.computeRoutes({
-      origin:      { location: { latLng: { latitude: state.pickup.lat,  longitude: state.pickup.lng  } } },
-      destination: { location: { latLng: { latitude: state.dropoff.lat, longitude: state.dropoff.lng } } },
-      travelMode:  "DRIVE",
-      routingPreference: "TRAFFIC_AWARE",
-    }, { fields: ["routes.distanceMeters", "routes.duration", "routes.polyline.encodedPolyline"] });
-
-    if (!routes || !routes.length) return;
-    const route = routes[0];
-
-    // Clear previous route polyline
-    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
-
-    // Decode + draw polyline
-    const path = encoding.decodePath(route.polyline.encodedPolyline);
-    routePolyline = new google.maps.Polyline({
-      path,
-      strokeColor:   "#3d5eff",
-      strokeWeight:  5,
-      strokeOpacity: 0.9,
-      map:           gmap,
+    const result = await new Promise((resolve, reject) => {
+      directionsService.route({
+        origin:      new google.maps.LatLng(state.pickup.lat,  state.pickup.lng),
+        destination: new google.maps.LatLng(state.dropoff.lat, state.dropoff.lng),
+        travelMode:  google.maps.TravelMode.DRIVING,
+      }, (res, status) => {
+        if (status === google.maps.DirectionsStatus.OK) resolve(res);
+        else reject(new Error(status));
+      });
     });
 
-    // Fit map to route
-    const bounds = new google.maps.LatLngBounds();
-    path.forEach(p => bounds.extend(p));
-    gmap.fitBounds(bounds, { top: 60, right: 60, bottom: 120, left: 60 });
+    directionsRenderer.setDirections(result);
 
-    // Parse duration ("123s" → 123)
-    const durationSecs = parseInt(route.duration);
-    // Pass synthetic leg object matching updateRouteStats() expectations
-    updateRouteStats({ distance: { value: route.distanceMeters }, duration: { value: durationSecs } });
+    const leg = result.routes[0].legs[0]; // leg.distance.value = metres, leg.duration.value = seconds
+    updateRouteStats(leg);
     assignDriver();
   } catch (err) {
-    console.warn("Routes API failed:", err);
+    console.warn("Directions API failed:", err);
   }
 }
 

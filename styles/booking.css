@@ -20,9 +20,9 @@ img    { display: block; max-width: 100%; }
   --green-dim:    rgba(34,197,94,.12);
   --yellow:       #eab308;
 
-  --bg:           #07070f;
-  --card:         rgba(10,10,20,.82);
-  --card-solid:   #0f0f1c;
+  --bg:           #000000;
+  --card:         rgba(255,255,255,.05);
+  --card-solid:   #0d0d0d;
   --surface:      rgba(255,255,255,.04);
   --surface-2:    rgba(255,255,255,.07);
   --surface-3:    rgba(255,255,255,.10);
@@ -39,7 +39,7 @@ img    { display: block; max-width: 100%; }
 
   --topbar-h:     56px;
   --panel-w:      340px;
-  --topbar-bg:    rgba(7,7,15,.92);
+  --topbar-bg:    rgba(0,0,0,.92);
 
   /* Map colours — dark */
   --map-bg:       #0d1117;
