@@ -215,304 +215,113 @@ const DRIVERS = [
   { name: "Valentina F.", emoji: "👩", since: "2021", rating: 4.99, review: "The best Ride driver I've ever had. Impeccable service every time.", reviewer: "Roberto P.", reviewDate: "March 2026" },
 ];
 
-/* ── MAP CANVAS ───────────────────────────────────────────────────────── */
-const MapRenderer = (() => {
-  let canvas, ctx, W, H;
-  let fromPt = null, toPt = null;
-  let animFrameId = null;
-  let driverT = 0, driverDir = 1;
-
-  // Rome-like street grid seed points
-  const NODES = [
-    [120,180],[280,140],[440,160],[600,130],[760,170],[880,200],
-    [100,300],[260,290],[420,280],[580,260],[720,300],[860,320],
-    [80,420], [240,400],[400,380],[560,360],[700,420],[840,400],
-    [110,520],[270,500],[430,480],[590,460],[730,520],[860,510],
-    [130,620],[300,600],[460,580],[620,560],[780,620],[900,600],
-  ];
-
-  function init() {
-    canvas = document.getElementById("mapBg");
-    ctx    = canvas.getContext("2d");
-    resize();
-    window.addEventListener("resize", resize);
-    drawBaseMap();
-  }
-
-  function resize() {
-    W = canvas.width  = canvas.offsetWidth  || window.innerWidth;
-    H = canvas.height = canvas.offsetHeight || window.innerHeight;
-    drawBaseMap();
-  }
-
-  function isDark() {
-    return document.documentElement.getAttribute("data-theme") !== "light";
-  }
-
-  function drawBaseMap() {
-    if (!ctx) return;
-    const dark = isDark();
-
-    // Background
-    ctx.fillStyle = dark ? "#0d1117" : "#e8ecf0";
-    ctx.fillRect(0, 0, W, H);
-
-    // Water blob (bottom-right)
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(W * .8, H * .85, W * .25, H * .2, 0.3, 0, Math.PI * 2);
-    ctx.fillStyle = dark ? "rgba(20,50,110,.35)" : "rgba(150,200,240,.5)";
-    ctx.fill();
-    ctx.restore();
-
-    // Park areas
-    const parks = [
-      { x: W * .15, y: H * .3, rx: W * .06, ry: H * .08 },
-      { x: W * .55, y: H * .55, rx: W * .05, ry: H * .07 },
-      { x: W * .75, y: H * .2,  rx: W * .04, ry: H * .05 },
-    ];
-    parks.forEach(p => {
-      ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
-      ctx.fillStyle = dark ? "rgba(20,60,30,.3)" : "rgba(160,210,140,.45)";
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // Grid streets
-    const cols = 14, rows = 9;
-    const cw = W / (cols - 1), ch = H / (rows - 1);
-    const jitter = (seed) => (Math.sin(seed * 137.5) * 0.5 + 0.5) * 8 - 4;
-
-    ctx.strokeStyle = dark ? "rgba(255,255,255,.055)" : "rgba(255,255,255,.8)";
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = "round";
-
-    // Vertical streets
-    for (let i = 0; i < cols; i++) {
-      ctx.beginPath();
-      for (let j = 0; j < rows; j++) {
-        const x = i * cw + jitter(i * 100 + j);
-        const y = j * ch + jitter(i + j * 200);
-        if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Horizontal streets
-    for (let j = 0; j < rows; j++) {
-      ctx.beginPath();
-      for (let i = 0; i < cols; i++) {
-        const x = i * cw + jitter(i * 300 + j);
-        const y = j * ch + jitter(i * 400 + j);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Major roads (brighter, wider)
-    ctx.strokeStyle = dark ? "rgba(255,255,255,.11)" : "rgba(255,255,255,.95)";
-    ctx.lineWidth = 3;
-    const majors = [
-      [[0, H * .35], [W, H * .38]],
-      [[0, H * .65], [W, H * .62]],
-      [[W * .3, 0], [W * .32, H]],
-      [[W * .65, 0], [W * .67, H]],
-    ];
-    majors.forEach(([[x1,y1],[x2,y2]]) => {
-      ctx.beginPath();
-      const mx = (x1+x2)/2, my = (y1+y2)/2;
-      ctx.moveTo(x1, y1);
-      ctx.quadraticCurveTo(mx + jitter(x1)*3, my + jitter(y1)*3, x2, y2);
-      ctx.stroke();
-    });
-
-    // Street labels (faint text)
-    ctx.fillStyle = dark ? "rgba(255,255,255,.12)" : "rgba(60,70,100,.3)";
-    ctx.font = "bold 9px 'DM Sans', sans-serif";
-    ctx.letterSpacing = "0.05em";
-    const labels = ["Via del Corso","Via Veneto","Via Appia","Lungotevere","Via Nazionale","Corso Vittorio"];
-    labels.forEach((lbl, i) => {
-      ctx.save();
-      const lx = W * (.1 + i * .15);
-      const ly = H * (.25 + (i % 3) * .2);
-      ctx.translate(lx, ly);
-      ctx.rotate((i % 2 === 0) ? 0 : -Math.PI / 2);
-      ctx.fillText(lbl, 0, 0);
-      ctx.restore();
-    });
-
-    // Block fills (city buildings tone)
-    ctx.fillStyle = dark ? "rgba(255,255,255,.018)" : "rgba(0,0,30,.03)";
-    for (let i = 0; i < 40; i++) {
-      const bx = (Math.sin(i * 13.7) * .5 + .5) * W;
-      const by = (Math.sin(i * 7.3)  * .5 + .5) * H;
-      const bw = 20 + (Math.sin(i * 3.1) * .5 + .5) * 60;
-      const bh = 15 + (Math.sin(i * 5.7) * .5 + .5) * 40;
-      ctx.fillRect(bx - bw/2, by - bh/2, bw, bh);
-    }
-  }
-
-  function setRoute(from, to) {
-    fromPt = from; toPt = to;
-    updateSVGRoute();
-    updateStats();
-    startDriverAnimation();
-  }
-
-  function clearRoute() {
-    fromPt = null; toPt = null;
-    stopDriverAnimation();
-    hideSVGRoute();
-    hideStats();
-  }
-
-  // Map logical coords to SVG viewBox (1000×700)
-  function toSVG(pt) {
-    return { x: (pt.x / 100) * 1000, y: (pt.y / 100) * 700 };
-  }
-
-  function updateSVGRoute() {
-    if (!fromPt || !toPt) return;
-    const fSVG = toSVG(fromPt);
-    const tSVG = toSVG(toPt);
-
-    // Curved bezier path
-    const mx = (fSVG.x + tSVG.x) / 2;
-    const my = (fSVG.y + tSVG.y) / 2 - Math.abs(tSVG.x - fSVG.x) * 0.3;
-    const d  = `M ${fSVG.x} ${fSVG.y} Q ${mx} ${my} ${tSVG.x} ${tSVG.y}`;
-
-    ["routeShadow","routePath","routePulse"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.setAttribute("d", d);
-    });
-
-    const rp = document.getElementById("routePath");
-    if (rp) {
-      const len = rp.getTotalLength?.() || 800;
-      rp.style.strokeDasharray  = len;
-      rp.style.strokeDashoffset = len;
-      rp.classList.remove("drawn");
-      requestAnimationFrame(() => { rp.classList.add("drawn"); });
-    }
-
-    const rpu = document.getElementById("routePulse");
-    if (rpu) { rpu.classList.remove("animating"); requestAnimationFrame(() => rpu.classList.add("animating")); }
-
-    // Position pins
-    positionPin("pinFrom", fSVG.x, fSVG.y);
-    positionPin("pinTo",   tSVG.x, tSVG.y);
-
-    document.getElementById("pinFrom").style.display = "";
-    document.getElementById("pinTo").style.display   = "";
-    document.getElementById("driverMarker").style.display = "";
-    document.getElementById("pinFrom").querySelector(".pin-label").textContent = t("pickup");
-    document.getElementById("pinTo").querySelector(".pin-label").textContent   = t("destination");
-  }
-
-  function positionPin(id, x, y) {
-    const g = document.getElementById(id);
-    if (!g) return;
-    g.setAttribute("transform", `translate(${x}, ${y})`);
-  }
-
-  function hideSVGRoute() {
-    ["routeShadow","routePath","routePulse"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.setAttribute("d", "");
-    });
-    document.getElementById("pinFrom").style.display = "none";
-    document.getElementById("pinTo").style.display   = "none";
-    document.getElementById("driverMarker").style.display = "none";
-  }
-
-  function startDriverAnimation() {
-    stopDriverAnimation();
-    driverT = 0; driverDir = 1;
-
-    function tick() {
-      if (!fromPt || !toPt) return;
-      const rp = document.getElementById("routePath");
-      if (!rp) return;
-      const len = rp.getTotalLength?.() || 0;
-      if (!len) { animFrameId = requestAnimationFrame(tick); return; }
-
-      driverT += driverDir * 0.0018;
-      if (driverT > 1) { driverT = 1; driverDir = -1; }
-      if (driverT < 0) { driverT = 0; driverDir = 1;  }
-
-      const pt = rp.getPointAtLength(driverT * len);
-      const dm = document.getElementById("driverMarker");
-      if (dm) dm.setAttribute("transform", `translate(${pt.x}, ${pt.y})`);
-
-      animFrameId = requestAnimationFrame(tick);
-    }
-    animFrameId = requestAnimationFrame(tick);
-  }
-
-  function stopDriverAnimation() {
-    if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-  }
-
-  function updateStats() {
-    const stats = document.getElementById("mapStats");
-    if (stats) stats.classList.add("visible");
-  }
-  function hideStats() {
-    const stats = document.getElementById("mapStats");
-    if (stats) stats.classList.remove("visible");
-  }
-
-  function redraw() {
-    drawBaseMap();
-    if (fromPt && toPt) updateSVGRoute();
-  }
-
-  return { init, setRoute, clearRoute, redraw };
-})();
-
-/* ── LOCATION LOOKUP (mock geocoder) ─────────────────────────────────── */
-const ROME_PLACES = [
-  { main: "Piazza Navona",          sub: "Centro Storico, Roma",           x: 38, y: 48 },
-  { main: "Fiumicino Airport",      sub: "Via dell'Aeroporto, Fiumicino",  x: 6,  y: 82 },
-  { main: "Roma Termini Station",   sub: "Piazza dei Cinquecento, Roma",   x: 58, y: 50 },
-  { main: "Colosseum",              sub: "Piazza del Colosseo, Roma",      x: 55, y: 58 },
-  { main: "Vatican City",           sub: "Città del Vaticano, Roma",       x: 30, y: 43 },
-  { main: "Via del Corso 1",        sub: "Centro Storico, Roma",           x: 44, y: 46 },
-  { main: "Trastevere",             sub: "Rione Trastevere, Roma",         x: 36, y: 60 },
-  { main: "EUR Centro",             sub: "Via Cristoforo Colombo, Roma",   x: 48, y: 80 },
-  { main: "Piazza Venezia",         sub: "Centro Storico, Roma",           x: 46, y: 52 },
-  { main: "Villa Borghese",         sub: "Viale dei Bambini, Roma",        x: 50, y: 32 },
-  { main: "Parioli",                sub: "Quartiere Parioli, Roma",        x: 52, y: 28 },
-  { main: "Testaccio",              sub: "Rione Testaccio, Roma",          x: 42, y: 65 },
-  { main: "Ostiense",               sub: "Via Ostiense, Roma",             x: 46, y: 70 },
-  { main: "Prati",                  sub: "Quartiere Prati, Roma",          x: 32, y: 38 },
-  { main: "Pantheon",               sub: "Piazza della Rotonda, Roma",     x: 42, y: 49 },
-  { main: "Napoili Centrale",       sub: "Piazza Garibaldi, Napoli",       x: 88, y: 65 },
-  { main: "Hotel Eden Roma",        sub: "Via Ludovisi 49, Roma",          x: 50, y: 40 },
-  { main: "Gianicolo",              sub: "Via Garibaldi, Roma",            x: 28, y: 52 },
-  { main: "Pigneto",                sub: "Via del Pigneto, Roma",          x: 68, y: 52 },
-  { main: "Via Veneto",             sub: "Via Vittorio Veneto, Roma",      x: 53, y: 42 },
-  { main: "Tiburtina Station",      sub: "Via Tiburtina, Roma",            x: 70, y: 45 },
-  { main: "Ciampino Airport",       sub: "Via Appia Nuova, Ciampino",      x: 65, y: 82 },
-  { main: "Largo Argentina",        sub: "Largo di Torre Argentina, Roma", x: 41, y: 51 },
-  { main: "Porta Portese",          sub: "Via Portuense, Roma",            x: 35, y: 64 },
-  { main: "Piazza del Popolo",      sub: "Flaminio, Roma",                 x: 43, y: 30 },
+/* ── GOOGLE MAPS ──────────────────────────────────────────────────────── */
+const DARK_MAP_STYLE = [
+  { elementType: "geometry",            stylers: [{ color: "#0d1117" }] },
+  { elementType: "labels.text.fill",    stylers: [{ color: "#4a5568" }] },
+  { elementType: "labels.text.stroke",  stylers: [{ color: "#0d1117" }] },
+  { featureType: "road",                elementType: "geometry",        stylers: [{ color: "#1a1f2e" }] },
+  { featureType: "road",                elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+  { featureType: "road.highway",        elementType: "geometry",        stylers: [{ color: "#2c3347" }] },
+  { featureType: "road",                elementType: "labels.text.fill",stylers: [{ color: "#4a5568" }] },
+  { featureType: "water",               elementType: "geometry",        stylers: [{ color: "#0d1520" }] },
+  { featureType: "poi",                 stylers: [{ visibility: "off" }] },
+  { featureType: "transit",             stylers: [{ visibility: "off" }] },
+  { featureType: "administrative",      elementType: "geometry",        stylers: [{ color: "#1e2433" }] },
+  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
 ];
 
-function searchPlaces(query) {
-  if (!query || query.length < 2) return [];
-  const q = query.toLowerCase();
-  return ROME_PLACES.filter(p =>
-    p.main.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q)
-  ).slice(0, 5);
+const LIGHT_MAP_STYLE = [
+  { featureType: "poi",     stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
+let gmap = null, directionsService = null, directionsRenderer = null, geocoder = null;
+
+window.initMap = function() {
+  const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+  geocoder           = new google.maps.Geocoder();
+  directionsService  = new google.maps.DirectionsService();
+
+  gmap = new google.maps.Map(document.getElementById("map"), {
+    center:         { lat: 41.9, lng: 12.49 },
+    zoom:           12,
+    styles:         isDark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
+    disableDefaultUI: true,
+    gestureHandling: "greedy",
+    clickableIcons: false,
+  });
+
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    map:              gmap,
+    suppressMarkers:  false,
+    polylineOptions:  { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
+  });
+
+  new MutationObserver(() => {
+    if (!gmap) return;
+    const dark = document.documentElement.getAttribute("data-theme") !== "light";
+    gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // Wire autocomplete after API ready
+  wireAutocomplete();
+};
+
+function calcRoute() {
+  if (!state.pickup || !state.dropoff || !directionsService) return;
+  directionsService.route({
+    origin:      { lat: state.pickup.lat,  lng: state.pickup.lng  },
+    destination: { lat: state.dropoff.lat, lng: state.dropoff.lng },
+    travelMode:  google.maps.TravelMode.DRIVING,
+  }, (result, status) => {
+    if (status === "OK") {
+      directionsRenderer.setDirections(result);
+      updateRouteStats(result.routes[0].legs[0]);
+      assignDriver();
+    } else {
+      console.warn("Directions failed:", status);
+    }
+  });
 }
+
+function updateRouteStats(leg) {
+  const km   = parseFloat((leg.distance.value / 1000).toFixed(1));
+  const min  = Math.round(leg.duration.value / 60);
+  state.distKm      = km;
+  state.durationMin = min;
+
+  const arrival = new Date(Date.now() + leg.duration.value * 1000);
+  const arrStr  = arrival.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
+  const fare = veh.baseFare + km * veh.ratePerKm;
+  state.fareEur = parseFloat(fare.toFixed(2));
+
+  document.getElementById("statDuration").textContent = min + " min";
+  document.getElementById("statDistance").textContent = km  + " km";
+  document.getElementById("statArrival").textContent  = arrStr;
+  document.getElementById("statFare").textContent     = "€" + fare.toFixed(2);
+  document.getElementById("mapStats").classList.add("visible");
+  updateRecap();
+}
+
+/* ── LOCATION LOOKUP (mock geocoder — fallback if Maps not loaded) ─────── */
+const ROME_PLACES = [
+  { main: "Piazza Navona",          sub: "Centro Storico, Roma",           lat: 41.8992, lng: 12.4730 },
+  { main: "Fiumicino Airport",      sub: "Via dell'Aeroporto, Fiumicino",  lat: 41.7999, lng: 12.2462 },
+  { main: "Roma Termini Station",   sub: "Piazza dei Cinquecento, Roma",   lat: 41.9009, lng: 12.4975 },
+  { main: "Colosseum",              sub: "Piazza del Colosseo, Roma",      lat: 41.8902, lng: 12.4922 },
+  { main: "Vatican City",           sub: "Città del Vaticano, Roma",       lat: 41.9022, lng: 12.4539 },
+  { main: "Trastevere",             sub: "Rione Trastevere, Roma",         lat: 41.8887, lng: 12.4675 },
+  { main: "Piazza Venezia",         sub: "Centro Storico, Roma",           lat: 41.8958, lng: 12.4823 },
+  { main: "Villa Borghese",         sub: "Viale dei Bambini, Roma",        lat: 41.9143, lng: 12.4922 },
+];
 
 /* ── STATE ───────────────────────────────────────────────────────────── */
 const state = {
   step: 1,
-  pickup: null,   // { main, sub, x, y }
+  pickup: null,   // { main, sub, lat, lng }
   dropoff: null,
   mode: "now",    // "now" | "schedule"
   date: "",
@@ -530,66 +339,42 @@ const state = {
 /* ── DISTANCE & FARE CALCULATOR ─────────────────────────────────────── */
 function calcTrip(pickup, dropoff, vehicle) {
   if (!pickup || !dropoff) return { km: 0, min: 0, fare: 0 };
-  const dx = (pickup.x - dropoff.x);
-  const dy = (pickup.y - dropoff.y);
-  // Rough normalised distance → km (assuming ~1 unit = 0.7 km for Rome scale)
-  const raw  = Math.sqrt(dx*dx + dy*dy);
-  const km   = Math.max(1, raw * 0.65);
-  const min  = Math.round(km * 2.8 + 4 + Math.random() * 3);
-  const v    = vehicle || VEHICLES[0];
+  // Use real data from state if set by updateRouteStats; fall back to rough estimate
+  const km  = state.distKm     || Math.max(2, 5 + Math.random() * 8);
+  const min = state.durationMin || Math.round(km * 2.5 + 4);
+  const v   = vehicle || VEHICLES[0];
   const fare = v.baseFare + km * v.ratePerKm;
   return { km: parseFloat(km.toFixed(1)), min, fare: parseFloat(fare.toFixed(2)) };
 }
 
-function updateMapStats() {
-  if (!state.pickup || !state.dropoff) return;
-  const trip = calcTrip(state.pickup, state.dropoff, VEHICLES.find(v => v.id === state.vehicle));
-  state.distKm = trip.km; state.durationMin = trip.min; state.fareEur = trip.fare;
+/* ── AUTOCOMPLETE (Google Places) ────────────────────────────────────── */
+// Called by window.initMap after Google Maps API is ready
+function wireAutocomplete() {
+  const inPickup  = document.getElementById("inputPickup");
+  const inDropoff = document.getElementById("inputDropoff");
+  const opts = { componentRestrictions: { country: "it" }, fields: ["geometry", "name", "formatted_address"] };
 
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + trip.min);
-  const arrival = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const acPickup  = new google.maps.places.Autocomplete(inPickup,  opts);
+  const acDropoff = new google.maps.places.Autocomplete(inDropoff, opts);
 
-  document.getElementById("statDuration").textContent = trip.min + " min";
-  document.getElementById("statDistance").textContent = trip.km + " km";
-  document.getElementById("statArrival").textContent  = arrival;
-  document.getElementById("statFare").textContent     = "€" + trip.fare.toFixed(2);
-
-  updateRecap();
-}
-
-/* ── AUTOCOMPLETE ────────────────────────────────────────────────────── */
-function initAutocomplete(inputId, acId, onSelect) {
-  const input = document.getElementById(inputId);
-  const ac    = document.getElementById(acId);
-
-  input.addEventListener("input", () => {
-    const results = searchPlaces(input.value);
-    if (!results.length || !input.value.trim()) { ac.classList.remove("open"); ac.innerHTML = ""; return; }
-
-    ac.innerHTML = results.map(p => `
-      <div class="bk-ac-item" data-main="${esc(p.main)}" data-sub="${esc(p.sub)}" data-x="${Number(p.x)}" data-y="${Number(p.y)}">
-        <div class="bk-ac-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="currentColor"/></svg>
-        </div>
-        <div>
-          <div class="bk-ac-main">${esc(p.main)}</div>
-          <div class="bk-ac-sub">${esc(p.sub)}</div>
-        </div>
-      </div>`).join("");
-    ac.classList.add("open");
-
-    ac.querySelectorAll(".bk-ac-item").forEach(item => {
-      item.addEventListener("click", () => {
-        const place = { main: item.dataset.main, sub: item.dataset.sub, x: +item.dataset.x, y: +item.dataset.y };
-        input.value = place.main;
-        ac.classList.remove("open"); ac.innerHTML = "";
-        onSelect(place);
-      });
-    });
+  acPickup.addListener("place_changed", () => {
+    const place = acPickup.getPlace();
+    if (!place.geometry) return;
+    const loc = place.geometry.location;
+    state.pickup = { main: place.name || inPickup.value, sub: place.formatted_address || "", lat: loc.lat(), lng: loc.lng() };
+    checkStep1();
+    if (state.dropoff) calcRoute();
   });
 
-  document.addEventListener("click", e => { if (!ac.contains(e.target) && e.target !== input) { ac.classList.remove("open"); ac.innerHTML = ""; } });
+  acDropoff.addListener("place_changed", () => {
+    const place = acDropoff.getPlace();
+    if (!place.geometry) return;
+    const loc = place.geometry.location;
+    state.dropoff = { main: place.name || inDropoff.value, sub: place.formatted_address || "", lat: loc.lat(), lng: loc.lng() };
+    document.getElementById("clearDropoff").style.display = "flex";
+    checkStep1();
+    if (state.pickup) calcRoute();
+  });
 }
 
 /* ── STEP NAVIGATION ─────────────────────────────────────────────────── */
@@ -766,13 +551,30 @@ function initFidelityMini(uid) {
 /* ── LOCATE ME ───────────────────────────────────────────────────────── */
 function initLocateBtn() {
   document.getElementById("locateBtn").addEventListener("click", () => {
-    // Simulate locating — pick a random central Rome place
-    const defaults = ROME_PLACES.filter(p => p.x > 30 && p.x < 65 && p.y > 35 && p.y < 65);
-    const place    = defaults[Math.floor(Math.random() * defaults.length)];
-    document.getElementById("inputPickup").value = place.main;
-    state.pickup = place;
-    checkStep1();
-    toast("📍 " + place.main);
+    if (!navigator.geolocation) { toast("Geolocation not supported"); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const latLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      if (geocoder) {
+        geocoder.geocode({ location: latLng }, (results, status) => {
+          if (status === "OK" && results[0]) {
+            const res  = results[0];
+            const name = res.address_components?.find(c => c.types.includes("route"))?.long_name
+                      || res.formatted_address;
+            state.pickup = { main: name, sub: res.formatted_address, lat: latLng.lat, lng: latLng.lng };
+            document.getElementById("inputPickup").value = name;
+            checkStep1();
+            toast("📍 " + name);
+            if (state.dropoff) calcRoute();
+          }
+        });
+      } else {
+        // Maps not loaded yet — use coords as label
+        state.pickup = { main: "My location", sub: "", lat: latLng.lat, lng: latLng.lng };
+        document.getElementById("inputPickup").value = "My location";
+        checkStep1();
+        toast("📍 My location");
+      }
+    }, () => toast("Could not get your location"));
   });
 }
 
@@ -780,28 +582,24 @@ function initLocateBtn() {
 function initQuickDests() {
   document.querySelectorAll(".bk-quick-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      const dest = btn.dataset.dest;
-      const match = ROME_PLACES.find(p => p.main.toLowerCase().includes(dest.toLowerCase().split(",")[0].toLowerCase().trim()));
-      if (match) {
-        document.getElementById("inputDropoff").value = match.main;
-        state.dropoff = match;
-        const clear = document.getElementById("clearDropoff");
-        if (clear) clear.style.display = "flex";
-        checkStep1();
-        if (state.pickup && state.dropoff) {
-          MapRenderer.setRoute(state.pickup, state.dropoff);
-          assignDriver();
-          updateMapStats();
-        }
-      }
+      const lat  = parseFloat(btn.dataset.lat);
+      const lng  = parseFloat(btn.dataset.lng);
+      const name = btn.dataset.dest;
+      state.dropoff = { main: name, sub: name + ", Roma", lat, lng };
+      document.getElementById("inputDropoff").value = name;
+      document.getElementById("clearDropoff").style.display = "flex";
+      checkStep1();
+      if (state.pickup) calcRoute();
+      else assignDriver();
     });
   });
 
   document.getElementById("clearDropoff").addEventListener("click", () => {
     document.getElementById("inputDropoff").value = "";
     state.dropoff = null;
+    state.distKm = 0; state.durationMin = 0;
     document.getElementById("clearDropoff").style.display = "none";
-    MapRenderer.clearRoute();
+    if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
     document.getElementById("mapStats").classList.remove("visible");
     checkStep1();
     document.getElementById("recapRoute").classList.add("hidden");
@@ -930,10 +728,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   applyBookingTranslations();
 
-  // Init map
-  MapRenderer.init();
-
-  // Init UI components
+  // Init UI components (map initialised via window.initMap Google Maps callback)
   initDropdown(user);
   initBackBtn();
   initFidelityMini(user?.id);
@@ -941,27 +736,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initQuickDests();
   initPassengerCounter();
   initTimeToggle();
-
-  // Autocomplete
-  initAutocomplete("inputPickup", "acPickup", place => {
-    state.pickup = place;
-    document.getElementById("inputPickup").value = place.main;
-    checkStep1();
-    if (state.dropoff) {
-      MapRenderer.setRoute(state.pickup, state.dropoff);
-      assignDriver(); updateMapStats();
-    }
-  });
-  initAutocomplete("inputDropoff", "acDropoff", place => {
-    state.dropoff = place;
-    document.getElementById("inputDropoff").value = place.main;
-    document.getElementById("clearDropoff").style.display = "flex";
-    checkStep1();
-    if (state.pickup) {
-      MapRenderer.setRoute(state.pickup, state.dropoff);
-      assignDriver(); updateMapStats();
-    }
-  });
 
   // Step navigation
   document.getElementById("btnStep1Next").addEventListener("click", () => {
@@ -980,14 +754,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "dashboard.html";
   });
 
-  // Theme sync from other tabs
+  // Theme / lang sync from other tabs
   window.addEventListener("storage", e => {
-    if (e.key === "ride_theme")         { Theme.apply(); MapRenderer.redraw(); }
-    if (e.key === "ride_reduce_motion") { Motion.apply(); }
+    if (e.key === "ride_reduce_motion") Motion.apply();
     if (e.key === "ride_lang")          { Lang.apply(); applyBookingTranslations(); }
   });
-
-  // Redraw map on theme change (for color tokens)
-  const themeObserver = new MutationObserver(() => MapRenderer.redraw());
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 });

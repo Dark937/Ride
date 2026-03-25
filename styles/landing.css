@@ -968,6 +968,125 @@ spline-viewer {
     0 0 28px rgba(218, 73, 255, 0.05);
 }
 
+/* ── SUPERCAR DNA SECTION ─────────────────────────────────────────── */
+.section-supercar-dna {
+  overflow: hidden;
+}
+
+.scd-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+}
+
+.scd-text {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.scd-text .section-title {
+  margin-bottom: 0;
+}
+
+.scd-text .section-text {
+  margin-bottom: 0;
+  max-width: 480px;
+}
+
+.scd-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 4px;
+}
+
+.scd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scd-stat-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.scd-stat-lbl {
+  font-size: 11.5px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.scd-stat-sep {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 24px;
+  flex-shrink: 0;
+}
+
+.scd-cta {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scd-media {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.40);
+}
+
+.scd-media img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s cubic-bezier(.22,1,.36,1);
+}
+
+.scd-media:hover img {
+  transform: scale(1.04);
+}
+
+.scd-media-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(9,9,15,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scd-badge-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.scd-badge-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
 .feature-number,
 .step-badge {
   display: none;
@@ -1778,10 +1897,10 @@ spline-viewer {
     flex-direction: column;
   }
 
-  /* Each panel: full-screen scroll zone; JS injects image inside it */
+  /* Each panel: scroll trigger zone — image lives in sticky header above */
   .feature-panel {
     height: auto;
-    min-height: 80vh;
+    min-height: 40vh;
     opacity: 1;
     display: flex;
     align-items: center;
@@ -1791,27 +1910,25 @@ spline-viewer {
   .feature-panel.active,
   .feature-panel.passed { opacity: 1; }
 
-  /* Per-panel image injected by mobile observer JS */
-  .feature-panel-img {
+  /* Shared image inside sticky .features-left, swapped by JS */
+  .features-mob-img {
     width: 100%;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
+    margin-top: 16px;
     border: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 12px 40px rgba(0,0,0,.38);
-    transition: opacity .3s ease, transform .3s ease;
+    box-shadow: 0 8px 28px rgba(0,0,0,.3);
+    transition: opacity .22s ease;
   }
-  .feature-panel-img img {
+  .features-mob-img.is-swapping { opacity: 0.15; }
+  .features-mob-img img {
     width: 100%;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
     display: block;
   }
-  .feature-panel-img.is-inactive {
-    opacity: 0.22;
-    transform: scale(0.97);
-  }
 
-  /* Hide single fixed image — JS renders per-panel images instead */
+  /* Hide desktop fixed image */
   .features-image-fixed {
     display: none !important;
   }
@@ -1833,6 +1950,17 @@ spline-viewer {
   .model-placeholder {
     min-height: 400px;
   }
+
+  /* Supercar DNA — stack on tablet/mobile */
+  .scd-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .scd-media { order: -1; }
+
+  .scd-stat-val { font-size: 22px; }
+  .scd-stat-sep { margin: 0 16px; }
 }
 
 @media (max-width: 900px) {
@@ -1907,6 +2035,16 @@ spline-viewer {
   .model-placeholder {
     min-height: 300px;
   }
+
+  /* Supercar DNA stats wrap on phone */
+  .scd-stats {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .scd-stat-sep { display: none; }
+
+  .scd-stat-val { font-size: 20px; }
 }
 
 @media (max-width: 600px) {

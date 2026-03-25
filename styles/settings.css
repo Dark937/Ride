@@ -717,10 +717,11 @@ body {
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .content {
-    padding: 0 0 60px;
+    padding: 0 0 80px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .form-grid { grid-template-columns: 1fr; }
   .field.span2 { grid-column: span 1; }
@@ -775,6 +776,22 @@ body {
 
   .account-left-col { gap: 18px; }
   .driver-promo { margin-top: 0; }
+
+  /* Cards: reduce padding on phone */
+  .card { padding: 16px; }
+  .card-hd { margin-bottom: 14px; }
+  .panel-header { margin-bottom: 18px; }
+  .panel-header h1 { font-size: 18px; }
+
+  /* Toggle rows: wrap label on narrow */
+  .toggle-row { gap: 10px; align-items: flex-start; }
+  .tr-info { flex: 1; min-width: 0; }
+
+  /* Appearance grid */
+  .theme-options, .motion-options { grid-template-columns: 1fr 1fr; }
+
+  /* Save button: full width */
+  .form-save { width: 100%; justify-content: center; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

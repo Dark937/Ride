@@ -64,68 +64,29 @@
   </button>
 </div>
 
-<!-- ══ MAP CANVAS (full background) ═════════════════════════════════ -->
-<div class="bk-map" id="mapCanvas" aria-hidden="true">
-  <canvas id="mapBg"></canvas>
-  <!-- Animated route SVG overlay -->
-  <svg class="bk-map-svg" id="routeSvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <filter id="glow">
-        <feGaussianBlur stdDeviation="4" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-        <path d="M0,0 L6,3 L0,6 Z" fill="var(--brand)" opacity="0.9"/>
-      </marker>
-    </defs>
-    <!-- Grid lines (faux map streets) -->
-    <g class="map-grid" id="mapGrid"></g>
-    <!-- Route path -->
-    <path class="route-shadow" id="routeShadow" fill="none"/>
-    <path class="route-path"   id="routePath"   fill="none" marker-end="url(#arrowHead)"/>
-    <!-- Animated dash pulse -->
-    <path class="route-pulse"  id="routePulse"  fill="none"/>
-    <!-- Origin pin -->
-    <g class="map-pin from-pin" id="pinFrom" style="display:none">
-      <circle class="pin-ring" r="22"/>
-      <circle class="pin-dot"  r="8"/>
-      <text class="pin-label" y="-32" text-anchor="middle" data-i18n="pickup">Pickup</text>
-    </g>
-    <!-- Destination pin -->
-    <g class="map-pin to-pin" id="pinTo" style="display:none">
-      <circle class="pin-ring" r="22"/>
-      <circle class="pin-dot"  r="8"/>
-      <text class="pin-label" y="-32" text-anchor="middle" data-i18n="destination">Destination</text>
-    </g>
-    <!-- Driver dot (animates along route) -->
-    <g class="driver-marker" id="driverMarker" style="display:none">
-      <circle class="driver-pulse" r="18"/>
-      <circle class="driver-bg"    r="12"/>
-      <text class="driver-icon" y="5" text-anchor="middle" font-size="14">🚗</text>
-    </g>
-  </svg>
+<!-- ══ MAP (full background — Google Maps) ══════════════════════════ -->
+<div id="map" aria-hidden="true"></div>
 
-  <!-- Map stats bar (bottom center) -->
-  <div class="bk-map-stats" id="mapStats">
-    <div class="map-stat">
-      <span class="map-stat-lbl" data-i18n="rideTime">Ride time</span>
-      <span class="map-stat-val" id="statDuration">—</span>
-    </div>
-    <div class="map-stat-div"></div>
-    <div class="map-stat">
-      <span class="map-stat-lbl" data-i18n="estDistance">Distance</span>
-      <span class="map-stat-val" id="statDistance">—</span>
-    </div>
-    <div class="map-stat-div"></div>
-    <div class="map-stat">
-      <span class="map-stat-lbl" data-i18n="arrivalTime">Arrival</span>
-      <span class="map-stat-val" id="statArrival">—</span>
-    </div>
-    <div class="map-stat-div"></div>
-    <div class="map-stat highlight">
-      <span class="map-stat-lbl" data-i18n="estFare">Est. fare</span>
-      <span class="map-stat-val" id="statFare">—</span>
-    </div>
+<!-- Map stats bar (fixed, bottom-center, shown after route calculated) -->
+<div class="bk-map-stats" id="mapStats">
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="rideTime">Ride time</span>
+    <span class="map-stat-val" id="statDuration">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="estDistance">Distance</span>
+    <span class="map-stat-val" id="statDistance">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="arrivalTime">Arrival</span>
+    <span class="map-stat-val" id="statArrival">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat highlight">
+    <span class="map-stat-lbl" data-i18n="estFare">Est. fare</span>
+    <span class="map-stat-val" id="statFare">—</span>
   </div>
 </div>
 
@@ -193,19 +154,19 @@
         <!-- Quick destinations -->
         <div class="bk-quick-label" data-i18n="quickDests">Quick destinations</div>
         <div class="bk-quick-list" id="quickList">
-          <button class="bk-quick-btn" data-dest="Fiumicino Airport, Rome">
+          <button class="bk-quick-btn" data-dest="Fiumicino Airport" data-lat="41.7999" data-lng="12.2462">
             <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor"/></svg>
-            Fiumicino Airport
+            Fiumicino
           </button>
-          <button class="bk-quick-btn" data-dest="Roma Termini Station">
+          <button class="bk-quick-btn" data-dest="Roma Termini" data-lat="41.9009" data-lng="12.4975">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3 9h18M9 21V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             Termini
           </button>
-          <button class="bk-quick-btn" data-dest="Colosseum, Rome">
+          <button class="bk-quick-btn" data-dest="Colosseum" data-lat="41.8902" data-lng="12.4922">
             <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 6v12M2 12h20" stroke="currentColor" stroke-width="1.2" opacity=".5"/></svg>
             Colosseo
           </button>
-          <button class="bk-quick-btn" data-dest="Vatican City, Rome">
+          <button class="bk-quick-btn" data-dest="Vatican City" data-lat="41.9022" data-lng="12.4539">
             <svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v9h14v-9h3L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
             Vaticano
           </button>
@@ -402,5 +363,9 @@
 <script src="assets/sql-wasm.js"></script>
 <script src="scripts/shared.js"></script>
 <script src="scripts/booking.js"></script>
+<!-- Google Maps JavaScript API — replace YOUR_GOOGLE_MAPS_API_KEY with your key -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap">
+</script>
 </body>
 </html>
