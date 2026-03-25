@@ -150,6 +150,7 @@ const VEHICLES = [
     baseFare: 5.0,
     eta: 4,
     capacity: 2,
+    speedFactor: 0.92,
     badge: null,
     features: ["2 seats", "Sport", "A/C"],
     unlocked: true,
@@ -163,6 +164,7 @@ const VEHICLES = [
     baseFare: 8.0,
     eta: 6,
     capacity: 4,
+    speedFactor: 1.0,
     badge: { label: "Popular", cls: "new" },
     features: ["4 seats", "Premium A/C", "Leather"],
     unlocked: true,
@@ -176,6 +178,7 @@ const VEHICLES = [
     baseFare: 20.0,
     eta: 10,
     capacity: 4,
+    speedFactor: 1.05,
     badge: { label: "Luxury", cls: "gold" },
     features: ["4 seats", "Chauffeur", "Champagne"],
     unlocked: true,
@@ -189,6 +192,7 @@ const VEHICLES = [
     baseFare: 5.5,
     eta: 5,
     capacity: 4,
+    speedFactor: 0.88,
     badge: { label: "Eco", cls: "eco" },
     features: ["4 seats", "Zero CO₂", "Autopilot"],
     unlocked: true,
@@ -202,6 +206,7 @@ const VEHICLES = [
     baseFare: 30.0,
     eta: 8,
     capacity: 4,
+    speedFactor: 0.82,
     badge: { label: "Signature", cls: "gold" },
     features: ["4 seats", "Supercar", "Track-ready"],
     unlocked: true,
@@ -215,6 +220,7 @@ const VEHICLES = [
     baseFare: 12.0,
     eta: 9,
     capacity: 7,
+    speedFactor: 1.08,
     badge: null,
     features: ["7 seats", "XL Luggage", "Premium"],
     unlocked: true,
@@ -249,20 +255,14 @@ const LIGHT_MAP_STYLE = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-let gmap = null, directionsService = null, directionsRenderer = null, geocoder = null;
+let gmap = null, routePolyline = null, geocoder = null;
 
 window.initMap = async function() {
-  const { Map }                              = await google.maps.importLibrary("maps");
-  const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("routes");
-  const { Geocoder }                         = await google.maps.importLibrary("geocoding");
+  const { Map }      = await google.maps.importLibrary("maps");
+  const { Geocoder } = await google.maps.importLibrary("geocoding");
 
   const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-  geocoder           = new Geocoder();
-  directionsService  = new DirectionsService();
-  directionsRenderer = new DirectionsRenderer({
-    suppressMarkers: false,
-    polylineOptions: { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
-  });
+  geocoder = new Geocoder();
 
   gmap = new Map(document.getElementById("map"), {
     center:           { lat: 41.9, lng: 12.49 },
@@ -273,48 +273,82 @@ window.initMap = async function() {
     clickableIcons:   false,
   });
 
-  directionsRenderer.setMap(gmap);
-
   new MutationObserver(() => {
     if (!gmap) return;
     const dark = document.documentElement.getAttribute("data-theme") !== "light";
     gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
+    if (routePolyline) routePolyline.setOptions({ strokeColor: "#3d5eff" });
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   wireAutocomplete();
 };
 
 async function calcRoute() {
-  if (!state.pickup || !state.dropoff || !directionsService) return;
+  if (!state.pickup || !state.dropoff || !gmap) return;
   try {
-    const result = await new Promise((resolve, reject) => {
-      directionsService.route({
-        origin:      new google.maps.LatLng(state.pickup.lat,  state.pickup.lng),
-        destination: new google.maps.LatLng(state.dropoff.lat, state.dropoff.lng),
-        travelMode:  google.maps.TravelMode.DRIVING,
-      }, (res, status) => {
-        if (status === google.maps.DirectionsStatus.OK) resolve(res);
-        else reject(new Error(status));
-      });
+    const { Route }    = await google.maps.importLibrary("routes");
+    const { encoding } = await google.maps.importLibrary("geometry");
+
+    const response = await Route.computeRoutes(
+      {
+        origin:      { location: { latLng: { latitude: state.pickup.lat,  longitude: state.pickup.lng  } } },
+        destination: { location: { latLng: { latitude: state.dropoff.lat, longitude: state.dropoff.lng } } },
+        travelMode:  "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+      },
+      { fields: ["routes.legs.distanceMeters", "routes.legs.duration", "routes.polyline.encodedPolyline"] }
+    );
+
+    if (!response.routes || !response.routes.length) return;
+    const route = response.routes[0];
+    const leg   = route.legs[0];
+
+    // Decode and draw polyline
+    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+    const path = encoding.decodePath(route.polyline.encodedPolyline);
+    routePolyline = new google.maps.Polyline({
+      path, map: gmap,
+      strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9,
     });
 
-    directionsRenderer.setDirections(result);
+    // Fit map to route
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    gmap.fitBounds(bounds, { top: 60, right: 60, bottom: 120, left: 60 });
 
-    const leg = result.routes[0].legs[0]; // leg.distance.value = metres, leg.duration.value = seconds
-    updateRouteStats(leg);
+    // duration from Routes API is "Xs" string (e.g. "721s") or Duration object
+    const rawSecs = typeof leg.duration === "string"
+      ? parseInt(leg.duration)
+      : (leg.duration?.seconds ?? leg.duration?.value ?? 0);
+    state.rawDurationSecs = rawSecs;
+    state.rawDistMeters   = leg.distanceMeters;
+
+    updateRouteStats();
     assignDriver();
   } catch (err) {
-    console.warn("Directions API failed:", err);
+    console.warn("Routes API failed:", err);
   }
 }
 
-function updateRouteStats(leg) {
-  const km   = parseFloat((leg.distance.value / 1000).toFixed(1));
-  const min  = Math.round(leg.duration.value / 60);
+/* Compute base-time for arrival: scheduled datetime or now */
+function getRideBaseTime() {
+  if (state.mode === "schedule" && state.date && state.time) {
+    const t = new Date(`${state.date}T${state.time}`).getTime();
+    if (!isNaN(t)) return t;
+  }
+  return Date.now();
+}
+
+function updateRouteStats() {
+  if (!state.rawDistMeters && !state.rawDurationSecs) return;
+  const veh      = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
+  const adjSecs  = Math.round(state.rawDurationSecs * (veh.speedFactor ?? 1.0));
+  const km       = parseFloat((state.rawDistMeters / 1000).toFixed(1));
+  const min      = Math.round(adjSecs / 60);
   state.distKm      = km;
   state.durationMin = min;
 
-  const arrival = new Date(Date.now() + leg.duration.value * 1000);
+  const arrival = new Date(getRideBaseTime() + adjSecs * 1000);
   const arrStr  = arrival.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
@@ -339,17 +373,21 @@ function updateRouteStats(leg) {
   if (state.step === 3) renderVehicles();
 }
 
-/* Update stats bar fare when vehicle selection changes */
+/* Refresh stats bar (fare + duration + arrival) when vehicle or time changes */
 function refreshStatsFare() {
-  if (!state.distKm || !state.vehicle) return;
-  const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
-  const fare = veh.baseFare + state.distKm * veh.ratePerKm;
-  state.fareEur = parseFloat(fare.toFixed(2));
-  const fareStr = "€" + fare.toFixed(2);
-  const el = document.getElementById("statFare");
-  if (el) el.textContent = fareStr;
-  const mob = document.getElementById("mobFare");
-  if (mob) mob.textContent = fareStr;
+  if (!state.rawDistMeters && !state.rawDurationSecs) return;
+  updateRouteStats();
+}
+
+/* Refresh only the arrival time display (e.g. when scheduled time changes) */
+function refreshArrival() {
+  if (!state.rawDurationSecs) return;
+  const veh     = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
+  const adjSecs = Math.round(state.rawDurationSecs * (veh.speedFactor ?? 1.0));
+  const arrival = new Date(getRideBaseTime() + adjSecs * 1000);
+  const arrStr  = arrival.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const el = document.getElementById("statArrival");
+  if (el) el.textContent = arrStr;
 }
 
 /* ── LOCATION LOOKUP (mock geocoder — fallback if Maps not loaded) ─────── */
@@ -377,6 +415,8 @@ const state = {
   vehicle: null,  // vehicle id
   driver: null,
   distKm: 0,
+  rawDurationSecs: 0,   // base duration from Routes API (before vehicle factor)
+  rawDistMeters: 0,
   durationMin: 0,
   fareEur: 0,
   user: null,
@@ -692,8 +732,9 @@ function initClearDropoff() {
     document.getElementById("inputDropoff").value = "";
     state.dropoff = null;
     state.distKm = 0; state.durationMin = 0;
+    state.rawDurationSecs = 0; state.rawDistMeters = 0;
     document.getElementById("clearDropoff").style.display = "none";
-    if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
+    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
     document.getElementById("mapStats").classList.remove("visible");
     // Reset mobile stats strip so stale values are not shown
     const mob = document.getElementById("mobStats");
@@ -735,6 +776,7 @@ function initTimeToggle() {
       btn.classList.add("active");
       state.mode = btn.dataset.val;
       document.getElementById("schedulePicker").classList.toggle("hidden", state.mode !== "schedule");
+      refreshArrival();
     });
   });
 
@@ -808,6 +850,7 @@ function initTimeToggle() {
   function syncState() {
     state.date = `${yearEl.value}-${monEl.value}-${dayEl.value}`;
     state.time = `${hourEl.value}:${minEl.value}`;
+    refreshArrival();
   }
   syncState();
 

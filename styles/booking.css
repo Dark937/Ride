@@ -21,7 +21,7 @@ img    { display: block; max-width: 100%; }
   --yellow:       #eab308;
 
   --bg:           #000000;
-  --card:         rgba(255,255,255,.05);
+  --card:         rgba(18,18,18,.92);
   --card-solid:   #0d0d0d;
   --surface:      rgba(255,255,255,.04);
   --surface-2:    rgba(255,255,255,.07);
@@ -98,7 +98,7 @@ img    { display: block; max-width: 100%; }
 /* ── BASE ────────────────────────────────────────────────────────────── */
 html, body {
   width: 100%; height: 100%; overflow: hidden;
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   background: var(--map-bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;

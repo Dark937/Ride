@@ -79,7 +79,7 @@ img{display:block;max-width:100%}
 /* ── BASE ── */
 html,body{
   height:100%;
-  font-family:'DM Sans',system-ui,sans-serif;
+  font-family:'Inter',system-ui,sans-serif;
   background:var(--bg);
   color:var(--text);
   -webkit-font-smoothing:antialiased;
