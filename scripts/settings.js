@@ -353,11 +353,13 @@ async function initAppearance() {
     const sel = document.querySelector("#langGrid .lang-card.sel");
     if (!sel) return;
     const newLang = sel.dataset.lang;
-    Lang.set(newLang);
-    Lang.apply();
-    // Persist to account (if logged in) or stay in cookie (guest)
+    // Fetch the session FIRST — Session.get() internally calls Lang.set(user.lang)
+    // which would overwrite the new choice if called after Lang.set(newLang).
     const user = await Session.get();
+    Lang.set(newLang);
     if (user) await Session.save({ ...user, lang: newLang });
+    // Apply AFTER all async work so no subsequent Lang.set() can overwrite
+    Lang.apply();
     showToast(Lang.t("saveLanguage") || "Language saved!");
   });
 }

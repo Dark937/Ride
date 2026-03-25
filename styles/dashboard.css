@@ -38,8 +38,8 @@ img{display:block;max-width:100%}
 
   --sidebar-w:   220px;
   --topbar-h:    56px;
-  --radius:      8px;
-  --radius-sm:   6px;
+  --radius:      16px;
+  --radius-sm:   10px;
   --topbar-bg:   rgba(7,7,15,0.92);
 }
 

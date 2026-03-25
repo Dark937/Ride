@@ -2434,3 +2434,27 @@ spline-viewer {
 [data-theme="light"] .bottom-fade {
   background: linear-gradient(to bottom, transparent, var(--bg));
 }
+
+/* ── BORDER-RADIUS UPLIFT ─────────────────────────────────────────────── */
+.glass-panel        { border-radius: 20px; }
+.vehicle-card       { border-radius: 20px; }
+.feature-card       { border-radius: 20px; }
+.step-card          { border-radius: 18px; }
+.stat-card          { border-radius: 18px; }
+.testimonial-card   { border-radius: 18px; }
+.faq-item           { border-radius: 14px; }
+.promo-card         { border-radius: 20px; }
+
+/* Buttons */
+.cta-btn,
+.hero-cta,
+.btn-primary,
+.btn-secondary     { border-radius: 14px; }
+.pill-badge        { border-radius: 999px; }
+
+/* Topbar elements */
+.nav-link          { border-radius: 10px; }
+.tb-cta            { border-radius: 12px; }
+.tb-dropdown       { border-radius: 18px; }
+.tb-dd-item        { border-radius: 10px; }
+}
