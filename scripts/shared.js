@@ -413,6 +413,18 @@ const LANGS = {
     partnersTrustedBy:"Trusted by",
     footerTagline:"Ride merges AI, premium service, and high-performance vehicles to redefine what urban mobility can feel like.",
     myDashboard:"My Dashboard",
+    // Supercar DNA section
+    sectionSupercarDNA:"Supercar DNA",
+    scdTitle:"Performance is not optional. It is the baseline.",
+    scdText:"Every Ride vehicle is chosen for one reason: it has to feel like nothing else on the road. 0–100 in under four seconds. Carbon fibre where aluminium would have been enough. Sound that makes the city pay attention.",
+    scdStat1Val:"0→100",
+    scdStat1Label:"under 4 seconds",
+    scdStat2Val:"1,200+",
+    scdStat2Label:"combined horsepower",
+    scdStat3Val:"100%",
+    scdStat3Label:"hand-selected fleet",
+    scdBadgeSub:"Performance fleet",
+    ctaBook:"Book now",
   },
 
   it: {
@@ -580,6 +592,18 @@ const LANGS = {
     partnersTrustedBy:"Collaborano con noi",
     footerTagline:"Ride unisce AI, servizio premium e veicoli ad alte prestazioni per ridefinire cosa può essere la mobilità urbana.",
     myDashboard:"La mia Dashboard",
+    // Supercar DNA section
+    sectionSupercarDNA:"DNA Supercar",
+    scdTitle:"Le prestazioni non sono opzionali. Sono il punto di partenza.",
+    scdText:"Ogni veicolo Ride è scelto per un solo motivo: deve dare una sensazione unica sulla strada. Da 0 a 100 in meno di quattro secondi. Fibra di carbonio dove l'alluminio sarebbe bastato. Un suono che fa alzare lo sguardo alla città.",
+    scdStat1Val:"0→100",
+    scdStat1Label:"meno di 4 secondi",
+    scdStat2Val:"1.200+",
+    scdStat2Label:"cavalli combinati",
+    scdStat3Val:"100%",
+    scdStat3Label:"flotta selezionata a mano",
+    scdBadgeSub:"Flotta performance",
+    ctaBook:"Prenota ora",
   },
 
   fr: {
@@ -747,6 +771,18 @@ const LANGS = {
     partnersTrustedBy:"Ils nous font confiance",
     footerTagline:"Ride fusionne IA, service premium et véhicules haute performance pour redéfinir la mobilité urbaine.",
     myDashboard:"Mon tableau de bord",
+    // Supercar DNA section
+    sectionSupercarDNA:"ADN Supercar",
+    scdTitle:"La performance n'est pas une option. C'est la base.",
+    scdText:"Chaque véhicule Ride est choisi pour une seule raison : il doit donner une sensation unique sur la route. De 0 à 100 en moins de quatre secondes. Fibre de carbone là où l'aluminium aurait suffi. Un son qui fait lever la tête dans toute la ville.",
+    scdStat1Val:"0→100",
+    scdStat1Label:"moins de 4 secondes",
+    scdStat2Val:"1 200+",
+    scdStat2Label:"chevaux combinés",
+    scdStat3Val:"100%",
+    scdStat3Label:"flotte sélectionnée à la main",
+    scdBadgeSub:"Flotte performance",
+    ctaBook:"Réserver",
   },
 
   es: {
@@ -914,6 +950,18 @@ const LANGS = {
     partnersTrustedBy:"Confían en nosotros",
     footerTagline:"Ride fusiona IA, servicio premium y vehículos de alto rendimiento para redefinir la movilidad urbana.",
     myDashboard:"Mi panel",
+    // Supercar DNA section
+    sectionSupercarDNA:"ADN Supercar",
+    scdTitle:"El rendimiento no es opcional. Es el punto de partida.",
+    scdText:"Cada vehículo Ride se elige por una sola razón: tiene que sentirse único en la carretera. De 0 a 100 en menos de cuatro segundos. Fibra de carbono donde el aluminio habría bastado. Un sonido que hace mirar a toda la ciudad.",
+    scdStat1Val:"0→100",
+    scdStat1Label:"menos de 4 segundos",
+    scdStat2Val:"1.200+",
+    scdStat2Label:"caballos combinados",
+    scdStat3Val:"100%",
+    scdStat3Label:"flota seleccionada a mano",
+    scdBadgeSub:"Flota de alto rendimiento",
+    ctaBook:"Reservar",
   },
 
   zh: {
@@ -1080,6 +1128,18 @@ const LANGS = {
     partnersTrustedBy:"合作伙伴",
     footerTagline:"Ride 将 AI、优质服务和高性能车辆融为一体，重新定义城市出行。",
     myDashboard:"我的控制台",
+    // Supercar DNA section
+    sectionSupercarDNA:"超跑基因",
+    scdTitle:"性能不是选项，而是起点。",
+    scdText:"每辆 Ride 车辆只为一个理由而选择：它必须让人感受到路上无可替代的存在。0 到 100 不到四秒。碳纤维用在铝就够的地方。那种让整座城市为之侧目的声浪。",
+    scdStat1Val:"0→100",
+    scdStat1Label:"不足 4 秒",
+    scdStat2Val:"1,200+",
+    scdStat2Label:"综合马力",
+    scdStat3Val:"100%",
+    scdStat3Label:"精心挑选车队",
+    scdBadgeSub:"性能车队",
+    ctaBook:"立即预订",
   }
 };
 

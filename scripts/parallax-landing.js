@@ -264,42 +264,61 @@ document.addEventListener("DOMContentLoaded", () => {
     onScrollEffects();
 
     // ── MOBILE PARALLAX  (<=1024px) ─────────────────────────────────
+    // Single shared image lives inside the sticky .features-left block.
+    // As panels scroll into view the image swaps in place (like desktop).
     (function initMobileParallax() {
       if (!featurePanels.length || !parallaxSection) return;
       function isMob() { return window.innerWidth <= 1024; }
 
-      function buildImages() {
-        featurePanels.forEach(panel => {
-          if (panel.querySelector('.feature-panel-img')) return;
-          const img = panel.dataset.img || '';
-          const alt = panel.dataset.alt || '';
-          if (!img) return;
-          const w = document.createElement('div');
-          w.className = 'feature-panel-img is-inactive';
-          w.innerHTML = `<img src="${img}" alt="${alt}" loading="lazy">`;
-          panel.appendChild(w);
-        });
+      let mobileImgEl = null;
+      let imgSwapTid  = null;
+
+      function buildMobileImg() {
+        let wrap = parallaxSection.querySelector('.features-mob-img');
+        if (wrap) { mobileImgEl = wrap.querySelector('img'); return; }
+        wrap = document.createElement('div');
+        wrap.className = 'features-mob-img';
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        const first = featurePanels[0];
+        if (first) { img.src = first.dataset.img || ''; img.alt = first.dataset.alt || ''; }
+        wrap.appendChild(img);
+        mobileImgEl = img;
+        // Insert after .features-left-inner, inside the sticky .features-left
+        const leftInner = parallaxSection.querySelector('.features-left-inner');
+        if (leftInner && leftInner.parentNode) {
+          leftInner.parentNode.insertBefore(wrap, leftInner.nextSibling);
+        }
       }
 
-      function activatePanel(idx) {
-        featurePanels.forEach((p, i) => {
-          const el = p.querySelector('.feature-panel-img');
-          if (el) el.classList.toggle('is-inactive', i !== idx);
-        });
+      function swapImg(panel) {
+        if (!mobileImgEl || !panel || !panel.dataset.img) return;
+        const wrap = mobileImgEl.parentNode;
+        wrap.classList.add('is-swapping');
+        clearTimeout(imgSwapTid);
+        imgSwapTid = setTimeout(() => {
+          mobileImgEl.src = panel.dataset.img;
+          mobileImgEl.alt = panel.dataset.alt || '';
+          wrap.classList.remove('is-swapping');
+        }, 200);
+      }
+
+      function activateMobilePanel(idx) {
         setActiveFeature(idx);
+        swapImg(featurePanels[idx]);
       }
 
       let observer = null;
 
       function attach() {
         if (!isMob()) return;
-        buildImages();
+        buildMobileImg();
         if (observer) observer.disconnect();
         observer = new IntersectionObserver(entries => {
           entries.forEach(e => {
             if (!e.isIntersecting) return;
             const idx = featurePanels.indexOf(e.target);
-            if (idx !== -1) activatePanel(idx);
+            if (idx !== -1) activateMobilePanel(idx);
           });
         }, { threshold: 0.45 });
         featurePanels.forEach(p => observer.observe(p));
@@ -307,10 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       function detach() {
         if (observer) { observer.disconnect(); observer = null; }
-        featurePanels.forEach(p => {
-          const img = p.querySelector('.feature-panel-img');
-          if (img) img.remove();
-        });
+        const wrap = parallaxSection.querySelector('.features-mob-img');
+        if (wrap) wrap.remove();
+        mobileImgEl = null;
       }
 
       if (isMob()) attach();

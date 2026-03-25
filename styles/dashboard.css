@@ -1043,4 +1043,27 @@ html,body{
   #panel-account{overflow-y:auto}
   #panel-account .panel-inner{padding-bottom:40px}
   .profile-card,.info-card{width:100%}
+
+  /* Welcome strip stats: wrap instead of overflow */
+  .ws-stats{flex-wrap:wrap;gap:12px 20px}
+  .ws-stat{text-align:left}
+
+  /* Rides table: hide Status column, show fare prominently */
+  .rides-tbl th:nth-child(3),
+  .rides-tbl td:nth-child(3){display:none}
+  .ride-fare{font-size:12px}
+
+  /* Transaction table: hide Status column */
+  .tx-table th:nth-child(4),
+  .tx-table td:nth-child(4){display:none}
+
+  /* Chart tabs scroll horizontally */
+  .chart-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .chart-tabs::-webkit-scrollbar{display:none}
+
+  /* Fidelity — progress bar label wrap */
+  .fid-prog-labels{flex-wrap:wrap;gap:4px}
+
+  /* Spending panel full-width padding */
+  .chart-card{padding:14px}
 }
