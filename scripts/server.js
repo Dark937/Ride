@@ -37,7 +37,7 @@ function applySecurityHeaders(req, res, next) {
     // Images: self + data URIs (avatars) + blob (canvas) + Google Maps tiles
     "img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com",
     // API calls: self + Google Maps Directions/Places/Geocode APIs
-    "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com",
+    "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://places.googleapis.com",
     // WASM workers
     "worker-src 'self' blob:",
     // No iframes anywhere (Maps JS API doesn't use iframes)

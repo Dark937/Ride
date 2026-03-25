@@ -248,7 +248,7 @@ const LANGS = {
   en: {
     home:"Home", features:"Features", vehicles:"Vehicles",
     fidelity:"Fidelity", drive:"Drive with us",
-    getStarted:"Get started", viewPlans:"View plans",
+    getStarted:"Get started", bookNow:"Book now", viewPlans:"View plans",
     signIn:"Sign in", createAccount:"Create account",
     welcomeBack:"Welcome back", createYourAccount:"Create your account",
     dontHaveAccount:"Don't have an account?", signUpFree:"Sign up for free",
@@ -430,7 +430,7 @@ const LANGS = {
   it: {
     home:"Home", features:"Funzionalità", vehicles:"Veicoli",
     fidelity:"Fedeltà", drive:"Guida con noi",
-    getStarted:"Inizia ora", viewPlans:"Vedi piani",
+    getStarted:"Inizia ora", bookNow:"Prenota ora", viewPlans:"Vedi piani",
     signIn:"Accedi", createAccount:"Crea account",
     welcomeBack:"Bentornato", createYourAccount:"Crea il tuo account",
     dontHaveAccount:"Non hai un account?", signUpFree:"Registrati gratis",
@@ -609,7 +609,7 @@ const LANGS = {
   fr: {
     home:"Accueil", features:"Fonctionnalités", vehicles:"Véhicules",
     fidelity:"Fidélité", drive:"Conduire avec nous",
-    getStarted:"Commencer", viewPlans:"Voir les plans",
+    getStarted:"Commencer", bookNow:"Réserver", viewPlans:"Voir les plans",
     signIn:"Se connecter", createAccount:"Créer un compte",
     welcomeBack:"Bon retour", createYourAccount:"Créer votre compte",
     dontHaveAccount:"Pas encore de compte?", signUpFree:"S'inscrire gratuitement",
@@ -788,7 +788,7 @@ const LANGS = {
   es: {
     home:"Inicio", features:"Características", vehicles:"Vehículos",
     fidelity:"Fidelidad", drive:"Conducir con nosotros",
-    getStarted:"Comenzar", viewPlans:"Ver planes",
+    getStarted:"Comenzar", bookNow:"Reservar ahora", viewPlans:"Ver planes",
     signIn:"Iniciar sesión", createAccount:"Crear cuenta",
     welcomeBack:"Bienvenido de nuevo", createYourAccount:"Crea tu cuenta",
     dontHaveAccount:"¿No tienes cuenta?", signUpFree:"Regístrate gratis",
@@ -967,7 +967,7 @@ const LANGS = {
   zh: {
     home:"首页", features:"功能", vehicles:"车辆",
     fidelity:"忠诚度", drive:"与我们一起驾驶",
-    getStarted:"立即开始", viewPlans:"查看方案",
+    getStarted:"立即开始", bookNow:"立即预订", viewPlans:"查看方案",
     signIn:"登录", createAccount:"创建账户",
     welcomeBack:"欢迎回来", createYourAccount:"创建您的账户",
     dontHaveAccount:"没有账户？", signUpFree:"免费注册",

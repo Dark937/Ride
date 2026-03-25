@@ -249,17 +249,16 @@ const LIGHT_MAP_STYLE = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-let gmap = null, directionsService = null, directionsRenderer = null, geocoder = null;
+let gmap = null, routesService = null, routePolyline = null, geocoder = null;
 
 window.initMap = async function() {
-  const { Map }                   = await google.maps.importLibrary("maps");
-  const { DirectionsService,
-          DirectionsRenderer }    = await google.maps.importLibrary("routes");
-  const { Geocoder }              = await google.maps.importLibrary("geocoding");
+  const { Map }          = await google.maps.importLibrary("maps");
+  const { RoutesService } = await google.maps.importLibrary("routes");
+  const { Geocoder }     = await google.maps.importLibrary("geocoding");
 
   const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-  geocoder          = new Geocoder();
-  directionsService = new DirectionsService();
+  geocoder      = new Geocoder();
+  routesService = new RoutesService();
 
   gmap = new Map(document.getElementById("map"), {
     center:           { lat: 41.9, lng: 12.49 },
@@ -270,36 +269,56 @@ window.initMap = async function() {
     clickableIcons:   false,
   });
 
-  directionsRenderer = new DirectionsRenderer({
-    map:             gmap,
-    suppressMarkers: false,
-    polylineOptions: { strokeColor: "#3d5eff", strokeWeight: 5, strokeOpacity: 0.9 },
-  });
-
   new MutationObserver(() => {
     if (!gmap) return;
     const dark = document.documentElement.getAttribute("data-theme") !== "light";
     gmap.setOptions({ styles: dark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE });
+    if (routePolyline) routePolyline.setOptions({ strokeColor: "#3d5eff" });
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   wireAutocomplete();
 };
 
-function calcRoute() {
-  if (!state.pickup || !state.dropoff || !directionsService) return;
-  directionsService.route({
-    origin:      { lat: state.pickup.lat,  lng: state.pickup.lng  },
-    destination: { lat: state.dropoff.lat, lng: state.dropoff.lng },
-    travelMode:  google.maps.TravelMode.DRIVING,
-  }, (result, status) => {
-    if (status === "OK") {
-      directionsRenderer.setDirections(result);
-      updateRouteStats(result.routes[0].legs[0]);
-      assignDriver();
-    } else {
-      console.warn("Directions failed:", status);
-    }
-  });
+async function calcRoute() {
+  if (!state.pickup || !state.dropoff || !routesService) return;
+  const { encoding } = await google.maps.importLibrary("geometry");
+  try {
+    const { routes } = await routesService.computeRoutes({
+      origin:      { location: { latLng: { latitude: state.pickup.lat,  longitude: state.pickup.lng  } } },
+      destination: { location: { latLng: { latitude: state.dropoff.lat, longitude: state.dropoff.lng } } },
+      travelMode:  "DRIVE",
+      routingPreference: "TRAFFIC_AWARE",
+    }, { fields: ["routes.distanceMeters", "routes.duration", "routes.polyline.encodedPolyline"] });
+
+    if (!routes || !routes.length) return;
+    const route = routes[0];
+
+    // Clear previous route polyline
+    if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+
+    // Decode + draw polyline
+    const path = encoding.decodePath(route.polyline.encodedPolyline);
+    routePolyline = new google.maps.Polyline({
+      path,
+      strokeColor:   "#3d5eff",
+      strokeWeight:  5,
+      strokeOpacity: 0.9,
+      map:           gmap,
+    });
+
+    // Fit map to route
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    gmap.fitBounds(bounds, { top: 60, right: 60, bottom: 120, left: 60 });
+
+    // Parse duration ("123s" → 123)
+    const durationSecs = parseInt(route.duration);
+    // Pass synthetic leg object matching updateRouteStats() expectations
+    updateRouteStats({ distance: { value: route.distanceMeters }, duration: { value: durationSecs } });
+    assignDriver();
+  } catch (err) {
+    console.warn("Routes API failed:", err);
+  }
 }
 
 function updateRouteStats(leg) {
