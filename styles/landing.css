@@ -2076,6 +2076,38 @@ spline-viewer {
     min-height: 220px;
     top: 0;
   }
+
+  /* Vehicle grid: 2 compact columns on phone */
+  .vehicle-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .vehicle-content {
+    padding: 12px 14px 14px;
+  }
+  .vehicle-content h3 {
+    font-size: 13px;
+  }
+  .vehicle-content p {
+    font-size: 11.5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Section padding tighter on small phones */
+  .section { padding: 64px 0; }
+
+  /* Supercar DNA: compact */
+  .scd-inner { gap: 32px; }
+  .scd-text { gap: 16px; }
+}
+
+@media (max-width: 400px) {
+  .vehicle-grid { grid-template-columns: 1fr; }
+  .vehicle-content h3 { font-size: 15px; }
+  .vehicle-content p  { -webkit-line-clamp: unset; }
 }
 .topbar-right {
   display: flex; align-items: center; gap: 10px;

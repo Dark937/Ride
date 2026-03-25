@@ -1105,4 +1105,10 @@ html,body{
 
   /* Spending panel full-width padding */
   .chart-card{padding:14px}
+
+  /* Panels need bottom padding so content clears the mobile nav */
+  .panel-inner{padding-bottom:80px}
+
+  /* Stats icon: hide on very small to save space */
+  .ws-stat-icon{display:none}
 }
