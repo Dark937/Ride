@@ -133,16 +133,31 @@
   <section class="panel active" id="panel-dashboard">
     <div class="panel-inner">
 
-      <!-- Welcome strip — no background card -->
+      <!-- Welcome strip -->
       <div class="welcome-strip">
-        <div>
+        <div class="ws-left">
           <div class="ws-greeting" id="wsGreeting">Good morning ✦</div>
           <div class="ws-sub" id="wsDate"></div>
         </div>
-        <div class="ws-stats">
-          <div class="ws-stat"><div class="ws-stat-val blue" id="wsRides">—</div><div class="ws-stat-label" data-i18n="totalRides">Total rides</div></div>
-          <div class="ws-stat"><div class="ws-stat-val yellow" id="wsPts">—</div><div class="ws-stat-label" data-i18n="myFidelityTitle">Fidelity pts</div></div>
-          <div class="ws-stat"><div class="ws-stat-val green" id="wsSpent">—</div><div class="ws-stat-label" data-i18n="spentThisMonth">Spent this month</div></div>
+        <div class="ws-right">
+          <div class="ws-stats">
+            <div class="ws-stat">
+              <div class="ws-stat-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+              <div><div class="ws-stat-val blue" id="wsRides">—</div><div class="ws-stat-label" data-i18n="totalRides">Total rides</div></div>
+            </div>
+            <div class="ws-stat">
+              <div class="ws-stat-icon yellow"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg></div>
+              <div><div class="ws-stat-val yellow" id="wsPts">—</div><div class="ws-stat-label" data-i18n="myFidelityTitle">Fidelity pts</div></div>
+            </div>
+            <div class="ws-stat">
+              <div class="ws-stat-icon green"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="1.8"/></svg></div>
+              <div><div class="ws-stat-val green" id="wsSpent">—</div><div class="ws-stat-label" data-i18n="spentThisMonth">Spent this month</div></div>
+            </div>
+          </div>
+          <a href="booking.html" class="ws-book-btn">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Book a Ride
+          </a>
         </div>
       </div>
 

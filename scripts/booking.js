@@ -304,6 +304,18 @@ function updateRouteStats(leg) {
   document.getElementById("statFare").textContent     = "€" + fare.toFixed(2);
   document.getElementById("mapStats").classList.add("visible");
   updateRecap();
+  // Re-render vehicle list prices if user is already on step 3
+  if (state.step === 3) renderVehicles();
+}
+
+/* Update stats bar fare when vehicle selection changes */
+function refreshStatsFare() {
+  if (!state.distKm || !state.vehicle) return;
+  const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
+  const fare = veh.baseFare + state.distKm * veh.ratePerKm;
+  state.fareEur = parseFloat(fare.toFixed(2));
+  const el = document.getElementById("statFare");
+  if (el) el.textContent = "€" + fare.toFixed(2);
 }
 
 /* ── LOCATION LOOKUP (mock geocoder — fallback if Maps not loaded) ─────── */
@@ -339,8 +351,8 @@ const state = {
 /* ── DISTANCE & FARE CALCULATOR ─────────────────────────────────────── */
 function calcTrip(pickup, dropoff, vehicle) {
   if (!pickup || !dropoff) return { km: 0, min: 0, fare: 0 };
-  // Use real data from state if set by updateRouteStats; fall back to rough estimate
-  const km  = state.distKm     || Math.max(2, 5 + Math.random() * 8);
+  // Use real data from state if set by updateRouteStats; fall back to straight-line estimate
+  const km  = state.distKm     || 7;
   const min = state.durationMin || Math.round(km * 2.5 + 4);
   const v   = vehicle || VEHICLES[0];
   const fare = v.baseFare + km * v.ratePerKm;
@@ -428,7 +440,7 @@ function renderVehicles() {
       list.querySelectorAll(".bk-vehicle-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");
       document.getElementById("btnConfirm").disabled = false;
-      updateMapStats();
+      refreshStatsFare();
       updateRecap();
       updateEarnBanner();
     });
