@@ -21,10 +21,10 @@ img{display:block;max-width:100%}
   --yellow-dim:  rgba(234,179,8,.11);
   --orange:      #f97316;
 
-  --bg:          #07070f;
-  --sidebar-bg:  #0c0c18;
-  --card-bg:     #0f0f1c;
-  --card-bg-2:   #131320;
+  --bg:          #000000;
+  --sidebar-bg:  #080808;
+  --card-bg:     #0d0d0d;
+  --card-bg-2:   #111111;
   --surface:     rgba(255,255,255,.045);
   --surface-2:   rgba(255,255,255,.075);
   --border:      rgba(255,255,255,.07);
@@ -40,7 +40,7 @@ img{display:block;max-width:100%}
   --topbar-h:    56px;
   --radius:      16px;
   --radius-sm:   10px;
-  --topbar-bg:   rgba(7,7,15,0.92);
+  --topbar-bg:   rgba(0,0,0,0.92);
 }
 
 [data-theme="light"]{
