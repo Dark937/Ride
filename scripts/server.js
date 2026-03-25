@@ -152,6 +152,21 @@ app.use(cors({
 // FIX V-05: limit JSON body size to prevent payload attacks
 app.use(express.json({ limit: '16kb' }));
 
+// CSRF-equivalent: verify Origin/Referer on all state-mutating POST requests.
+// Since the API uses stateless JWT (no session cookies), CSRF risk is low, but
+// this adds an extra layer: reject requests whose Origin/Referer doesn't match
+// an allowed origin. Browsers always send Origin on cross-origin POST; if it's
+// absent we allow it (same-origin request or server-to-server tool).
+app.use((req, res, next) => {
+  if (req.method !== 'POST') return next();
+  const origin  = req.headers['origin'];
+  const referer = req.headers['referer'];
+  const source  = origin || (referer ? new URL(referer).origin : null);
+  if (!source) return next(); // same-origin or curl/Postman — allow
+  if (allowedOrigins.some(o => source === o || source.startsWith(o))) return next();
+  return res.status(403).json({ error: 'Forbidden: cross-origin request rejected.' });
+});
+
 // NoSQL injection sanitization (inline, no dep)
 app.use(mongoSanitizeMiddleware);
 

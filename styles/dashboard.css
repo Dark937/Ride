@@ -176,9 +176,19 @@ html,body{
 /* Content area must start below the fixed topbar */
 .panel{padding-top:0}
 
+.tb-left{display:flex;align-items:center;gap:10px}
 .tb-section-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
-
 .tb-right{display:flex;align-items:center;gap:8px}
+
+/* Home link in topbar */
+.tb-home-link{
+  display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:9px;
+  color:var(--muted);transition:color .14s,background .14s;
+  flex-shrink:0;
+}
+.tb-home-link:hover{color:var(--text);background:var(--surface-2)}
+.tb-home-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .tb-icon-btn{
   width:34px;height:34px;border-radius:6px;
