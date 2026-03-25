@@ -143,24 +143,24 @@ function toast(msg) {
 const VEHICLES = [
   {
     id: "economy",
-    emoji: "🚗",
-    name: "Ride Economy",
-    sub: "Comfortable city ride",
-    ratePerKm: 1.10,
-    baseFare: 3.5,
+    name: "Porsche 718",
+    sub: "Precision handling. City-ready performance.",
+    img: "assets/economy.jpg",
+    ratePerKm: 1.80,
+    baseFare: 5.0,
     eta: 4,
-    capacity: 4,
+    capacity: 2,
     badge: null,
-    features: ["4 seats", "A/C", "Wi-Fi"],
+    features: ["2 seats", "Sport", "A/C"],
     unlocked: true,
   },
   {
-    id: "comfort",
-    emoji: "🚙",
-    name: "Ride Comfort",
-    sub: "Premium sedan, extra space",
-    ratePerKm: 1.65,
-    baseFare: 5.0,
+    id: "business",
+    name: "Mercedes S-Class",
+    sub: "Flagship comfort for business and first-class travel.",
+    img: "assets/business.jpg",
+    ratePerKm: 2.20,
+    baseFare: 8.0,
     eta: 6,
     capacity: 4,
     badge: { label: "Popular", cls: "new" },
@@ -168,42 +168,55 @@ const VEHICLES = [
     unlocked: true,
   },
   {
-    id: "business",
-    emoji: "🏎️",
-    name: "Ride Business",
-    sub: "Ferrari Roma or similar",
-    ratePerKm: 2.80,
-    baseFare: 12.0,
-    eta: 8,
-    capacity: 3,
-    badge: { label: "Gold", cls: "gold" },
-    features: ["3 seats", "Supercar", "Champagne"],
+    id: "premium",
+    name: "Rolls-Royce Ghost",
+    sub: "Unmatched refinement. Silence as a feature.",
+    img: "assets/premium.jpg",
+    ratePerKm: 4.50,
+    baseFare: 20.0,
+    eta: 10,
+    capacity: 4,
+    badge: { label: "Luxury", cls: "gold" },
+    features: ["4 seats", "Chauffeur", "Champagne"],
     unlocked: true,
   },
   {
-    id: "green",
-    emoji: "⚡",
-    name: "Ride Green",
-    sub: "100% electric fleet",
-    ratePerKm: 1.30,
-    baseFare: 4.0,
-    eta: 7,
+    id: "electric",
+    name: "Tesla Model S Plaid",
+    sub: "Zero emissions. Full performance. AI-native.",
+    img: "assets/electric.jpg",
+    ratePerKm: 1.60,
+    baseFare: 5.5,
+    eta: 5,
     capacity: 4,
     badge: { label: "Eco", cls: "eco" },
-    features: ["4 seats", "Zero CO₂", "Silent"],
+    features: ["4 seats", "Zero CO₂", "Autopilot"],
     unlocked: true,
   },
   {
-    id: "van",
-    emoji: "🚐",
-    name: "Ride Van",
-    sub: "Perfect for groups",
-    ratePerKm: 1.90,
-    baseFare: 7.0,
+    id: "supercar",
+    name: "Lamborghini Urus",
+    sub: "The Ride signature. Raw presence, every arrival.",
+    img: "assets/supercar.jpg",
+    ratePerKm: 5.50,
+    baseFare: 30.0,
+    eta: 8,
+    capacity: 4,
+    badge: { label: "Signature", cls: "gold" },
+    features: ["4 seats", "Supercar", "Track-ready"],
+    unlocked: true,
+  },
+  {
+    id: "xl",
+    name: "Range Rover Autobiography",
+    sub: "Group travel with no compromise on luxury.",
+    img: "assets/xl.jpg",
+    ratePerKm: 2.80,
+    baseFare: 12.0,
     eta: 9,
     capacity: 7,
     badge: null,
-    features: ["7 seats", "Luggage", "A/C"],
+    features: ["7 seats", "XL Luggage", "Premium"],
     unlocked: true,
   },
 ];
@@ -303,7 +316,30 @@ function updateRouteStats(leg) {
   document.getElementById("statArrival").textContent  = arrStr;
   document.getElementById("statFare").textContent     = "€" + fare.toFixed(2);
   document.getElementById("mapStats").classList.add("visible");
+  // Mobile inline stats strip
+  const mob = document.getElementById("mobStats");
+  if (mob) {
+    document.getElementById("mobTime").textContent = min + " min";
+    document.getElementById("mobDist").textContent = km  + " km";
+    document.getElementById("mobFare").textContent = "€" + fare.toFixed(2);
+    mob.classList.add("visible");
+  }
   updateRecap();
+  // Re-render vehicle list prices if user is already on step 3
+  if (state.step === 3) renderVehicles();
+}
+
+/* Update stats bar fare when vehicle selection changes */
+function refreshStatsFare() {
+  if (!state.distKm || !state.vehicle) return;
+  const veh  = VEHICLES.find(v => v.id === state.vehicle) || VEHICLES[0];
+  const fare = veh.baseFare + state.distKm * veh.ratePerKm;
+  state.fareEur = parseFloat(fare.toFixed(2));
+  const fareStr = "€" + fare.toFixed(2);
+  const el = document.getElementById("statFare");
+  if (el) el.textContent = fareStr;
+  const mob = document.getElementById("mobFare");
+  if (mob) mob.textContent = fareStr;
 }
 
 /* ── LOCATION LOOKUP (mock geocoder — fallback if Maps not loaded) ─────── */
@@ -339,8 +375,8 @@ const state = {
 /* ── DISTANCE & FARE CALCULATOR ─────────────────────────────────────── */
 function calcTrip(pickup, dropoff, vehicle) {
   if (!pickup || !dropoff) return { km: 0, min: 0, fare: 0 };
-  // Use real data from state if set by updateRouteStats; fall back to rough estimate
-  const km  = state.distKm     || Math.max(2, 5 + Math.random() * 8);
+  // Use real data from state if set by updateRouteStats; fall back to straight-line estimate
+  const km  = state.distKm     || 7;
   const min = state.durationMin || Math.round(km * 2.5 + 4);
   const v   = vehicle || VEHICLES[0];
   const fare = v.baseFare + km * v.ratePerKm;
@@ -399,23 +435,24 @@ function renderVehicles() {
 
   list.innerHTML = VEHICLES.map(v => {
     const trip_v = calcTrip(state.pickup, state.dropoff, v);
-    const arrNow = new Date(); arrNow.setMinutes(arrNow.getMinutes() + v.eta);
-    const etaStr = arrNow.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const isSelected = v.id === state.vehicle;
 
     return `<div class="bk-vehicle-card${isSelected ? " selected" : ""}" data-vid="${v.id}">
       ${v.badge ? `<span class="bk-vc-badge ${v.badge.cls}">${v.badge.label}</span>` : ""}
       <div class="bk-vc-top">
-        <div class="bk-vc-icon">${v.emoji}</div>
+        <div class="bk-vc-img">
+          <img src="${esc(v.img)}" alt="${esc(v.name)}" onerror="this.style.display='none'">
+        </div>
         <div class="bk-vc-info">
-          <div class="bk-vc-name">${v.name}</div>
-          <div class="bk-vc-sub">${v.sub}</div>
+          <div class="bk-vc-name">${esc(v.name)}</div>
+          <div class="bk-vc-sub">${esc(v.sub)}</div>
+          <div class="bk-vc-features">${v.features.map(f => `<span>${esc(f)}</span>`).join("")}</div>
         </div>
       </div>
       <div class="bk-vc-bottom">
         <div class="bk-vc-meta">
-          <span class="bk-vc-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>${v.eta} min</span>
-          <span class="bk-vc-meta-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>${v.capacity}</span>
+          <span class="bk-vc-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>${v.eta} min ETA</span>
+          <span class="bk-vc-meta-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>${v.capacity} seats</span>
         </div>
         <div class="bk-vc-price">€${trip_v.fare.toFixed(2)}<span class="per-km"> €${v.ratePerKm.toFixed(2)}/km</span></div>
       </div>
@@ -428,7 +465,7 @@ function renderVehicles() {
       list.querySelectorAll(".bk-vehicle-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");
       document.getElementById("btnConfirm").disabled = false;
-      updateMapStats();
+      refreshStatsFare();
       updateRecap();
       updateEarnBanner();
     });
@@ -578,22 +615,8 @@ function initLocateBtn() {
   });
 }
 
-/* ── QUICK DESTINATIONS ──────────────────────────────────────────────── */
-function initQuickDests() {
-  document.querySelectorAll(".bk-quick-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const lat  = parseFloat(btn.dataset.lat);
-      const lng  = parseFloat(btn.dataset.lng);
-      const name = btn.dataset.dest;
-      state.dropoff = { main: name, sub: name + ", Roma", lat, lng };
-      document.getElementById("inputDropoff").value = name;
-      document.getElementById("clearDropoff").style.display = "flex";
-      checkStep1();
-      if (state.pickup) calcRoute();
-      else assignDriver();
-    });
-  });
-
+/* ── CLEAR DROPOFF ───────────────────────────────────────────────────── */
+function initClearDropoff() {
   document.getElementById("clearDropoff").addEventListener("click", () => {
     document.getElementById("inputDropoff").value = "";
     state.dropoff = null;
@@ -601,6 +624,14 @@ function initQuickDests() {
     document.getElementById("clearDropoff").style.display = "none";
     if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
     document.getElementById("mapStats").classList.remove("visible");
+    // Reset mobile stats strip so stale values are not shown
+    const mob = document.getElementById("mobStats");
+    if (mob) {
+      mob.classList.remove("visible");
+      document.getElementById("mobTime").textContent = "—";
+      document.getElementById("mobDist").textContent = "—";
+      document.getElementById("mobFare").textContent = "—";
+    }
     checkStep1();
     document.getElementById("recapRoute").classList.add("hidden");
     document.getElementById("recapDriver").classList.add("hidden");
@@ -626,6 +657,7 @@ function initPassengerCounter() {
 
 /* ── TIME TOGGLE ─────────────────────────────────────────────────────── */
 function initTimeToggle() {
+  // Mode toggle buttons
   document.querySelectorAll(".bk-toggle-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".bk-toggle-btn").forEach(b => b.classList.remove("active"));
@@ -635,12 +667,83 @@ function initTimeToggle() {
     });
   });
 
-  // Default date/time
+  const dayEl  = document.getElementById("inputDay");
+  const monEl  = document.getElementById("inputMonth");
+  const yearEl = document.getElementById("inputYear");
+  const hourEl = document.getElementById("inputHour");
+  const minEl  = document.getElementById("inputMinute");
+
+  // Populate month select
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  MONTHS.forEach((m, i) => {
+    const o = document.createElement("option");
+    o.value = String(i + 1).padStart(2, "0");
+    o.textContent = m;
+    monEl.appendChild(o);
+  });
+
+  // Populate year select (current + 2 years)
+  const curYear = new Date().getFullYear();
+  for (let y = curYear; y <= curYear + 2; y++) {
+    const o = document.createElement("option");
+    o.value = y;
+    o.textContent = y;
+    yearEl.appendChild(o);
+  }
+
+  // Populate hour select (00–23)
+  for (let h = 0; h < 24; h++) {
+    const o = document.createElement("option");
+    o.value = o.textContent = String(h).padStart(2, "0");
+    hourEl.appendChild(o);
+  }
+
+  // Populate minute select (every 5 min)
+  for (let m = 0; m < 60; m += 5) {
+    const o = document.createElement("option");
+    o.value = o.textContent = String(m).padStart(2, "0");
+    minEl.appendChild(o);
+  }
+
+  // Rebuild day options to match the real number of days for the selected month/year.
+  // new Date(year, month, 0) returns the last day of the previous month,
+  // so new Date(year, month, 0).getDate() gives the correct max day.
+  function updateDays() {
+    const month  = parseInt(monEl.value,  10);
+    const year   = parseInt(yearEl.value, 10);
+    const maxDay = new Date(year, month, 0).getDate();
+    const prevDay = parseInt(dayEl.value || "1", 10);
+    dayEl.innerHTML = "";
+    for (let d = 1; d <= maxDay; d++) {
+      const o = document.createElement("option");
+      o.value = String(d).padStart(2, "0");
+      o.textContent = d;
+      dayEl.appendChild(o);
+    }
+    // Clamp to last valid day (e.g. if Feb was selected when day was 31, cap to 28/29)
+    dayEl.value = String(Math.min(prevDay, maxDay)).padStart(2, "0");
+  }
+
+  // Default: next rounded hour
   const now = new Date();
   now.setHours(now.getHours() + 1, 0, 0, 0);
-  document.getElementById("inputDate").value = now.toISOString().split("T")[0];
-  document.getElementById("inputDate").min   = new Date().toISOString().split("T")[0];
-  document.getElementById("inputTime").value = now.toTimeString().slice(0,5);
+  monEl.value  = String(now.getMonth() + 1).padStart(2, "0");
+  yearEl.value = now.getFullYear();
+  updateDays(); // must run after month/year are set
+  dayEl.value  = String(now.getDate()).padStart(2, "0");
+  hourEl.value = String(now.getHours()).padStart(2, "0");
+  minEl.value  = "00";
+
+  function syncState() {
+    state.date = `${yearEl.value}-${monEl.value}-${dayEl.value}`;
+    state.time = `${hourEl.value}:${minEl.value}`;
+  }
+  syncState();
+
+  // Re-generate days whenever month or year changes, then sync
+  monEl.addEventListener("change",  () => { updateDays(); syncState(); });
+  yearEl.addEventListener("change", () => { updateDays(); syncState(); });
+  [dayEl, hourEl, minEl].forEach(el => el.addEventListener("change", syncState));
 }
 
 /* ── BOOKING CONFIRMATION ────────────────────────────────────────────── */
@@ -733,7 +836,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initBackBtn();
   initFidelityMini(user?.id);
   initLocateBtn();
-  initQuickDests();
+  initClearDropoff();
   initPassengerCounter();
   initTimeToggle();
 
