@@ -829,6 +829,33 @@ html, body {
   .bk-confirm-details { grid-template-columns: 1fr; }
 }
 
+/* ── BORDER-RADIUS UPLIFT ─────────────────────────────────────────────── */
+.bk-panel         { border-radius: 0; } /* panel stays flush on left */
+.bk-input         { border-radius: 14px; }
+.bk-ac-dropdown   { border-radius: 14px; }
+.bk-ac-item:first-child { border-radius: 14px 14px 0 0; }
+.bk-ac-item:last-child  { border-radius: 0 0 14px 14px; }
+.bk-select        { border-radius: 12px; }
+.bk-select-wide   { border-radius: 12px; }
+.bk-toggle        { border-radius: 12px; }
+.bk-toggle-btn    { border-radius: 10px; }
+.bk-pax-btn       { border-radius: 10px; }
+
+.bk-vehicle-card  { border-radius: 18px; }
+.bk-vc-img        { border-radius: 12px; }
+.bk-vc-pill       { border-radius: 999px; }
+.bk-vc-badge      { border-radius: 8px; }
+
+.bk-map-stats     { border-radius: 18px; }
+.bk-mob-stats     { border-radius: 14px; }
+
+.bk-step-btn      { border-radius: 14px; }
+.bk-confirm-btn   { border-radius: 14px; }
+.bk-driver-card   { border-radius: 18px; }
+.bk-earn-banner   { border-radius: 14px; }
+
+.toast            { border-radius: 14px; }
+
 @media (max-width: 480px) {
   .bk-steps span { display: none; }
   .bk-title { font-size: 19px; }

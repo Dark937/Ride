@@ -15,9 +15,10 @@ function applySecurityHeaders(req, res, next) {
   res.setHeader('X-Frame-Options',           'DENY');
   res.setHeader('X-XSS-Protection',          '0'); // disabled in favour of CSP
   res.setHeader('Referrer-Policy',           'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy',        'geolocation=(), camera=(), microphone=()');
+  // Allow geolocation from same origin (needed for "My Position" in booking)
+  res.setHeader('Permissions-Policy',        'geolocation=(self), camera=(), microphone=()');
   // CSP: whitelist inline scripts by hash (no unsafe-inline needed),
-  // allow Google Fonts, unpkg CDN (spline viewer), and WASM execution.
+  // allow Google Fonts, unpkg CDN (spline viewer), Google Maps JS API, and WASM execution.
   const inlineScriptHashes = [
     "'sha256-Cnvf4An+Z1PYTrc86hNsT128/nDRkkQHDoq7KJ781GM='", // index.html
     "'sha256-5qOFzbSteATv9poShdvmMth/arfJmZdBhlcuffpYD1c='", // dashboard.html
@@ -27,19 +28,19 @@ function applySecurityHeaders(req, res, next) {
   ].join(' ');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    // Client JS files (self) + CDN scripts (spline viewer) + WASM unsafe-eval
-    `script-src 'self' https://unpkg.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
-    // Google Fonts stylesheet + self styles + inline styles (needed for dynamic style attrs)
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    // Google Fonts binary files
+    // Client JS + CDN (spline) + Google Maps JS API + WASM
+    `script-src 'self' https://unpkg.com https://maps.googleapis.com https://maps.gstatic.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
+    // Google Fonts stylesheet + Maps styles + self styles + inline styles (dynamic attrs)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
+    // Google Fonts + Maps glyph fonts
     "font-src 'self' https://fonts.gstatic.com data:",
-    // Images: self + data URIs (avatars) + blob (canvas exports)
-    "img-src 'self' data: blob:",
-    // API calls only to self (no third-party fetch)
-    "connect-src 'self'",
+    // Images: self + data URIs (avatars) + blob (canvas) + Google Maps tiles
+    "img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com",
+    // API calls: self + Google Maps Directions/Places/Geocode APIs
+    "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com",
     // WASM workers
     "worker-src 'self' blob:",
-    // No iframes anywhere
+    // No iframes anywhere (Maps JS API doesn't use iframes)
     "frame-ancestors 'none'",
     // No plugins
     "object-src 'none'",

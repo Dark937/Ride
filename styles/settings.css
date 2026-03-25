@@ -111,7 +111,8 @@ body {
   font-size:10px; font-weight:700; overflow:hidden;
 }
 .tb-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.tb-name { font-size:13px; font-weight:500; color:var(--text-muted); }
+/* Name hidden in settings — sidebar already shows full name + email */
+.tb-name { display: none; }
 
 /* ── LAYOUT ──────────────────────────────────────────────────────────── */
 .shell {
@@ -1066,6 +1067,35 @@ body {
 }
 
 /* Extra small: ≤380px */
+/* ── BORDER-RADIUS UPLIFT ─────────────────────────────────────────────── */
+.card             { border-radius: 16px; }
+.driver-promo     { border-radius: 16px; }
+.card-preview     { border-radius: 14px; }
+.table-wrap       { border-radius: 14px; }
+.modal-box        { border-radius: 20px; }
+.toast            { border-radius: 14px; }
+.lang-card        { border-radius: 12px; }
+.card-item, .sess-row { border-radius: 12px; }
+
+.btn-primary,
+.btn-ghost,
+.btn-danger       { border-radius: 12px; }
+.btn-add          { border-radius: 12px; }
+.btn-danger-sm    { border-radius: 10px; }
+.set-dflt         { border-radius: 8px; }
+.cbtn-del         { border-radius: 8px; }
+
+.field input      { border-radius: 12px; }
+.pw-wrap input    { border-radius: 12px; }
+
+.sb-item          { border-radius: 10px; }
+.sb-item.active   { border-radius: 0 10px 10px 0; }
+.mn-item          { border-radius: 10px; }
+
+.switch .track    { border-radius: 22px; }
+.theme-option,
+.motion-option    { border-radius: 14px; }
+
 @media (max-width: 380px) {
   .panel.active { padding: 14px 12px 28px; }
   .card { padding: 14px; }
