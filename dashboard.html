@@ -163,12 +163,20 @@
         </div>
 
         <div class="fid-mini" id="fidMiniCard" style="cursor:pointer" data-panel="fidelity">
-          <div class="fm-tier">Ride Fidelity</div>
+          <div class="fm-header">
+            <span class="fm-tier-badge">
+              <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+              Ride Fidelity
+            </span>
+            <span class="fm-tier-label" id="fidMiniTierLabel">Standard</span>
+          </div>
           <div class="fm-pts" id="fidMiniPts">—</div>
           <div class="fm-label" data-i18n="fidelityPts">points available</div>
-          <div class="fm-bar-track"><div class="fm-bar-fill" id="fidMiniBar" style="width:0%"></div></div>
-          <div class="fm-next" id="fidMiniNext"></div>
-          <a class="fm-btn" style="margin-top:12px">View Fidelity →</a>
+          <div class="fm-progress-row">
+            <div class="fm-bar-track"><div class="fm-bar-fill" id="fidMiniBar" style="width:0%"></div></div>
+            <div class="fm-next" id="fidMiniNext"></div>
+          </div>
+          <a class="fm-btn">View Fidelity →</a>
         </div>
 
         <div class="card card-sm">
@@ -216,7 +224,7 @@
           </div>
           <div class="chart-summary" id="chartSummary"></div>
           <div class="chart-svg-wrap" id="chartSvgWrap">
-            <svg class="chart-svg" id="chartSvg" viewBox="0 0 400 130" preserveAspectRatio="none"></svg>
+            <svg class="chart-svg" id="chartSvg" viewBox="0 0 400 140" preserveAspectRatio="none"></svg>
           </div>
           <div class="chart-tooltip" id="chartTooltip"></div>
         </div>
