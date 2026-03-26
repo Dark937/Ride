@@ -109,6 +109,9 @@ const RideData = {
   getFid(uid)      { return JSON.parse(localStorage.getItem('ride_fidelity_'+uid)||'{"pts":0,"redeemed":0,"totalEarned":0}'); },
   saveCards(uid,v) { localStorage.setItem('ride_cards_'+uid, JSON.stringify(v)); },
   saveBookings(uid,v){ localStorage.setItem('ride_bookings_'+uid, JSON.stringify(v)); },
+  getWallet(uid)   { return parseFloat(localStorage.getItem('ride_wallet_'+uid)||'0'); },
+  getWalletTxs(uid){ return JSON.parse(localStorage.getItem('ride_wallet_txs_'+uid)||'[]'); },
+  saveWallet(uid,bal,txs){ localStorage.setItem('ride_wallet_'+uid,String(bal)); localStorage.setItem('ride_wallet_txs_'+uid,JSON.stringify(txs)); },
 };
 
 /* ════════════════════════════════════════════════════════
@@ -137,7 +140,7 @@ function statusPill(s) {
 /* ════════════════════════════════════════════════════════
    PANEL NAV
    ════════════════════════════════════════════════════════ */
-const PANEL_TITLES={dashboard:'Dashboard',fidelity:'My Fidelity',payments:'Payments',account:'My Account'};
+const PANEL_TITLES={dashboard:'Dashboard',fidelity:'My Fidelity',payments:'Wallet',account:'My Account'};
 function switchPanel(name) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-item[data-panel]').forEach(i=>i.classList.remove('active'));
@@ -179,6 +182,7 @@ function renderDashboard(user, uid) {
   document.getElementById('wsRides').textContent=rides.length;
   document.getElementById('wsPts').textContent=fid.pts.toLocaleString();
   document.getElementById('wsSpent').textContent='€'+monthSpent.toFixed(0);
+  document.getElementById('wsWallet').textContent='€'+RideData.getWallet(uid).toFixed(2);
   renderNextRide(bookings,uid);
   // Fidelity mini
   const pct=Math.min((fid.totalEarned/GOLD_THRESHOLD)*100,100);
@@ -249,6 +253,26 @@ function showCancelConfirm(booking) {
     overlay.addEventListener('click', e => { if(e.target===overlay) close(false); });
   });
 }
+function showRedeemConfirm(couponName, cost) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('redeemOverlay');
+    if (!overlay) { resolve(confirm(`Redeem "${couponName}" for ${cost} pts?`)); return; }
+    document.getElementById('redeemDesc').textContent = `"${couponName}"`;
+    document.getElementById('redeemCost').textContent = cost.toLocaleString() + ' pts';
+    overlay.classList.add('open');
+    const close = v => { overlay.classList.remove('open'); resolve(v); };
+    const cancelBtn = document.getElementById('redeemCancel');
+    const confirmBtn = document.getElementById('redeemConfirmBtn');
+    const cancelClone = cancelBtn.cloneNode(true);
+    const confirmClone = confirmBtn.cloneNode(true);
+    cancelBtn.replaceWith(cancelClone);
+    confirmBtn.replaceWith(confirmClone);
+    cancelClone.addEventListener('click', () => close(false));
+    confirmClone.addEventListener('click', () => close(true));
+    overlay.addEventListener('click', e => { if(e.target===overlay) close(false); }, {once:true});
+  });
+}
+
 function openUpcoming(bookings,uid) {
   const ol=document.getElementById('upcomingList');
   ol.innerHTML=bookings.map(b=>`<div class="upcoming-item"><div class="ui-date">${esc(fmtDatetime(b.datetime))}</div><div><div class="ui-point"><span class="nr-dot from" style="margin-right:8px"></span>${esc(b.from)}</div><div style="width:1px;height:7px;background:var(--border-md);margin:2px 0 2px 3.5px"></div><div class="ui-point"><span class="nr-dot to" style="margin-right:8px"></span>${esc(b.to)}</div></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${esc(b.car)} · €${esc(b.fare.toFixed(2))}</div><div class="ui-actions"><button class="ui-btn cancel" data-cancel="${esc(b.id)}" data-uid="${esc(uid)}">Cancel</button><button class="ui-btn edit" data-edit="${esc(b.id)}" data-uid="${esc(uid)}">Edit</button></div></div>`).join('');
@@ -581,37 +605,40 @@ function renderChart(rides,range){
    ════════════════════════════════════════════════════════ */
 
 const PARTNER_COUPONS = [
-  {id:'c1', badge:'partner', badgeLabel:'Partner', name:'20% off at Eataly', desc:'Valid on your next purchase over €30', cost:150, used:false},
-  {id:'c2', badge:'free',    badgeLabel:'Free ride', name:'Free ride up to €15', desc:'Redeem for any city ride', cost:200, used:false},
-  {id:'c3', badge:'discount', badgeLabel:'Discount', name:'€10 off next ride', desc:'Applied automatically at checkout', cost:100, used:false},
-  {id:'c4', badge:'partner', badgeLabel:'Partner', name:'Free coffee at Lavazza', desc:'One free espresso at any Lavazza café', cost:50, used:false},
-  {id:'c5', badge:'partner', badgeLabel:'Partner', name:'15% off at Trenitalia', desc:'On regional trains, valid 30 days', cost:300, used:false},
-  {id:'c6', badge:'discount', badgeLabel:'Discount', name:'€5 credit', desc:'Added to your Ride wallet instantly', cost:60, used:false},
+  {id:'c1', badge:'partner',  badgeLabel:'Partner',   icon:'🍽️', name:'20% off at Eataly',      desc:'Valid on your next purchase over €30', cost:150},
+  {id:'c2', badge:'free',     badgeLabel:'Free ride', icon:'🚗', name:'Free ride up to €15',     desc:'Redeem for any city ride',             cost:200},
+  {id:'c3', badge:'discount', badgeLabel:'Discount',  icon:'🏷️', name:'€10 off next ride',       desc:'Applied automatically at checkout',    cost:100},
+  {id:'c4', badge:'partner',  badgeLabel:'Partner',   icon:'☕', name:'Free coffee at Lavazza',  desc:'One free espresso at any Lavazza café', cost:50},
+  {id:'c5', badge:'partner',  badgeLabel:'Partner',   icon:'🚂', name:'15% off at Trenitalia',   desc:'On regional trains, valid 30 days',    cost:300},
+  {id:'c6', badge:'discount', badgeLabel:'Discount',  icon:'💳', name:'€5 wallet credit',        desc:'Added to your Ride wallet instantly',   cost:60},
 ];
 
 function renderPartnerCoupons(pts) {
   const el = document.getElementById('partnerCouponList');
   if (!el) return;
   const shown = PARTNER_COUPONS.slice(0, 3);
-  el.innerHTML = shown.map(cp => `
-    <div class="coupon-item" data-id="${cp.id}">
+  el.innerHTML = shown.map(cp => {
+    const canAfford = pts >= cp.cost;
+    return `
+    <div class="coupon-item" data-id="${cp.id}" style="${!canAfford?'opacity:.6':''}">
       <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
       <div class="coupon-info">
-        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-name">${cp.icon} ${cp.name}</div>
         <div class="coupon-desc">${cp.desc}</div>
+        ${!canAfford?`<div class="coupon-used">Need ${(cp.cost-pts).toLocaleString()} more pts</div>`:''}
       </div>
-      <div class="coupon-cost">${cp.cost} pts</div>
-    </div>`).join('');
+      <div class="coupon-cost" style="color:${canAfford?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
+    </div>`;
+  }).join('');
   document.getElementById('couponsAvail').textContent = PARTNER_COUPONS.length + ' available';
 
   el.querySelectorAll('.coupon-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', async () => {
       const cp = PARTNER_COUPONS.find(x => x.id === item.dataset.id);
       if (!cp) return;
       if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return; }
-      if (confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) {
-        toast(`✓ Coupon redeemed: ${cp.name}`);
-      }
+      const ok = await showRedeemConfirm(cp.name, cp.cost);
+      if (ok) toast(`✓ Coupon redeemed: ${cp.name}`);
     });
   });
 }
@@ -619,23 +646,31 @@ function renderPartnerCoupons(pts) {
 function openCouponModal(title, coupons, pts) {
   document.getElementById('couponModalTitle').textContent = title;
   const list = document.getElementById('couponModalList');
-  list.innerHTML = coupons.map(cp => `
-    <div class="coupon-item" data-cost="${cp.cost}" data-name="${cp.name}" data-pts="${pts}">
-      <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+  list.innerHTML = coupons.map(cp => {
+    const canAfford = pts >= cp.cost;
+    return `
+    <div class="coupon-item" data-id="${cp.id}" style="${!canAfford?'opacity:.65':''}">
+      <div class="coupon-item-icon">${cp.icon}</div>
       <div class="coupon-info">
         <div class="coupon-name">${cp.name}</div>
         <div class="coupon-desc">${cp.desc}</div>
-        ${pts < cp.cost ? '<div class="coupon-used">Need '+(cp.cost-pts)+' more pts</div>' : ''}
+        ${!canAfford?`<div class="coupon-used" style="font-size:11px;color:var(--faint);margin-top:4px">Need ${(cp.cost-pts).toLocaleString()} more pts</div>`:''}
       </div>
-      <div class="coupon-cost" style="color:${pts>=cp.cost?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
-    </div>`).join('');
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
+        <div class="coupon-cost" style="color:${canAfford?'var(--brand)':'var(--faint)'}">${cp.cost} pts</div>
+      </div>
+    </div>`;
+  }).join('');
   list.querySelectorAll('.coupon-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const cost = +item.dataset.cost, name = item.dataset.name, avail = +item.dataset.pts;
-      if (avail < cost) { toast('Not enough points.'); return; }
-      if (confirm(`Redeem "${name}" for ${cost} points?`)) {
+    item.addEventListener('click', async () => {
+      const cp = coupons.find(x => x.id === item.dataset.id);
+      if (!cp) return;
+      if (pts < cp.cost) { toast('Not enough points.'); return; }
+      const ok = await showRedeemConfirm(cp.name, cp.cost);
+      if (ok) {
         document.getElementById('couponOverlay').classList.remove('open');
-        toast(`✓ Coupon redeemed: ${name}`);
+        toast(`✓ Coupon redeemed: ${cp.name}`);
       }
     });
   });
@@ -690,21 +725,26 @@ function renderFidelity(uid){
   const grid=document.getElementById('partnerCouponList');
   if(grid){
     const shown=PARTNER_COUPONS.slice(0,4);
-    grid.innerHTML=shown.map(cp=>`
-      <div class="coupon-item" data-id="${cp.id}">
+    grid.innerHTML=shown.map(cp=>{
+      const canAfford=fid.pts>=cp.cost;
+      return `
+      <div class="coupon-item" data-id="${cp.id}" style="${!canAfford?'opacity:.6':''}">
         <div class="coupon-item-top">
           <span class="coupon-badge ${cp.badge}">${cp.badgeLabel}</span>
-          <span class="coupon-cost-tag">${cp.cost} pts</span>
+          <span class="coupon-cost-tag" style="color:${canAfford?'var(--brand)':'var(--faint)'}">${cp.cost} pts</span>
         </div>
-        <div class="coupon-name">${cp.name}</div>
+        <div class="coupon-name">${cp.icon} ${cp.name}</div>
         <div class="coupon-desc-short">${cp.desc}</div>
-      </div>`).join('');
+        ${!canAfford?`<div style="font-size:10.5px;color:var(--faint);margin-top:2px">Need ${(cp.cost-fid.pts).toLocaleString()} more pts</div>`:''}
+      </div>`;
+    }).join('');
     grid.querySelectorAll('.coupon-item').forEach(item=>{
-      item.addEventListener('click',()=>{
+      item.addEventListener('click', async ()=>{
         const cp=PARTNER_COUPONS.find(x=>x.id===item.dataset.id);
         if(!cp) return;
         if(fid.pts<cp.cost){toast('Not enough points to redeem this coupon.');return;}
-        if(confirm(`Redeem "${cp.name}" for ${cp.cost} points?`)) toast(`✓ Coupon redeemed: ${cp.name}`);
+        const ok = await showRedeemConfirm(cp.name, cp.cost);
+        if(ok) toast(`✓ Coupon redeemed: ${cp.name}`);
       });
     });
     document.getElementById('couponsAvail').textContent=PARTNER_COUPONS.length+' available';
@@ -735,9 +775,73 @@ function renderFidelity(uid){
 }
 
 /* ════════════════════════════════════════════════════════
-   PAYMENTS PANEL
+   PAYMENTS / WALLET PANEL
    ════════════════════════════════════════════════════════ */
-function renderPayments(uid){renderCards(uid);renderTransactions(uid);initAddCard(uid);}
+function renderPayments(uid){renderWallet(uid);renderCards(uid);initAddCard(uid);}
+
+function renderWallet(uid) {
+  const bal = RideData.getWallet(uid);
+  const txs = RideData.getWalletTxs(uid);
+
+  const balEl = document.getElementById('walletBalance');
+  if (balEl) balEl.textContent = bal.toFixed(2);
+
+  // Combine wallet txs with ride debits for display
+  const rideDebits = RideData.getRides(uid).filter(r=>r.status==='completed').map(r=>({
+    type:'debit', label:'Ride to '+r.to, date:r.date, amount:r.fare
+  }));
+  const allTxs = [...txs, ...rideDebits].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,12);
+
+  const listEl = document.getElementById('walletTxList');
+  if (listEl) {
+    if (!allTxs.length) {
+      listEl.innerHTML = '<div class="wallet-empty">No transactions yet</div>';
+    } else {
+      listEl.innerHTML = allTxs.map(tx => `
+        <div class="wallet-tx">
+          <div class="wallet-tx-icon ${tx.type}">
+            <svg viewBox="0 0 24 24">${tx.type==='credit'
+              ? '<polyline points="18 15 12 9 6 15"/>'
+              : '<polyline points="6 9 12 15 18 9"/>'}
+            </svg>
+          </div>
+          <div class="wallet-tx-info">
+            <div class="wallet-tx-label">${esc(tx.label)}</div>
+            <div class="wallet-tx-date">${esc(fmtDate(tx.date))}</div>
+          </div>
+          <div class="wallet-tx-amount ${tx.type}">${tx.type==='credit'?'+':'−'}€${tx.amount.toFixed(2)}</div>
+        </div>`).join('');
+    }
+  }
+
+  // Preset & custom add buttons
+  document.querySelectorAll('.wallet-preset').forEach(btn => {
+    btn.onclick = () => addToWallet(uid, parseFloat(btn.dataset.amount));
+  });
+  const customInput = document.getElementById('walletCustomAmt');
+  const addBtn = document.getElementById('walletAddBtn');
+  if (addBtn) {
+    addBtn.onclick = () => {
+      const v = parseFloat(customInput?.value||'0');
+      if (!v || v < 1 || v > 500) { toast('Enter an amount between €1 and €500.'); return; }
+      addToWallet(uid, v);
+      if (customInput) customInput.value = '';
+    };
+  }
+}
+
+function addToWallet(uid, amount) {
+  const bal = RideData.getWallet(uid) + amount;
+  const txs = RideData.getWalletTxs(uid);
+  txs.unshift({ type:'credit', label:'Funds added', date:new Date().toISOString(), amount });
+  RideData.saveWallet(uid, bal, txs);
+  toast(`✓ €${amount.toFixed(2)} added to wallet`);
+  renderWallet(uid);
+  // Update welcome strip and account panel wallet display
+  const wsW = document.getElementById('wsWallet'); if (wsW) wsW.textContent = '€'+bal.toFixed(2);
+  const psW = document.getElementById('psWallet'); if (psW) psW.textContent = '€'+bal.toFixed(2);
+}
+
 function renderCards(uid){
   let cards=RideData.getCards(uid);
   const list=document.getElementById('cardsList');
@@ -749,20 +853,6 @@ function renderCards(uid){
     if(del){const idx=+del.dataset.idx,was=cards[idx]?.dflt;cards.splice(idx,1);if(was&&cards.length)cards[0].dflt=true;RideData.saveCards(uid,cards);renderCards(uid);toast('Card removed.');}
   });
 }
-function renderTransactions(uid){
-  const rides=RideData.getRides(uid);
-  const tb=document.getElementById('txTbody');
-  tb.innerHTML=rides.slice(0,10).map(r=>`
-    <tr>
-      <td class="tx-desc">
-        <span class="tx-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px;flex-shrink:0;background:${r.status==='completed'?'var(--green)':r.status==='cancelled'?'var(--accent)':'var(--brand)'}"></span>Ride to ${esc(r.to)}
-      </td>
-      <td class="tx-date">${esc(fmtDate(r.date))}</td>
-      <td class="tx-amt" style="text-align:right">${r.status==='cancelled'?'<span style="color:var(--faint)">—</span>':'€'+esc(String(r.fare.toFixed(2)))}</td>
-      <td>${statusPill(r.status)}</td>
-    </tr>`).join('');
-}
-
 /* ── Notifications ─────────────────────────────────────────────── */
 function renderNotifications(uid) {
   const el = document.getElementById('notifList');
@@ -801,6 +891,22 @@ function renderNotifications(uid) {
   const dot = document.getElementById('notifDot');
   const unreadCount = notifs.filter(n=>!n.read).length;
   if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? unreadCount : ''; }
+
+  // Fire real browser notifications if push is enabled and permission granted
+  try {
+    const prefs = JSON.parse(localStorage.getItem('ride_notif_prefs')||'{}');
+    if (prefs.nPush && Notification.permission === 'granted' && soon) {
+      const sentKey = 'ride_notif_sent_' + soon.id;
+      if (!sessionStorage.getItem(sentKey)) {
+        sessionStorage.setItem(sentKey, '1');
+        const hrs = Math.round((new Date(soon.datetime).getTime()-now)/3600000);
+        new Notification('Upcoming Ride — Ride', {
+          body: `Your ride to ${soon.to} is in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`,
+          icon: 'assets/favicon.svg',
+        });
+      }
+    }
+  } catch (_) {}
 
   if (!notifs.length) {
     el.innerHTML = `<div class="tb-dd-empty">No notifications</div>`;
@@ -866,6 +972,7 @@ function renderAccount(user,uid){
   document.getElementById('profileSince').textContent=user.createdAt?'Member since '+fmtDate(user.createdAt):'';
   document.getElementById('psRides').textContent=rides.length;
   document.getElementById('psPts').textContent=fid.pts.toLocaleString();
+  document.getElementById('psWallet').textContent='€'+RideData.getWallet(uid).toFixed(2);
   document.getElementById('infoFirst').textContent=user.firstName||'—';
   document.getElementById('infoLast').textContent=user.lastName||'—';
   document.getElementById('infoEmail').textContent=user.email||'—';

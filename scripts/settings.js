@@ -526,7 +526,55 @@ function initBilling() {
 }
 /* ── NOTIFICATIONS PANEL ─────────────────────────────────────────── */
 function initNotifications() {
+  const PREFS_KEY = "ride_notif_prefs";
+  const IDS = ["nPush","nSms","nRideReminders","nReceipts","nAccount","nPromo"];
+
+  // Load saved prefs
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
+    IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && saved[id] !== undefined) el.checked = saved[id];
+    });
+  } catch (_) {}
+
+  // When push toggle is enabled, request browser permission
+  const pushEl = document.getElementById("nPush");
+  pushEl?.addEventListener("change", async () => {
+    if (!pushEl.checked) return;
+    if (!("Notification" in window)) {
+      showToast("Browser notifications are not supported.");
+      pushEl.checked = false;
+      return;
+    }
+    if (Notification.permission === "denied") {
+      showToast("Notification permission blocked. Allow it in browser settings.");
+      pushEl.checked = false;
+      return;
+    }
+    if (Notification.permission !== "granted") {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        showToast("Permission not granted — push notifications disabled.");
+        pushEl.checked = false;
+        return;
+      }
+    }
+    showToast("Push notifications enabled!");
+    // Send a test notification
+    new Notification("Ride Notifications", {
+      body: "You'll now receive ride reminders and updates.",
+      icon: "assets/favicon.svg",
+    });
+  });
+
   document.getElementById("saveNotifs")?.addEventListener("click", () => {
+    const prefs = {};
+    IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) prefs[id] = el.checked;
+    });
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
     showToast("Notification preferences saved!");
   });
 }

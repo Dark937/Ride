@@ -34,7 +34,6 @@
 
 <!-- ══ SIDEBAR ══════════════════════════════════════════════════════ -->
 <aside class="sidebar">
-  <div class="sb-logo"><img src="assets/logo.png" alt="Ride"></div>
   <nav class="sb-nav">
     <div class="sb-section">Main</div>
     <a class="sb-item active" data-panel="dashboard" href="#">
@@ -46,8 +45,8 @@
       <span data-i18n="myFidelityTitle">My Fidelity</span>
     </a>
     <a class="sb-item" data-panel="payments" href="#">
-      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      <span data-i18n="paymentsTitle">Payments</span>
+      <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/></svg>
+      <span>Wallet</span>
     </a>
     <div class="sb-section">Account</div>
     <a class="sb-item" data-panel="account" href="#">
@@ -67,6 +66,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </a>
       <span class="tb-section-title" id="tbTitle">Dashboard</span>
+    </div>
+    <div class="tb-center">
+      <img src="assets/logo.png" alt="Ride" class="tb-center-logo">
     </div>
     <div class="tb-right">
       <!-- Notifications -->
@@ -142,6 +144,10 @@
             <div class="ws-stat">
               <div class="ws-stat-icon green"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="1.8"/></svg></div>
               <div><div class="ws-stat-val green" id="wsSpent">—</div><div class="ws-stat-label" data-i18n="spentThisMonth">Spent this month</div></div>
+            </div>
+            <div class="ws-stat">
+              <div class="ws-stat-icon wallet"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/></svg></div>
+              <div><div class="ws-stat-val" style="color:var(--green)" id="wsWallet">—</div><div class="ws-stat-label">Wallet</div></div>
             </div>
           </div>
         </div>
@@ -308,46 +314,67 @@
     </div>
   </section>
 
-  <!-- ══ PANEL: PAYMENTS ══════════════════════════════════════════ -->
+  <!-- ══ PANEL: PAYMENTS (WALLET) ═══════════════════════════════ -->
   <section class="panel" id="panel-payments">
     <div class="panel-inner">
-      <div class="pay-grid">
-        <div class="card">
-          <div class="card-hd"><span class="card-title" data-i18n="paymentMethods2">Payment Methods</span></div>
-          <div class="cards-list" id="cardsList"></div>
-          <div style="margin-top:10px">
-            <button class="add-card-toggle" id="addCardToggle">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span data-i18n="addNewCard">Add new card</span>
-            </button>
-            <div class="add-card-form" id="addCardForm">
-              <div class="card-preview">
-                <div class="cp-top"><div class="cp-chip"></div><div class="cp-brand" id="cpBrand"></div></div>
-                <div class="cp-number" id="cpNum">•••• •••• •••• ••••</div>
-                <div class="cp-bottom">
-                  <div class="cp-holder" id="cpHolder">CARDHOLDER NAME</div>
-                  <div class="cp-exp" id="cpExp">MM / YY</div>
+      <div class="wallet-grid">
+        <!-- Left: wallet hero + load money -->
+        <div>
+          <div class="wallet-hero">
+            <div class="wallet-hero-label">Ride Wallet</div>
+            <div class="wallet-hero-balance"><span>€</span><span id="walletBalance">0.00</span></div>
+            <div class="wallet-add-section">
+              <div class="wallet-add-label">Add funds</div>
+              <div class="wallet-presets">
+                <button class="wallet-preset" data-amount="10">€10</button>
+                <button class="wallet-preset" data-amount="25">€25</button>
+                <button class="wallet-preset" data-amount="50">€50</button>
+                <button class="wallet-preset" data-amount="100">€100</button>
+              </div>
+              <div class="wallet-custom-row">
+                <input class="wallet-custom-input" id="walletCustomAmt" type="number" min="1" max="500" placeholder="Custom amount (€)">
+                <button class="wallet-add-btn" id="walletAddBtn">Add</button>
+              </div>
+            </div>
+          </div>
+          <!-- Payment methods section below wallet -->
+          <div class="wallet-cards-section">
+            <div class="wallet-cards-label">Payment Methods</div>
+            <div class="cards-list" id="cardsList"></div>
+            <div style="margin-top:10px">
+              <button class="add-card-toggle" id="addCardToggle">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span data-i18n="addNewCard">Add new card</span>
+              </button>
+              <div class="add-card-form" id="addCardForm">
+                <div class="card-preview">
+                  <div class="cp-top"><div class="cp-chip"></div><div class="cp-brand" id="cpBrand"></div></div>
+                  <div class="cp-number" id="cpNum">•••• •••• •••• ••••</div>
+                  <div class="cp-bottom">
+                    <div class="cp-holder" id="cpHolder">CARDHOLDER NAME</div>
+                    <div class="cp-exp" id="cpExp">MM / YY</div>
+                  </div>
                 </div>
-              </div>
-              <div class="form-field"><label data-i18n="cardholderName">Cardholder name</label><input type="text" id="cName" placeholder="Marco Rossi" autocomplete="cc-name"></div>
-              <div class="form-row">
-                <div class="form-field"><label data-i18n="cardNumber">Card number</label><input type="text" id="cNum" placeholder="1234 5678 9012 3456" autocomplete="cc-number" maxlength="19"></div>
-                <div class="form-field"><label data-i18n="expiry">Expiry</label><input type="text" id="cExp" placeholder="MM / YY" autocomplete="cc-exp" maxlength="7"></div>
-              </div>
-              <div class="form-field"><label>CVV</label><input type="password" id="cCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc"></div>
-              <div class="form-btns">
-                <button class="form-btn primary" id="addCardSave" data-i18n="saveCard">Save card</button>
-                <button class="form-btn ghost" id="addCardCancel" data-i18n="cancel">Cancel</button>
+                <div class="form-field"><label data-i18n="cardholderName">Cardholder name</label><input type="text" id="cName" placeholder="Marco Rossi" autocomplete="cc-name"></div>
+                <div class="form-row">
+                  <div class="form-field"><label data-i18n="cardNumber">Card number</label><input type="text" id="cNum" placeholder="1234 5678 9012 3456" autocomplete="cc-number" maxlength="19"></div>
+                  <div class="form-field"><label data-i18n="expiry">Expiry</label><input type="text" id="cExp" placeholder="MM / YY" autocomplete="cc-exp" maxlength="7"></div>
+                </div>
+                <div class="form-field"><label>CVV</label><input type="password" id="cCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc"></div>
+                <div class="form-btns">
+                  <button class="form-btn primary" id="addCardSave" data-i18n="saveCard">Save card</button>
+                  <button class="form-btn ghost" id="addCardCancel" data-i18n="cancel">Cancel</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-hd"><span class="card-title">Transaction History</span></div>
-          <table class="tx-table">
-            <thead><tr><th>Description</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
-            <tbody id="txTbody"></tbody>
-          </table>
+        <!-- Right: wallet transaction history -->
+        <div class="wallet-history">
+          <div class="wallet-history-title">Transaction History</div>
+          <div class="wallet-tx-list" id="walletTxList">
+            <div class="wallet-empty">No transactions yet</div>
+          </div>
         </div>
       </div>
     </div>
@@ -362,9 +389,10 @@
           <div class="profile-name" id="profileName">—</div>
           <div class="profile-email" id="profileEmail">—</div>
           <div class="profile-since" id="profileSince">—</div>
-          <div class="profile-stats">
+          <div class="profile-stats" style="grid-template-columns:1fr 1fr 1fr">
             <div class="ps-item"><div class="ps-val" style="color:var(--brand)" id="psRides">—</div><div class="ps-label" data-i18n="totalRides">Rides</div></div>
             <div class="ps-item"><div class="ps-val" style="color:var(--yellow)" id="psPts">—</div><div class="ps-label">Points</div></div>
+            <div class="ps-item"><div class="ps-val" style="color:var(--green)" id="psWallet">—</div><div class="ps-label">Wallet</div></div>
           </div>
           <a href="settings.html" class="acct-to-settings">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -409,6 +437,22 @@
     <div class="so-actions">
       <button class="so-cancel" id="soCancel">Cancel</button>
       <button class="so-confirm" id="soConfirm">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Redeem confirm modal -->
+<div class="redeem-overlay" id="redeemOverlay">
+  <div class="redeem-box">
+    <div class="redeem-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+    </div>
+    <h3>Redeem reward?</h3>
+    <p id="redeemDesc">Are you sure you want to redeem this reward?</p>
+    <div class="redeem-cost" id="redeemCost">0 pts</div>
+    <div class="redeem-actions">
+      <button class="redeem-cancel" id="redeemCancel">Cancel</button>
+      <button class="redeem-confirm" id="redeemConfirmBtn">Redeem</button>
     </div>
   </div>
 </div>

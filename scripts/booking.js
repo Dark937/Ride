@@ -868,6 +868,20 @@ async function confirmBooking() {
 
   const token = localStorage.getItem("ride_token");
 
+  // ── Wallet payment ────────────────────────────────────────────────
+  let paidByWallet = false;
+  if (uid) {
+    const walletBal = parseFloat(localStorage.getItem("ride_wallet_" + uid) || "0");
+    if (walletBal >= trip.fare) {
+      const newBal = walletBal - trip.fare;
+      const walletTxs = JSON.parse(localStorage.getItem("ride_wallet_txs_" + uid) || "[]");
+      walletTxs.unshift({ type:"debit", label:"Ride to " + bookingData.to, date: new Date().toISOString(), amount: trip.fare });
+      localStorage.setItem("ride_wallet_" + uid, String(newBal));
+      localStorage.setItem("ride_wallet_txs_" + uid, JSON.stringify(walletTxs));
+      paidByWallet = true;
+    }
+  }
+
   if (uid && token) {
     // ── Save to server (cross-device sync) ──────────────────────────
     try {
@@ -904,7 +918,7 @@ async function confirmBooking() {
   document.getElementById("confirmMsg").textContent = t("confirmMsg");
   details.innerHTML = [
     { k: "Vehicle", v: esc(veh.name) },
-    { k: "Fare",    v: "€" + esc(trip.fare.toFixed(2)) },
+    { k: "Fare",    v: "€" + esc(trip.fare.toFixed(2)) + (paidByWallet ? ' <span style="color:var(--green);font-size:11px;margin-left:6px">✓ Wallet</span>' : '') },
     { k: "Route",   v: esc(state.pickup.main) + " → " + esc(state.dropoff.main) },
     { k: "Driver",  v: esc(state.driver?.name || "—") },
     { k: "ETA",     v: esc(String(veh.eta)) + " min" },
