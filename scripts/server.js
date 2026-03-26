@@ -24,7 +24,7 @@ function applySecurityHeaders(req, res, next) {
     "'sha256-5qOFzbSteATv9poShdvmMth/arfJmZdBhlcuffpYD1c='", // dashboard.html
     "'sha256-WnvhjbPqxyliCkx0EZdyUKN6m5L360DNy6peJb86JHU='", // settings.html
     "'sha256-ZlyzTylzriMqewO9P8iTDN96VchltcvA7jE6Xk/vb4Y='", // login.html + register.html
-    "'sha256-7h4N/XV4lF09Y30+EA2Ti3YBV2TboMwATObM6Mh4XUk='", // booking.html
+    "'sha256-7h4N/XV4lF09Y30+EA2Ti3YBV2TboMwATObM6Mh4XUk='", // book-ride.html
   ].join(' ');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
@@ -539,7 +539,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'booking.html'
+  booking:'book-ride.html'
 };
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {

@@ -354,8 +354,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const progress = Math.min(scrollY / heroH, 1);
 
       if (splineBg) {
-        // Very subtle parallax — background barely moves while page scrolls
-        splineBg.style.transform = `translateY(${scrollY * 0.04}px)`;
+        // Background stays fixed while page scrolls
+        splineBg.style.transform = `translateY(0px)`;
       }
 
       if (contentInner) {

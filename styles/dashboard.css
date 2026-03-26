@@ -117,6 +117,19 @@ html,body{
 }
 .sb-nav::-webkit-scrollbar{width:0}
 
+.sb-profile{display:flex;align-items:center;gap:10px;padding:10px 10px 12px;}
+.sb-av{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;overflow:hidden;
+}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.sb-pinfo{flex:1;min-width:0;}
+.sb-pname{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-pemail{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.sb-divider{height:1px;background:var(--border);margin:0 8px 8px;}
+
 .sb-section{
   font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint);padding:12px 10px 4px;
@@ -126,17 +139,23 @@ html,body{
   display:flex;align-items:center;gap:10px;
   padding:9px 11px;border-radius:10px;
   font-size:13px;font-weight:500;color:var(--muted);
-  transition:background .15s,color .15s;cursor:pointer;
+  transition:background .18s,color .18s,box-shadow .18s,padding-left .18s;
+  cursor:pointer;position:relative;
 }
 .sb-item svg{
   width:15px;height:15px;stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;
-  opacity:.7;transition:opacity .15s;
+  opacity:.6;transition:opacity .18s,color .18s;
 }
-.sb-item:hover{background:var(--surface-2);color:var(--text-2)}
-.sb-item:hover svg{opacity:.9}
-.sb-item.active{background:var(--brand-dim);color:var(--brand)}
-.sb-item.active svg{opacity:1;}
+.sb-item:hover:not(.active){background:var(--surface-2);color:var(--text-2)}
+.sb-item:hover:not(.active) svg{opacity:.9}
+.sb-item.active{
+  background:var(--brand-dim);color:var(--brand);
+  box-shadow:inset 3px 0 0 var(--brand);
+  border-radius:0 10px 10px 0;
+  padding-left:15px;
+}
+.sb-item.active svg{opacity:1;color:var(--brand)}
 
 /* ══════════════════════════════════
    MAIN AREA
@@ -1453,14 +1472,6 @@ select option{background:var(--card-bg);color:var(--text)}
 /* ── SIDEBAR UPLIFT ─────────────────────────────────────────────────── */
 .sidebar{
   border-right: 1px solid var(--border);
-}
-.sb-item.active{
-  background: var(--brand-dim);
-  color: var(--brand);
-  box-shadow: inset 3px 0 0 var(--brand);
-  border-radius: 0 10px 10px 0;
-  margin-left: -10px;
-  padding-left: 21px;
 }
 
 /* ── TOPBAR UPLIFT ──────────────────────────────────────────────────── */

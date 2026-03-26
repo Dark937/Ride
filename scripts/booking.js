@@ -236,6 +236,28 @@ const DRIVERS = [
 
 /* ── MAP (Leaflet + OpenStreetMap/CartoDB — free, no API key) ─────────── */
 let gmap = null, routePolyline = null, tileLayer = null;
+let pickupMarker = null, dropoffMarker = null;
+
+function makeMarkerIcon(color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45)"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
+function setPickupMarker(lat, lng) {
+  if (!gmap) return;
+  if (pickupMarker) gmap.removeLayer(pickupMarker);
+  pickupMarker = L.marker([lat, lng], { icon: makeMarkerIcon('#3d5eff'), zIndexOffset: 10 }).addTo(gmap);
+}
+
+function setDropoffMarker(lat, lng) {
+  if (!gmap) return;
+  if (dropoffMarker) gmap.removeLayer(dropoffMarker);
+  dropoffMarker = L.marker([lat, lng], { icon: makeMarkerIcon('#e03050'), zIndexOffset: 10 }).addTo(gmap);
+}
 
 const TILE_DARK  = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
@@ -398,8 +420,17 @@ function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
   async function fetchSuggestions(query) {
+    // Bias search toward user's current location if known
+    let viewboxParam = '';
+    if (state.pickup?.lat && state.pickup?.lng) {
+      const d = 1.5; // ~1.5 degree bounding box around pickup
+      const { lat, lng } = state.pickup;
+      viewboxParam = `&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=0`;
+    }
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}`
-      + `&format=jsonv2&limit=8&addressdetails=1&namedetails=1&dedupe=1`;
+      + `&format=jsonv2&limit=7&addressdetails=1&namedetails=1&dedupe=1`
+      + `&featuretype=settlement,natural,highway,amenity,building`
+      + viewboxParam;
     const res = await fetch(url, { headers: { "Accept-Language": "it,en;q=0.8" } });
     return res.json();
   }
@@ -463,7 +494,12 @@ function wireAutocomplete() {
   setupInput(
     document.getElementById("inputPickup"),
     document.getElementById("acPickup"),
-    loc => { state.pickup = loc; checkStep1(); if (state.dropoff) calcRoute(); }
+    loc => {
+      state.pickup = loc;
+      setPickupMarker(loc.lat, loc.lng);
+      checkStep1();
+      if (state.dropoff) calcRoute();
+    }
   );
 
   setupInput(
@@ -471,6 +507,7 @@ function wireAutocomplete() {
     document.getElementById("acDropoff"),
     loc => {
       state.dropoff = loc;
+      setDropoffMarker(loc.lat, loc.lng);
       document.getElementById("clearDropoff").style.display = "flex";
       checkStep1();
       if (state.pickup) calcRoute();
@@ -658,7 +695,27 @@ function initFidelityMini(uid) {
 function initLocateBtn() {
   document.getElementById("locateBtn").addEventListener("click", () => {
     if (!navigator.geolocation) { toast("Geolocation not supported"); return; }
+
+    // Animated loading text in pickup input while waiting for GPS
+    const inputPickup = document.getElementById("inputPickup");
+    const origPlaceholder = inputPickup ? inputPickup.placeholder : "";
+    let dotCount = 0, dotTimer = null;
+    if (inputPickup) {
+      inputPickup.disabled = true;
+      inputPickup.value = "";
+      inputPickup.placeholder = "Getting your location.";
+      dotTimer = setInterval(() => {
+        dotCount = (dotCount + 1) % 4;
+        inputPickup.placeholder = "Getting your location" + ".".repeat(dotCount || 1);
+      }, 400);
+    }
+    const stopLoading = () => {
+      clearInterval(dotTimer);
+      if (inputPickup) { inputPickup.disabled = false; inputPickup.placeholder = origPlaceholder; }
+    };
+
     navigator.geolocation.getCurrentPosition(async pos => {
+      stopLoading();
       const lat = pos.coords.latitude, lng = pos.coords.longitude;
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
@@ -669,18 +726,20 @@ function initLocateBtn() {
                   || data.address?.quarter
                   || data.display_name.split(",")[0];
         state.pickup = { main: name, sub: data.display_name, lat, lng };
-        document.getElementById("inputPickup").value = name;
+        setPickupMarker(lat, lng);
+        if (inputPickup) inputPickup.value = name;
         checkStep1();
         toast("📍 " + name);
         if (state.dropoff) calcRoute();
       } catch (_) {
         state.pickup = { main: "My location", sub: "", lat, lng };
-        document.getElementById("inputPickup").value = "My location";
+        setPickupMarker(lat, lng);
+        if (inputPickup) inputPickup.value = "My location";
         checkStep1();
         toast("📍 Located");
         if (state.dropoff) calcRoute();
       }
-    }, () => toast("Could not get your location"),
+    }, () => { stopLoading(); toast("Could not get your location"); },
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
   });
 }
@@ -694,6 +753,7 @@ function initClearDropoff() {
     state.rawDurationSecs = 0; state.rawDistMeters = 0;
     document.getElementById("clearDropoff").style.display = "none";
     if (routePolyline) { gmap && gmap.removeLayer(routePolyline); routePolyline = null; }
+    if (dropoffMarker) { gmap && gmap.removeLayer(dropoffMarker); dropoffMarker = null; }
     document.getElementById("mapStats").classList.remove("visible");
     // Reset mobile stats strip so stale values are not shown
     const mob = document.getElementById("mobStats");

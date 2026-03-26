@@ -204,14 +204,14 @@ function renderNextRide(bookings,uid) {
   if(!bookings||!bookings.length) {
     badge.style.display='none';
     body.innerHTML=`<div class="nr-empty"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>${Lang.t('noUpcomingRides')}</p></div><button class="nr-book-btn" id="bookRideBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${Lang.t('bookRide')}</button>`;
-    document.getElementById('bookRideBtn')?.addEventListener('click', () => { window.location.href = 'booking.html'; });
+    document.getElementById('bookRideBtn')?.addEventListener('click', () => { window.location.href = 'book-ride.html'; });
     return;
   }
   const next=bookings[0];
   badge.style.display=''; badge.textContent=bookings.length+' upcoming';
   const more=bookings.length>1?`<div class="nr-more" id="seeAllUpcoming">+ ${bookings.length-1} more — tap to manage</div>`:'';
   body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${esc(next.from)}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${esc(next.to)}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(fmtDatetime(next.datetime))}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${esc(next.car)}</span><span class="nr-meta-item" style="color:var(--brand)">€${esc(next.fare.toFixed(2))}</span></div><div class="nr-actions"><button class="nr-btn primary" id="bookAnotherBtn">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" id="editNextRideBtn">Edit</button><button class="nr-btn ghost" data-cancel="${esc(next.id)}" data-uid="${esc(uid)}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
-  document.getElementById('bookAnotherBtn')?.addEventListener('click', () => { window.location.href = 'booking.html'; });
+  document.getElementById('bookAnotherBtn')?.addEventListener('click', () => { window.location.href = 'book-ride.html'; });
   document.getElementById('editNextRideBtn')?.addEventListener('click', () => openEditRide(next, uid));
   document.getElementById('seeAllUpcoming')?.addEventListener('click',()=>openUpcoming(bookings,uid));
   document.querySelector(`[data-cancel="${next.id}"]`)?.addEventListener('click',()=>cancelBooking(next.id,uid));
@@ -941,6 +941,12 @@ function renderCards(uid){
   });
 }
 /* ── Notifications ─────────────────────────────────────────────── */
+function markNotifsRead(uid) {
+  localStorage.setItem('ride_notif_seen_'+uid, String(Date.now()));
+  const dot = document.getElementById('notifDot');
+  if (dot) { dot.style.display = 'none'; dot.textContent = ''; }
+}
+
 function renderNotifications(uid) {
   const el = document.getElementById('notifList');
   if (!el) return;
@@ -948,6 +954,7 @@ function renderNotifications(uid) {
   const rides    = RideData.getRides(uid).filter(r=>r.status==='completed');
   const fid      = RideData.getFid(uid);
   const now      = Date.now();
+  const lastSeen = parseInt(localStorage.getItem('ride_notif_seen_'+uid)||'0');
   const notifs   = [];
 
   // Upcoming ride within next 48h
@@ -957,13 +964,16 @@ function renderNotifications(uid) {
   });
   if (soon) {
     const hrs = Math.round((new Date(soon.datetime).getTime()-now)/3600000);
-    notifs.push({ icon:'📅', text:`Upcoming ride to <b>${esc(soon.to)}</b> in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`, time:'Upcoming', read:false });
+    // Unread only if the ride was booked after the last time notifications were seen
+    const rideTs = new Date(soon.datetime).getTime() - hrs*3600000; // approx booking time
+    const isNew = lastSeen === 0 || (soon.id && !sessionStorage.getItem('ride_notif_read_'+soon.id));
+    notifs.push({ icon:'📅', text:`Upcoming ride to <b>${esc(soon.to)}</b> in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`, time:'Upcoming', read: !isNew || lastSeen > 0 });
   }
 
   // Last earned points
   const lastRide = rides[0];
   if (lastRide) {
-    notifs.push({ icon:'⭐', text:`You earned <b>+${lastRide.pts} pts</b> on your ride to ${esc(lastRide.to)}.`, time:fmtDate(lastRide.date,true), read:notifs.length>0 });
+    notifs.push({ icon:'⭐', text:`You earned <b>+${lastRide.pts} pts</b> on your ride to ${esc(lastRide.to)}.`, time:fmtDate(lastRide.date,true), read:true });
   }
 
   // Fidelity tier approaching
@@ -975,9 +985,12 @@ function renderNotifications(uid) {
   // Promo
   notifs.push({ icon:'🎁', text:'Weekend promo: <b>20% off</b> your next 3 rides. Use <b>RIDE20</b>.', time:'3 days ago', read:true });
 
+  // If all notifications have been seen, mark as read
+  if (lastSeen > 0) notifs.forEach(n => n.read = true);
+
   const dot = document.getElementById('notifDot');
   const unreadCount = notifs.filter(n=>!n.read).length;
-  if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? unreadCount : ''; }
+  if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? String(unreadCount) : ''; }
 
   // Fire real browser notifications if push is enabled and permission granted
   try {
@@ -1101,6 +1114,17 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     else{tbAv.textContent=user.initials||name[0]||'R';}
   }
 
+  // Sidebar profile
+  const sbAv=document.getElementById('sbAv');
+  if(sbAv){
+    if(user.photo){_setAvatarPhoto(sbAv,user.photo,"");sbAv.style.background='transparent';}
+    else{sbAv.textContent=user.initials||name[0]||'R';}
+  }
+  const sbPname=document.getElementById('sbPname');
+  const sbPemail=document.getElementById('sbPemail');
+  if(sbPname) sbPname.textContent=name||'—';
+  if(sbPemail) sbPemail.textContent=user.email||'—';
+
   // Profile dropdown user info
   const ddAv=document.getElementById('ddAvatar');
   if(ddAv){
@@ -1189,8 +1213,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   })();
 
   // Topbar buttons
-  document.getElementById('notifBtn').addEventListener('click',()=>toggleDropdown('notifDropdown'));
-  document.getElementById('tbAvatar').addEventListener('click',()=>toggleDropdown('profileDropdown'));
+  document.getElementById('notifBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleDropdown('notifDropdown');
+    if (document.getElementById('notifDropdown').classList.contains('open')) markNotifsRead(uid);
+  });
+  document.getElementById('tbAvatar').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleDropdown('profileDropdown');
+  });
 
   // Profile dropdown actions
   document.getElementById('ddFidelityCard')?.addEventListener('click',()=>{switchPanel('fidelity');renderFidelity(uid);closeAllDropdowns();});
