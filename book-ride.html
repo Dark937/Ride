@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n-title="bookPageTitle">Book a Ride — Ride</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles/booking.css">
+  <link rel="stylesheet" href="styles/cookie.css">
+  <!-- Anti-FOUC: apply theme before paint -->
+  <script>
+    (function(){
+      var stored = localStorage.getItem('ride_theme');
+      var cookie = (document.cookie.match(/(?:^|;\s*)ride_theme=([^;]+)/)||[])[1];
+      var system = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', stored || cookie || system);
+      if(localStorage.getItem('ride_reduce_motion')==='true')
+        document.documentElement.classList.add('reduce-motion');
+    })();
+  </script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none;overflow:hidden" aria-hidden="true"><defs>
+  <filter id="lg-card-filter" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+    <feImage result="cardMap" preserveAspectRatio="none" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cdefs%3E%3CradialGradient id='rg' cx='50%25' cy='50%25' r='55%25'%3E%3Cstop offset='0%25' stop-color='%23808080'/%3E%3Cstop offset='70%25' stop-color='%23808080'/%3E%3Cstop offset='88%25' stop-color='%23c86464'/%3E%3Cstop offset='100%25' stop-color='%23808080'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23rg)'/%3E%3C/svg%3E"/>
+    <feDisplacementMap in="SourceGraphic" in2="cardMap" scale="18" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+    <feComponentTransfer in="displaced"><feFuncR type="linear" slope="1.006" intercept="-0.003"/><feFuncB type="linear" slope="0.994" intercept="0.003"/></feComponentTransfer>
+  </filter>
+  <filter id="lg-bar-filter" x="-2%" y="-50%" width="104%" height="200%" color-interpolation-filters="sRGB">
+    <feImage result="barMap" preserveAspectRatio="none" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='80'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23909090'/%3E%3Cstop offset='20%25' stop-color='%23808080'/%3E%3Cstop offset='80%25' stop-color='%23808080'/%3E%3Cstop offset='100%25' stop-color='%23707070'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23bg)'/%3E%3C/svg%3E"/>
+    <feDisplacementMap in="SourceGraphic" in2="barMap" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</defs></svg>
+
+<!-- ══ TOPBAR ═══════════════════════════════════════════════════════ -->
+<header class="bk-topbar">
+  <div class="bk-tb-left">
+    <a href="index.html" class="bk-back" id="tbBack">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="tbBackLabel" data-i18n="home">Home</span>
+    </a>
+  </div>
+  <a href="index.html" class="bk-logo">
+    <img src="assets/logo.png" alt="Ride">
+  </a>
+  <div class="bk-tb-right">
+    <div class="bk-avatar" id="tbAvatar" aria-label="Profile menu">R</div>
+  </div>
+</header>
+
+<!-- Profile dropdown -->
+<div class="bk-dropdown" id="profileDropdown">
+  <div class="bk-dd-user">
+    <div class="bk-dd-av" id="ddAvatar">R</div>
+    <div class="bk-dd-info">
+      <div class="bk-dd-name" id="ddName">—</div>
+      <div class="bk-dd-email" id="ddEmail">—</div>
+    </div>
+  </div>
+  <div class="bk-dd-sep"></div>
+  <a href="dashboard.html" class="bk-dd-item">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span data-i18n="dashTitle">Dashboard</span>
+  </a>
+  <a href="settings.html" class="bk-dd-item">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span data-i18n="settings">Settings</span>
+  </a>
+  <div class="bk-dd-sep"></div>
+  <button class="bk-dd-item danger" id="ddSignOut">
+    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <span data-i18n="signOut">Sign out</span>
+  </button>
+</div>
+
+<!-- ══ MAP (full background — Google Maps) ══════════════════════════ -->
+<div id="map" aria-hidden="true"></div>
+
+<!-- Map stats bar (fixed, bottom-center, shown after route calculated) -->
+<div class="bk-map-stats" id="mapStats">
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="rideTime">Ride time</span>
+    <span class="map-stat-val" id="statDuration">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="estDistance">Distance</span>
+    <span class="map-stat-val" id="statDistance">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat">
+    <span class="map-stat-lbl" data-i18n="arrivalTime">Arrival</span>
+    <span class="map-stat-val" id="statArrival">—</span>
+  </div>
+  <div class="map-stat-div"></div>
+  <div class="map-stat highlight">
+    <span class="map-stat-lbl" data-i18n="estFare">Est. fare</span>
+    <span class="map-stat-val" id="statFare">—</span>
+  </div>
+</div>
+
+<!-- ══ LEFT PANEL — Booking form ════════════════════════════════════ -->
+<aside class="bk-panel left" id="panelLeft">
+  <div class="bk-panel-inner">
+
+    <!-- Mobile route stats strip (hidden on desktop, shown when route calculated) -->
+    <div class="bk-mob-stats" id="mobStats">
+      <div class="bk-ms-item">
+        <span class="bk-ms-lbl" data-i18n="rideTime">Time</span>
+        <span class="bk-ms-val" id="mobTime">—</span>
+      </div>
+      <div class="bk-ms-div"></div>
+      <div class="bk-ms-item">
+        <span class="bk-ms-lbl" data-i18n="estDistance">Distance</span>
+        <span class="bk-ms-val" id="mobDist">—</span>
+      </div>
+      <div class="bk-ms-div"></div>
+      <div class="bk-ms-item">
+        <span class="bk-ms-lbl" data-i18n="estFare">Fare</span>
+        <span class="bk-ms-val brand" id="mobFare">—</span>
+      </div>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="bk-steps">
+      <div class="bk-step active" id="step1ind">
+        <div class="bk-step-num">1</div>
+        <span data-i18n="whereTitle">Where</span>
+      </div>
+      <div class="bk-step-connector"></div>
+      <div class="bk-step" id="step2ind">
+        <div class="bk-step-num">2</div>
+        <span data-i18n="whenTitle">When</span>
+      </div>
+      <div class="bk-step-connector"></div>
+      <div class="bk-step" id="step3ind">
+        <div class="bk-step-num">3</div>
+        <span data-i18n="vehicleTitle">Vehicle</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Locations ── -->
+    <div class="bk-step-content" id="stepContent1">
+      <h2 class="bk-title" data-i18n="bookTitle">Book a Ride</h2>
+      <p class="bk-subtitle" data-i18n="bookSubtitle">Enter your pickup and destination</p>
+
+      <div class="bk-form">
+        <!-- Pickup -->
+        <div class="bk-field" id="fieldPickup">
+          <div class="bk-field-row">
+            <div class="bk-field-icon from">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+            </div>
+            <input type="text" id="inputPickup" class="bk-input" placeholder="Pickup location" data-i18n-placeholder="pickupPlaceholder" autocomplete="off">
+            <button class="bk-locate-btn" id="locateBtn" title="Use my location">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+            </button>
+          </div>
+          <div class="bk-autocomplete" id="acPickup"></div>
+        </div>
+
+        <!-- Route connector -->
+        <div class="bk-route-line">
+          <span></span><span></span><span></span>
+        </div>
+
+        <!-- Destination -->
+        <div class="bk-field" id="fieldDropoff">
+          <div class="bk-field-row">
+            <div class="bk-field-icon to">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="currentColor"/></svg>
+            </div>
+            <input type="text" id="inputDropoff" class="bk-input" placeholder="Destination" data-i18n-placeholder="dropoffPlaceholder" autocomplete="off">
+            <button class="bk-clear-btn" id="clearDropoff" style="display:none">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="bk-autocomplete" id="acDropoff"></div>
+        </div>
+
+      </div>
+
+      <button class="bk-btn-primary" id="btnStep1Next" disabled data-i18n="continueBtn">Continue</button>
+    </div>
+
+    <!-- ── STEP 2: Date & Time ── -->
+    <div class="bk-step-content hidden" id="stepContent2">
+      <h2 class="bk-title" data-i18n="whenTitle">When</h2>
+      <p class="bk-subtitle" data-i18n="whenSubtitle">Schedule your pickup time</p>
+
+      <div class="bk-form">
+        <!-- Now vs Schedule toggle -->
+        <div class="bk-toggle-group" id="timeToggle">
+          <button class="bk-toggle-btn active" data-val="now" data-i18n="rideNow">Ride now</button>
+          <button class="bk-toggle-btn" data-val="schedule" data-i18n="schedule">Schedule</button>
+        </div>
+
+        <div id="schedulePicker" class="bk-schedule hidden">
+          <!-- Date selects -->
+          <div class="bk-select-row">
+            <div class="bk-field-icon">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.8"/></svg>
+            </div>
+            <div class="bk-selects">
+              <select id="inputDay" class="bk-select"></select>
+              <select id="inputMonth" class="bk-select bk-select-wide"></select>
+              <select id="inputYear" class="bk-select"></select>
+            </div>
+          </div>
+          <!-- Time selects -->
+          <div class="bk-select-row">
+            <div class="bk-field-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="bk-selects">
+              <select id="inputHour" class="bk-select"></select>
+              <span class="bk-time-sep">:</span>
+              <select id="inputMinute" class="bk-select"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passengers -->
+        <div class="bk-counter-row">
+          <div class="bk-counter-info">
+            <div class="bk-counter-label" data-i18n="passengers">Passengers</div>
+            <div class="bk-counter-sub" data-i18n="passengersMax">Maximum 4</div>
+          </div>
+          <div class="bk-counter">
+            <button class="bk-counter-btn" id="passMinus">−</button>
+            <span class="bk-counter-val" id="passVal">1</span>
+            <button class="bk-counter-btn" id="passPlus">+</button>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="bk-field">
+          <textarea id="inputNotes" class="bk-textarea" rows="2" placeholder="Any notes for the driver…" data-i18n-placeholder="notesPlaceholder"></textarea>
+        </div>
+      </div>
+
+      <div class="bk-btn-row">
+        <button class="bk-btn-ghost" id="btnStep2Back" data-i18n="back">Back</button>
+        <button class="bk-btn-primary" id="btnStep2Next" data-i18n="continueBtn">Continue</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Vehicle ── -->
+    <div class="bk-step-content hidden" id="stepContent3">
+      <h2 class="bk-title" data-i18n="chooseVehicle">Choose your vehicle</h2>
+      <p class="bk-subtitle" id="step3RouteLabel"></p>
+
+      <div class="bk-vehicles" id="vehicleList"></div>
+
+      <div class="bk-btn-row">
+        <button class="bk-btn-ghost" id="btnStep3Back" data-i18n="back">Back</button>
+        <button class="bk-btn-primary" id="btnConfirm" disabled data-i18n="confirmRide">Confirm ride</button>
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+<!-- ══ RIGHT PANEL — Driver & recap ════════════════════════════════ -->
+<aside class="bk-panel right" id="panelRight">
+  <div class="bk-panel-inner">
+
+    <!-- Greeting (before booking) -->
+    <div class="bk-right-section" id="recapGreeting">
+      <div class="bk-greeting" id="rightGreeting">
+        <span class="bk-greeting-hi" data-i18n="hello">Hello</span>
+        <span class="bk-greeting-name" id="greetingName"></span>
+      </div>
+      <p class="bk-right-hint" data-i18n="rightHint">Fill in your pickup and destination to see available vehicles and pricing.</p>
+      <!-- Fidelity mini -->
+      <div class="bk-fid-mini" id="fidMini">
+        <div class="bk-fid-pts"><span id="fidPts">0</span> <span data-i18n="fidelityPts">pts</span></div>
+        <div class="bk-fid-bar"><div class="bk-fid-fill" id="fidFill"></div></div>
+        <div class="bk-fid-next" id="fidNext"></div>
+      </div>
+    </div>
+
+    <!-- Driver card (shown after locations set) -->
+    <div class="bk-right-section hidden" id="recapDriver">
+      <div class="bk-section-label" data-i18n="yourDriver">Your driver</div>
+      <div class="bk-driver-card" id="driverCard">
+        <div class="bk-driver-av" id="driverAv"></div>
+        <div class="bk-driver-info">
+          <div class="bk-driver-name" id="driverName">—</div>
+          <div class="bk-driver-sub" id="driverSub"></div>
+          <div class="bk-driver-stars" id="driverStars"></div>
+        </div>
+      </div>
+      <div class="bk-driver-review" id="driverReview">
+        <div class="bk-review-text" id="reviewText"></div>
+        <div class="bk-review-meta" id="reviewMeta"></div>
+      </div>
+    </div>
+
+    <!-- Route recap (shown after vehicle selected) -->
+    <div class="bk-right-section hidden" id="recapRoute">
+      <div class="bk-section-label" data-i18n="yourTrip">Your trip</div>
+      <div class="bk-recap-route" id="recapRouteDetail">
+        <div class="bk-recap-point">
+          <span class="bk-recap-dot from"></span>
+          <span class="bk-recap-addr" id="recapFrom">—</span>
+        </div>
+        <div class="bk-recap-connector"></div>
+        <div class="bk-recap-point">
+          <span class="bk-recap-dot to"></span>
+          <span class="bk-recap-addr" id="recapTo">—</span>
+        </div>
+      </div>
+      <div class="bk-recap-grid">
+        <div class="bk-recap-item">
+          <span class="bk-recap-key" data-i18n="rideTime">Time</span>
+          <span class="bk-recap-val" id="recapDuration">—</span>
+        </div>
+        <div class="bk-recap-item">
+          <span class="bk-recap-key" data-i18n="estFare">Fare</span>
+          <span class="bk-recap-val brand" id="recapFare">—</span>
+        </div>
+        <div class="bk-recap-item">
+          <span class="bk-recap-key" data-i18n="pts">Points</span>
+          <span class="bk-recap-val green" id="recapPts">—</span>
+        </div>
+        <div class="bk-recap-item">
+          <span class="bk-recap-key" data-i18n="passengers">Passengers</span>
+          <span class="bk-recap-val" id="recapPass">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promo earn banner -->
+    <div class="bk-earn-banner" id="earnBanner" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" fill="currentColor"/></svg>
+      <span id="earnText"></span>
+    </div>
+
+  </div>
+</aside>
+
+<!-- ══ BOOKING CONFIRMED OVERLAY ═══════════════════════════════════ -->
+<div class="bk-confirm-overlay" id="confirmOverlay">
+  <div class="bk-confirm-box">
+    <div class="bk-confirm-icon">
+      <svg viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="26" r="24" stroke="rgba(34,197,94,.25)" stroke-width="1.5"/>
+        <path d="M16 26l8 8 13-13" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 data-i18n="bookingConfirmed">Ride confirmed!</h2>
+    <p id="confirmMsg"></p>
+    <div class="bk-confirm-details" id="confirmDetails"></div>
+    <button class="bk-btn-primary" id="btnToDashboard" data-i18n="viewInDashboard">View in Dashboard</button>
+  </div>
+</div>
+
+<!-- ══ SIGN-OUT MODAL ═══════════════════════════════════════════════ -->
+<div class="so-overlay" id="soModal">
+  <div class="so-box" role="dialog" aria-modal="true">
+    <div class="so-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <h3 data-i18n="signOutQ">Sign out?</h3>
+    <p data-i18n="signOutDesc">You'll need to sign in again to access your account.</p>
+    <div class="so-actions">
+      <button class="so-cancel" id="soCancel" data-i18n="cancel">Cancel</button>
+      <button class="so-confirm" id="soConfirm" data-i18n="signOut">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/sql-wasm.js"></script>
+<script src="scripts/shared.js"></script>
+<script src="scripts/booking.js"></script>
+<<<<<<< claude/redesign-modern-minimal-tuv4z
+=======
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAXypsxJBIks_o8reW4V_gLxHheoIuYfac&loading=async&libraries=places&callback=initMap"></script>
+>>>>>>> main
+  <script src="scripts/cookie.js" defer></script>
+</body>
+</html>

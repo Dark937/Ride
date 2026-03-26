@@ -186,10 +186,13 @@ function renderDashboard(user, uid) {
   renderNextRide(bookings,uid);
   // Fidelity mini
   const pct=Math.min((fid.totalEarned/GOLD_THRESHOLD)*100,100);
+  const isGoldMini=fid.totalEarned>=GOLD_THRESHOLD;
   document.getElementById('fidMiniPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidMiniBar').style.width=pct+'%';
   document.getElementById('fidMiniNext').textContent=
-    fid.totalEarned>=GOLD_THRESHOLD?'Gold tier unlocked ✦':`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} pts to Gold`;
+    isGoldMini?`${pct.toFixed(0)}% · Gold ✦`:`${pct.toFixed(0)}% · ${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} to Gold`;
+  const tierLabelEl=document.getElementById('fidMiniTierLabel');
+  if(tierLabelEl) tierLabelEl.textContent=isGoldMini?'Gold ✦':'Standard';
   renderRecentRides(rides.slice(0,5));
   renderReviews(uid);
   renderChart(rides,'week');
@@ -201,14 +204,14 @@ function renderNextRide(bookings,uid) {
   if(!bookings||!bookings.length) {
     badge.style.display='none';
     body.innerHTML=`<div class="nr-empty"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>${Lang.t('noUpcomingRides')}</p></div><button class="nr-book-btn" id="bookRideBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${Lang.t('bookRide')}</button>`;
-    document.getElementById('bookRideBtn')?.addEventListener('click', () => { window.location.href = 'booking.html'; });
+    document.getElementById('bookRideBtn')?.addEventListener('click', () => { window.location.href = 'book-ride.html'; });
     return;
   }
   const next=bookings[0];
   badge.style.display=''; badge.textContent=bookings.length+' upcoming';
   const more=bookings.length>1?`<div class="nr-more" id="seeAllUpcoming">+ ${bookings.length-1} more — tap to manage</div>`:'';
   body.innerHTML=`<div class="nr-ride"><div class="nr-route"><div class="nr-point"><span class="nr-dot from"></span>${esc(next.from)}</div><div class="nr-connector"></div><div class="nr-point"><span class="nr-dot to"></span>${esc(next.to)}</div></div><div class="nr-meta"><span class="nr-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(fmtDatetime(next.datetime))}</span><span class="nr-meta-item"><svg viewBox="0 0 24 24"><path d="M19 17H5"/><path d="M5 17l-1-5h15l-1 5"/><path d="M8 17v2m8-2v2"/></svg>${esc(next.car)}</span><span class="nr-meta-item" style="color:var(--brand)">€${esc(next.fare.toFixed(2))}</span></div><div class="nr-actions"><button class="nr-btn primary" id="bookAnotherBtn">${Lang.t('bookAnother')}</button><button class="nr-btn ghost" id="editNextRideBtn">Edit</button><button class="nr-btn ghost" data-cancel="${esc(next.id)}" data-uid="${esc(uid)}">${Lang.t('cancelRide')}</button></div>${more}</div>`;
-  document.getElementById('bookAnotherBtn')?.addEventListener('click', () => { window.location.href = 'booking.html'; });
+  document.getElementById('bookAnotherBtn')?.addEventListener('click', () => { window.location.href = 'book-ride.html'; });
   document.getElementById('editNextRideBtn')?.addEventListener('click', () => openEditRide(next, uid));
   document.getElementById('seeAllUpcoming')?.addEventListener('click',()=>openUpcoming(bookings,uid));
   document.querySelector(`[data-cancel="${next.id}"]`)?.addEventListener('click',()=>cancelBooking(next.id,uid));
@@ -557,30 +560,41 @@ function renderChart(rides,range){
     <div class="cs-item"><div class="cs-val" style="color:var(--green)">${rangeCompletedCount}</div><div class="cs-label">Rides</div></div>`;
 
   const svg=document.getElementById('chartSvg');
-  const W=400,H=130,PAD={t:12,r:10,b:24,l:38};
+  const wrap=document.getElementById('chartSvgWrap');
+  const W=Math.max(wrap?wrap.clientWidth:400,200),H=140,PAD={t:14,r:14,b:28,l:42};
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const cW=W-PAD.l-PAD.r, cH=H-PAD.t-PAD.b;
   const max=Math.max(...data.map(d=>d.val),1);
-  // Y-axis ticks
   const yTicks=4;
   const tickStep=max/yTicks;
-  let html='';
+  // Nice tick labels: use k for thousands
+  const fmtTick=v=>v>=1000?`€${(v/1000).toFixed(v%1000===0?0:1)}k`:`€${Math.round(v)}`;
+  let html=`<defs>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3d5eff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#3d5eff" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="barGradHover" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b8aff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#3d5eff" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>`;
   // grid lines + y labels
   for(let i=0;i<=yTicks;i++){
     const y=PAD.t+cH-(i/yTicks)*cH;
-    const val=Math.round(tickStep*i);
     html+=`<line x1="${PAD.l}" y1="${y.toFixed(1)}" x2="${W-PAD.r}" y2="${y.toFixed(1)}" class="chart-grid-line" vector-effect="non-scaling-stroke"/>`;
-    html+=`<text x="${PAD.l-5}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--faint)" font-family="DM Mono,monospace">€${val}</text>`;
+    html+=`<text x="${PAD.l-7}" y="${(y+3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--faint)" font-family="DM Mono,monospace">${fmtTick(tickStep*i)}</text>`;
   }
   // Bars + x labels
   const n=data.length;
-  const barW=Math.max(4, (cW/n)*0.55);
+  const barW=Math.max(6,(cW/n)*0.52);
   const gap=(cW-barW*n)/(n+1);
   data.forEach((d,i)=>{
-    const bH=d.val>0?Math.max((d.val/max)*cH,3):0;
+    const bH=d.val>0?Math.max((d.val/max)*cH,4):0;
     const x=PAD.l+gap+(barW+gap)*i;
     const y=PAD.t+cH-bH;
-    html+=`<rect class="chart-bar-rect" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bH.toFixed(1)}" rx="3" data-val="${d.val.toFixed(2)}" data-label="${d.label}"/>`;
-    html+=`<text x="${(x+barW/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9" fill="var(--faint)" font-family="DM Sans,sans-serif">${d.label}</text>`;
+    html+=`<rect class="chart-bar-rect" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bH.toFixed(1)}" rx="4" fill="url(#barGrad)" data-val="${d.val.toFixed(2)}" data-label="${d.label}"/>`;
+    html+=`<text x="${(x+barW/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--faint)" font-family="DM Sans,sans-serif">${d.label}</text>`;
   });
   svg.innerHTML=html;
 
@@ -594,9 +608,9 @@ function renderChart(rides,range){
       tt.style.top=(r.top-32)+'px';
       tt.style.transform='translateX(-50%)';
       tt.classList.add('show');
-      bar.classList.add('active');
+      bar.setAttribute('fill','url(#barGradHover)');
     });
-    bar.addEventListener('mouseleave',()=>{tt.classList.remove('show');bar.classList.remove('active');});
+    bar.addEventListener('mouseleave',()=>{tt.classList.remove('show');bar.setAttribute('fill','url(#barGrad)');});
   });
 }
 
@@ -815,17 +829,18 @@ function renderWallet(uid) {
   }
 
   // Preset & custom add buttons
-  document.querySelectorAll('.wallet-preset').forEach(btn => {
-    btn.onclick = () => addToWallet(uid, parseFloat(btn.dataset.amount));
-  });
   const customInput = document.getElementById('walletCustomAmt');
   const addBtn = document.getElementById('walletAddBtn');
+  document.querySelectorAll('.wallet-preset').forEach(btn => {
+    btn.onclick = () => { if (customInput) { customInput.value = btn.dataset.amount; customInput.focus(); } };
+  });
   if (addBtn) {
-    addBtn.onclick = () => {
+    addBtn.onclick = async () => {
       const v = parseFloat(customInput?.value||'0');
       if (!v || v < 1 || v > 500) { toast('Enter an amount between €1 and €500.'); return; }
-      addToWallet(uid, v);
-      if (customInput) customInput.value = '';
+      addBtn.disabled = true;
+      try { await addToWallet(uid, v); if (customInput) customInput.value = ''; }
+      finally { addBtn.disabled = false; }
     };
   }
 }
@@ -837,19 +852,6 @@ async function addToWallet(uid, amount) {
   // Rate-limit check
   const nowMs = Date.now();
   const oneHourAgo = nowMs - 3600000;
-  const timesKey = 'ride_wallet_topup_times_' + uid;
-  const recentTimes = JSON.parse(localStorage.getItem(timesKey) || '[]').filter(t => t > oneHourAgo);
-
-  if (recentTimes.length >= WALLET_MAX_TOPUPS_PER_HOUR) {
-    toast('⚠ Too many top-ups. Please wait before adding more funds.');
-    return;
-  }
-  const recentTotal = recentTimes.reduce((s,t,i,arr) => {
-    // stored as {ts, amount}
-    return s + (JSON.parse(localStorage.getItem(timesKey+'_amounts')||'[]')[i] || 0);
-  }, 0);
-
-  // Simpler approach: store array of {ts, amount}
   const histKey = 'ride_wallet_topup_hist_' + uid;
   const hist = JSON.parse(localStorage.getItem(histKey) || '[]').filter(e => e.ts > oneHourAgo);
   const hourlyTotal = hist.reduce((s, e) => s + e.amount, 0);
@@ -939,6 +941,12 @@ function renderCards(uid){
   });
 }
 /* ── Notifications ─────────────────────────────────────────────── */
+function markNotifsRead(uid) {
+  localStorage.setItem('ride_notif_seen_'+uid, String(Date.now()));
+  const dot = document.getElementById('notifDot');
+  if (dot) { dot.style.display = 'none'; dot.textContent = ''; }
+}
+
 function renderNotifications(uid) {
   const el = document.getElementById('notifList');
   if (!el) return;
@@ -946,6 +954,7 @@ function renderNotifications(uid) {
   const rides    = RideData.getRides(uid).filter(r=>r.status==='completed');
   const fid      = RideData.getFid(uid);
   const now      = Date.now();
+  const lastSeen = parseInt(localStorage.getItem('ride_notif_seen_'+uid)||'0');
   const notifs   = [];
 
   // Upcoming ride within next 48h
@@ -955,13 +964,16 @@ function renderNotifications(uid) {
   });
   if (soon) {
     const hrs = Math.round((new Date(soon.datetime).getTime()-now)/3600000);
-    notifs.push({ icon:'📅', text:`Upcoming ride to <b>${esc(soon.to)}</b> in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`, time:'Upcoming', read:false });
+    // Unread only if the ride was booked after the last time notifications were seen
+    const rideTs = new Date(soon.datetime).getTime() - hrs*3600000; // approx booking time
+    const isNew = lastSeen === 0 || (soon.id && !sessionStorage.getItem('ride_notif_read_'+soon.id));
+    notifs.push({ icon:'📅', text:`Upcoming ride to <b>${esc(soon.to)}</b> in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`, time:'Upcoming', read: !isNew || lastSeen > 0 });
   }
 
   // Last earned points
   const lastRide = rides[0];
   if (lastRide) {
-    notifs.push({ icon:'⭐', text:`You earned <b>+${lastRide.pts} pts</b> on your ride to ${esc(lastRide.to)}.`, time:fmtDate(lastRide.date,true), read:notifs.length>0 });
+    notifs.push({ icon:'⭐', text:`You earned <b>+${lastRide.pts} pts</b> on your ride to ${esc(lastRide.to)}.`, time:fmtDate(lastRide.date,true), read:true });
   }
 
   // Fidelity tier approaching
@@ -973,9 +985,12 @@ function renderNotifications(uid) {
   // Promo
   notifs.push({ icon:'🎁', text:'Weekend promo: <b>20% off</b> your next 3 rides. Use <b>RIDE20</b>.', time:'3 days ago', read:true });
 
+  // If all notifications have been seen, mark as read
+  if (lastSeen > 0) notifs.forEach(n => n.read = true);
+
   const dot = document.getElementById('notifDot');
   const unreadCount = notifs.filter(n=>!n.read).length;
-  if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? unreadCount : ''; }
+  if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? String(unreadCount) : ''; }
 
   // Fire real browser notifications if push is enabled and permission granted
   try {
@@ -1099,6 +1114,17 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     else{tbAv.textContent=user.initials||name[0]||'R';}
   }
 
+  // Sidebar profile
+  const sbAv=document.getElementById('sbAv');
+  if(sbAv){
+    if(user.photo){_setAvatarPhoto(sbAv,user.photo,"");sbAv.style.background='transparent';}
+    else{sbAv.textContent=user.initials||name[0]||'R';}
+  }
+  const sbPname=document.getElementById('sbPname');
+  const sbPemail=document.getElementById('sbPemail');
+  if(sbPname) sbPname.textContent=name||'—';
+  if(sbPemail) sbPemail.textContent=user.email||'—';
+
   // Profile dropdown user info
   const ddAv=document.getElementById('ddAvatar');
   if(ddAv){
@@ -1187,8 +1213,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   })();
 
   // Topbar buttons
-  document.getElementById('notifBtn').addEventListener('click',()=>toggleDropdown('notifDropdown'));
-  document.getElementById('tbAvatar').addEventListener('click',()=>toggleDropdown('profileDropdown'));
+  document.getElementById('notifBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleDropdown('notifDropdown');
+    if (document.getElementById('notifDropdown').classList.contains('open')) markNotifsRead(uid);
+  });
+  document.getElementById('tbAvatar').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleDropdown('profileDropdown');
+  });
 
   // Profile dropdown actions
   document.getElementById('ddFidelityCard')?.addEventListener('click',()=>{switchPanel('fidelity');renderFidelity(uid);closeAllDropdowns();});

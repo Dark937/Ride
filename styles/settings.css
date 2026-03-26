@@ -226,17 +226,23 @@ body {
   display:flex; align-items:center; gap:9px;
   padding:9px 10px; border-radius:10px;
   font-size:13px; font-weight:500; color:var(--text-muted);
-  transition:background .15s, color .15s, transform .1s;
-  width:100%; text-align:left;
+  transition:background .18s, color .18s, box-shadow .18s, padding-left .18s;
+  width:100%; text-align:left; position:relative;
 }
 .sb-item svg {
   width:15px; height:15px; stroke:currentColor; fill:none;
   stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
-  flex-shrink:0; opacity:.7; transition:opacity .15s;
+  flex-shrink:0; opacity:.6; transition:opacity .18s, color .18s;
 }
-.sb-item:hover  { background:var(--surface-2); color:var(--text-2); }
-.sb-item.active { background:var(--brand-dim); color:var(--brand); }
-.sb-item.active svg { opacity:1; }
+.sb-item:hover:not(.active) { background:var(--surface-2); color:var(--text-2); }
+.sb-item:hover:not(.active) svg { opacity:.9; }
+.sb-item.active {
+  background:var(--brand-dim); color:var(--brand);
+  box-shadow:inset 3px 0 0 var(--brand);
+  border-radius:0 10px 10px 0;
+  padding-left:14px;
+}
+.sb-item.active svg { opacity:1; color:var(--brand); }
 
 .sb-spacer { flex:1; }
 .sb-footer { padding-top:12px; border-top:1px solid var(--border); }
@@ -917,16 +923,7 @@ select option { background: var(--card-bg); color: var(--text); }
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── SIDEBAR UPLIFT ─────────────────────────────────────────────────── */
-/* Active nav item: left brand bar */
-.sb-item.active {
-  background: var(--brand-dim);
-  color: var(--brand);
-  box-shadow: inset 3px 0 0 var(--brand);
-  border-radius: 0 5px 5px 0;
-  margin-left: -10px;
-  padding-left: 20px;
-}
-.sb-item.active svg { color: var(--brand); opacity: 1; }
+/* Active state defined in base styles above */
 
 /* Profile block: brand ring on avatar */
 .sb-av {
@@ -1153,7 +1150,7 @@ select option { background: var(--card-bg); color: var(--text); }
 .pw-wrap input    { border-radius: 12px; }
 
 .sb-item          { border-radius: 10px; }
-.sb-item.active   { border-radius: 0 10px 10px 0; }
+.sb-item.active   { border-radius: 0 10px 10px 0; padding-left: 14px; }
 .mn-item          { border-radius: 10px; }
 
 .switch .track    { border-radius: 22px; }

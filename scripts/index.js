@@ -33,10 +33,10 @@ async function initTopbarDropdown() {
     // Hide lang toggle when user is logged in (preferences are in settings)
     if (langBtn) langBtn.style.display = "none";
 
-    // Update hero CTA: "Get Started" → "Book Now" → booking.html
+    // Update hero CTA: "Get Started" → "Book Now" → book-ride.html
     const primaryCta = document.querySelector(".actions .btn-primary");
     if (primaryCta) {
-      primaryCta.href = "booking.html";
+      primaryCta.href = "book-ride.html";
       const span = primaryCta.querySelector("[data-i18n-key='getStarted']");
       if (span) {
         span.dataset.i18nKey = "bookNow";
