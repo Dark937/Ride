@@ -74,8 +74,9 @@ button {
   min-height: 100vh;
   width: 100%;
   background:
-    radial-gradient(circle at 50% 35%, rgba(83, 45, 255, 0.04), transparent 30%),
-    radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.04), transparent 28%),
+    radial-gradient(ellipse 80% 60% at 50% 10%, rgba(100, 60, 255, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0, 102, 255, 0.12), transparent 45%),
+    radial-gradient(ellipse 50% 35% at 85% 30%, rgba(180, 40, 255, 0.08), transparent 45%),
     transparent;
   overflow: hidden;
 }
@@ -435,8 +436,13 @@ button {
   pointer-events: none;
   opacity: 0.92;
   overflow: hidden;
-  mask-image: linear-gradient(to top, transparent 0%, #000 25%, #000 75%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 25%, #000 75%, transparent 100%);
+  /* fallback gradient shown while Spline loads or if blocked */
+  background:
+    radial-gradient(ellipse 70% 55% at 72% 48%, rgba(80,50,200,0.30), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 30% 60%, rgba(0,80,255,0.18), transparent 55%),
+    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(180,40,255,0.12), transparent 50%);
+  mask-image: linear-gradient(to top, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 22%, #000 78%, transparent 100%);
 }
 
 spline-viewer {
@@ -478,20 +484,20 @@ spline-viewer {
   bottom: 7vh;
   left: 50%;
   transform: translateX(-50%);
-  width: min(860px, 88vw);
+  width: min(920px, 90vw);
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .partners-label {
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.32);
 }
 
 .partners-inner {
@@ -499,11 +505,15 @@ spline-viewer {
   align-items: center;
   width: 100%;
   overflow: hidden;
+  padding: 8px 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
   /* lateral fade */
   mask-image: linear-gradient(to right,
-    transparent 0%, #000 8%, #000 92%, transparent 100%);
+    transparent 0%, #000 6%, #000 94%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right,
-    transparent 0%, #000 8%, #000 92%, transparent 100%);
+    transparent 0%, #000 6%, #000 94%, transparent 100%);
 }
 
 .marquee-track {
@@ -516,10 +526,10 @@ spline-viewer {
 .marquee-content {
   display: flex;
   align-items: center;
-  gap: 56px;
-  padding-right: 56px;
+  gap: 52px;
+  padding: 0 26px;
   flex-shrink: 0;
-  animation: marquee-scroll 32s linear infinite;
+  animation: marquee-scroll 30s linear infinite;
 }
 
 .marquee-track:hover .marquee-content {
@@ -527,15 +537,15 @@ spline-viewer {
 }
 
 .partner-logo {
-  height: 16px;
+  height: 18px;
   width: auto;
-  opacity: 0.30;
-  transition: opacity 0.3s ease;
+  opacity: 0.38;
+  transition: opacity 0.25s ease;
   flex-shrink: 0;
   display: block;
 }
 
-.partner-logo:hover { opacity: 0.60; }
+.partner-logo:hover { opacity: 0.70; }
 
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
@@ -1039,24 +1049,37 @@ spline-viewer {
   gap: 8px;
 }
 
+@keyframes scd-float {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-10px) scale(1.012); }
+}
+
 .scd-media {
   position: relative;
-  border-radius: 6px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.40);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.50),
+    0 0 0 1px rgba(255,255,255,0.06) inset;
+  animation: scd-float 6s cubic-bezier(.45,.05,.55,.95) infinite;
+  will-change: transform;
 }
+
+.reduce-motion .scd-media { animation: none; }
 
 .scd-media img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
-  transition: transform 0.7s cubic-bezier(.22,1,.36,1);
+  filter: saturate(1.08) brightness(0.95);
+  transition: transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.4s ease;
 }
 
 .scd-media:hover img {
-  transform: scale(1.04);
+  transform: scale(1.05);
+  filter: saturate(1.15) brightness(1.0);
 }
 
 .scd-media-badge {
@@ -1320,8 +1343,9 @@ spline-viewer {
   padding: 0;
   overflow: visible;
   background:
-    radial-gradient(circle at 20% 10%, rgba(139, 72, 255, 0.05), transparent 28%),
-    radial-gradient(circle at 80% 80%, rgba(44, 119, 255, 0.05), transparent 30%),
+    radial-gradient(ellipse 60% 40% at 15% 15%, rgba(139, 72, 255, 0.10), transparent 55%),
+    radial-gradient(ellipse 50% 35% at 85% 80%, rgba(44, 119, 255, 0.10), transparent 55%),
+    radial-gradient(ellipse 40% 30% at 70% 20%, rgba(180, 40, 255, 0.06), transparent 50%),
     #000;
 }
 
@@ -1402,14 +1426,14 @@ spline-viewer {
 /* The actual image card — transitions identically to text */
 .features-image-card {
   width: 100%;
-  max-width: 520px;
-  border-radius: 4px;
+  max-width: 600px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow:
-    0 24px 64px rgba(0,0,0,0.45),
-    0 4px 16px rgba(0,0,0,0.20),
-    inset 0 1px 0 rgba(255,255,255,0.10);
+    0 32px 80px rgba(0,0,0,0.52),
+    0 4px 16px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.12);
   transition:
     opacity 0.42s cubic-bezier(.4,0,.2,1),
     transform 0.42s cubic-bezier(.4,0,.2,1);
