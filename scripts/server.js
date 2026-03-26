@@ -34,12 +34,12 @@ function applySecurityHeaders(req, res, next) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com",
     // Google Fonts
     "font-src 'self' https://fonts.gstatic.com data:",
-    // Images: self + data URIs + blob + CartoDB tiles + OSM tiles
-    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org",
-    // API calls: self + Nominatim (geocoding/autocomplete) + OSRM (routing) + unpkg
-    "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://unpkg.com",
-    // WASM workers
-    "worker-src 'self' blob:",
+    // Images: self + data URIs + blob + CartoDB tiles + OSM tiles + Spline + Unsplash
+    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://prod.spline.design https://cdn.spline.design https://images.unsplash.com",
+    // API calls: self + Nominatim + OSRM + unpkg + Spline scene/CDN
+    "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://unpkg.com https://prod.spline.design https://cdn.spline.design",
+    // WASM workers + Spline workers
+    "worker-src 'self' blob: https://unpkg.com",
     // No iframes
     "frame-ancestors 'none'",
     // No plugins
@@ -195,6 +195,12 @@ const authLimiter = makeRateLimiter(
   10,                                          // 10 attempts per IP
   15 * 60 * 1000,                              // per 15-minute window
   'Too many attempts. Please try again later.' // message
+);
+// Rate limiter for booking creation (prevent spam)
+const bookingLimiter = makeRateLimiter(
+  20,                                          // 20 bookings per IP
+  60 * 60 * 1000,                              // per hour
+  'Too many booking requests. Please wait before trying again.'
 );
 
 // MongoDB connection
@@ -424,7 +430,7 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
   } catch (err) { console.error('[bookings GET]', err); res.status(500).json({ error: 'Failed to load bookings.' }); }
 });
 
-app.post('/api/bookings', authenticateToken, async (req, res) => {
+app.post('/api/bookings', authenticateToken, bookingLimiter, async (req, res) => {
   try {
     const { from, to, fromLat, fromLng, toLat, toLng, datetime, car, carId,
             fare, durationMin, distKm, passengers, notes, driver } = req.body;

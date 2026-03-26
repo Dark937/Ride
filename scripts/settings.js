@@ -560,8 +560,8 @@ function initProfileDropdown(user) {
   }
 
   let isOpen = false;
-  const open  = () => { dropdown.style.display = "block"; isOpen = true; };
-  const close = () => { dropdown.style.display = "none";  isOpen = false; };
+  const open  = () => { dropdown.classList.add("open"); isOpen = true; };
+  const close = () => { dropdown.classList.remove("open"); isOpen = false; };
 
   avatar.addEventListener("click", e => { e.stopPropagation(); isOpen ? close() : open(); });
   document.addEventListener("click", e => {

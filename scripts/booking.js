@@ -269,7 +269,10 @@ async function calcRoute() {
     const res  = await fetch(url);
     const data = await res.json();
 
-    if (!data.routes?.length) return;
+    if (data.code !== 'Ok' || !data.routes?.length) {
+      toast("⚓ No road route found — this destination may require sea or air travel, which Ride doesn't support.");
+      return;
+    }
     const route = data.routes[0];
 
     // Draw polyline

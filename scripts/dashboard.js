@@ -68,19 +68,21 @@ const RideData = {
           ck='ride_cards_'+uid, fk='ride_fidelity_'+uid;
     if (!localStorage.getItem(rk)) {
       const now = Date.now();
+      const H = 3600000, D = 86400000;
       localStorage.setItem(rk, JSON.stringify([
-        {id:'r1',from:'Piazza Navona',to:'Fiumicino Airport',date:new Date(now-4*86400000).toISOString(),status:'completed',fare:38.50,car:'Ferrari Roma',pts:39},
-        {id:'r2',from:'Termini Station',to:'Colosseo',date:new Date(now-5*86400000).toISOString(),status:'completed',fare:11.20,car:'Lamborghini Urus',pts:11},
-        {id:'r3',from:'Trastevere',to:'EUR Centro',date:new Date(now-6*86400000).toISOString(),status:'cancelled',fare:0,car:'Porsche Taycan',pts:0},
-        {id:'r4',from:'Prati',to:'Testaccio',date:new Date(now-7*86400000).toISOString(),status:'completed',fare:9.80,car:'Aston Martin DBX',pts:10},
-        {id:'r5',from:'Via Veneto',to:'Tiburtina',date:new Date(now-8*86400000).toISOString(),status:'completed',fare:16.40,car:'Bentley Flying Spur',pts:16},
-        {id:'r6',from:'Colosseo',to:'Villa Borghese',date:new Date(now-12*86400000).toISOString(),status:'completed',fare:8.20,car:'Ferrari Roma',pts:8},
-        {id:'r7',from:'Ostiense',to:'Parioli',date:new Date(now-14*86400000).toISOString(),status:'completed',fare:14.60,car:'Rolls Royce Ghost',pts:15},
-        {id:'r8',from:'Piazza Venezia',to:'Gianicolo',date:new Date(now-20*86400000).toISOString(),status:'completed',fare:7.50,car:'Lamborghini Urus',pts:8},
-        {id:'r9',from:'Pantheon',to:'Pigneto',date:new Date(now-25*86400000).toISOString(),status:'completed',fare:12.80,car:'Porsche Taycan',pts:13},
-        {id:'r10',from:'EUR',to:'Fiumicino Airport',date:new Date(now-35*86400000).toISOString(),status:'completed',fare:28.00,car:'Bentley Flying Spur',pts:28},
-        {id:'r11',from:'Trastevere',to:'Parioli',date:new Date(now-50*86400000).toISOString(),status:'completed',fare:11.00,car:'Ferrari Roma',pts:11},
-        {id:'r12',from:'Termini',to:'Ostia Lido',date:new Date(now-65*86400000).toISOString(),status:'completed',fare:32.00,car:'Rolls Royce Ghost',pts:32},
+        // Recent rides (last 7 days) make the spending chart non-empty
+        {id:'r1',from:'Piazza Navona',to:'Fiumicino Airport',date:new Date(now-1*D-2*H).toISOString(),status:'completed',fare:38.50,car:'Ferrari Roma',pts:39},
+        {id:'r2',from:'Termini Station',to:'Colosseo',date:new Date(now-2*D-4*H).toISOString(),status:'completed',fare:11.20,car:'Lamborghini Urus',pts:11},
+        {id:'r3',from:'Trastevere',to:'EUR Centro',date:new Date(now-3*D).toISOString(),status:'cancelled',fare:0,car:'Porsche Taycan',pts:0},
+        {id:'r4',from:'Prati',to:'Testaccio',date:new Date(now-4*D-1*H).toISOString(),status:'completed',fare:9.80,car:'Aston Martin DBX',pts:10},
+        {id:'r5',from:'Via Veneto',to:'Tiburtina',date:new Date(now-5*D-3*H).toISOString(),status:'completed',fare:16.40,car:'Bentley Flying Spur',pts:16},
+        {id:'r6',from:'Colosseo',to:'Villa Borghese',date:new Date(now-6*D-1*H).toISOString(),status:'completed',fare:8.20,car:'Ferrari Roma',pts:8},
+        {id:'r7',from:'Ostiense',to:'Parioli',date:new Date(now-9*D).toISOString(),status:'completed',fare:14.60,car:'Rolls Royce Ghost',pts:15},
+        {id:'r8',from:'Piazza Venezia',to:'Gianicolo',date:new Date(now-14*D).toISOString(),status:'completed',fare:7.50,car:'Lamborghini Urus',pts:8},
+        {id:'r9',from:'Pantheon',to:'Pigneto',date:new Date(now-18*D).toISOString(),status:'completed',fare:12.80,car:'Porsche Taycan',pts:13},
+        {id:'r10',from:'EUR',to:'Fiumicino Airport',date:new Date(now-28*D).toISOString(),status:'completed',fare:28.00,car:'Bentley Flying Spur',pts:28},
+        {id:'r11',from:'Trastevere',to:'Parioli',date:new Date(now-42*D).toISOString(),status:'completed',fare:11.00,car:'Ferrari Roma',pts:11},
+        {id:'r12',from:'Termini',to:'Ostia Lido',date:new Date(now-55*D).toISOString(),status:'completed',fare:32.00,car:'Rolls Royce Ghost',pts:32},
       ]));
     }
     if (!localStorage.getItem(bk)) {
@@ -209,12 +211,43 @@ function renderNextRide(bookings,uid) {
 }
 
 async function cancelBooking(id,uid) {
-  // Best-effort server cancel (id may be MongoDB _id)
+  const booking = RideData.getBookings(uid).find(b=>b.id===id);
+  const confirmed = await showCancelConfirm(booking);
+  if (!confirmed) return;
   await apiRequest('DELETE', `/api/bookings/${id}`);
   const b=RideData.getBookings(uid).filter(x=>x.id!==id);
   RideData.saveBookings(uid,b); renderNextRide(b,uid);
   if(document.getElementById('upcomingOverlay').classList.contains('open')) openUpcoming(b,uid);
   toast('Ride cancelled.');
+}
+
+function showCancelConfirm(booking) {
+  return new Promise(resolve => {
+    document.getElementById('cancelConfirmOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'cancelConfirmOverlay';
+    overlay.className = 'so-overlay';
+    overlay.innerHTML = `
+      <div class="so-box" role="dialog" aria-modal="true">
+        <div class="so-icon" style="color:var(--accent)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3>Cancel this ride?</h3>
+        <p>Ride to <strong>${esc(booking?.to||'destination')}</strong> will be removed. This cannot be undone.</p>
+        <div class="so-actions">
+          <button class="so-cancel" id="ccKeep">Keep ride</button>
+          <button class="so-confirm" id="ccDo" style="background:var(--accent)">Cancel ride</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+    const close = v => { overlay.classList.remove('is-open'); setTimeout(()=>overlay.remove(),300); resolve(v); };
+    overlay.querySelector('#ccKeep').addEventListener('click', () => close(false));
+    overlay.querySelector('#ccDo').addEventListener('click',  () => close(true));
+    overlay.addEventListener('click', e => { if(e.target===overlay) close(false); });
+  });
 }
 function openUpcoming(bookings,uid) {
   const ol=document.getElementById('upcomingList');
@@ -243,50 +276,68 @@ function openEditRide(booking, uid) {
   overlay.className = 'upcoming-overlay';
   overlay.style.cssText = 'z-index:1100';
   overlay.innerHTML = `
-    <div class="upcoming-modal" style="max-width:440px">
-      <div class="upcoming-modal-hd">
-        <span class="upcoming-modal-title">Edit Ride</span>
-        <button class="um-close" id="editRideClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>
-      <div style="padding:0 20px 20px">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
-          ${esc(booking.from)} → ${esc(booking.to)}
+    <div class="er-modal">
+      <div class="er-header">
+        <div class="er-header-left">
+          <div class="er-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div>
+            <div class="er-header-title">Edit Ride</div>
+            <div class="er-header-sub">${esc(booking.car)} · €${booking.fare.toFixed(2)}</div>
+          </div>
         </div>
-        <div style="margin-bottom:14px">
-          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Date &amp; Time</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <select id="erDay" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+        <button class="er-close" id="editRideClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div class="er-route">
+        <div class="er-route-point"><span class="nr-dot from"></span><span class="er-route-text">${esc(booking.from)}</span></div>
+        <div class="er-route-connector"></div>
+        <div class="er-route-point"><span class="nr-dot to"></span><span class="er-route-text">${esc(booking.to)}</span></div>
+      </div>
+
+      <div class="er-body">
+        <div class="er-section">
+          <div class="er-label">Date &amp; Time</div>
+          <div class="er-date-row">
+            <select id="erDay" class="er-select er-select-sm">
               ${Array.from({length:31},(_,i)=>`<option value="${pad(i+1)}" ${i+1===dt.getDate()?'selected':''}>${i+1}</option>`).join('')}
             </select>
-            <select id="erMonth" style="flex:1;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+            <select id="erMonth" class="er-select er-select-lg">
               ${MONTHS.map((m,i)=>`<option value="${pad(i+1)}" ${i===dt.getMonth()?'selected':''}>${m}</option>`).join('')}
             </select>
-            <select id="erYear" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+            <select id="erYear" class="er-select er-select-md">
               ${[0,1,2].map(o=>{const y=new Date().getFullYear()+o;return`<option value="${y}" ${y===dt.getFullYear()?'selected':''}>${y}</option>`;}).join('')}
             </select>
-            <select id="erHour" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+            <div class="er-time-sep">at</div>
+            <select id="erHour" class="er-select er-select-sm">
               ${Array.from({length:24},(_,i)=>`<option value="${pad(i)}" ${i===dt.getHours()?'selected':''}>${pad(i)}</option>`).join('')}
             </select>
-            <select id="erMinute" style="flex:0 0 auto;padding:8px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px">
+            <div class="er-time-sep">:</div>
+            <select id="erMinute" class="er-select er-select-sm">
               ${Array.from({length:12},(_,i)=>`<option value="${pad(i*5)}" ${Math.round(dt.getMinutes()/5)*5===i*5?'selected':''}>${pad(i*5)}</option>`).join('')}
             </select>
           </div>
         </div>
-        <div style="margin-bottom:14px">
-          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Passengers</label>
-          <div style="display:flex;align-items:center;gap:12px">
-            <button id="erPassMinus" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border-md);color:var(--fg);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
-            <span id="erPassVal" style="font-size:16px;font-weight:600;min-width:20px;text-align:center">${booking.passengers||1}</span>
-            <button id="erPassPlus" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border-md);color:var(--fg);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+
+        <div class="er-section">
+          <div class="er-label">Passengers</div>
+          <div class="er-stepper">
+            <button id="erPassMinus" class="er-step-btn">−</button>
+            <span id="erPassVal" class="er-step-val">${booking.passengers||1}</span>
+            <button id="erPassPlus" class="er-step-btn">+</button>
+            <span class="er-step-label">of 7 max</span>
           </div>
         </div>
-        <div style="margin-bottom:20px">
-          <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Notes for driver</label>
-          <textarea id="erNotes" rows="3" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--border-md);border-radius:8px;color:var(--fg);font-size:14px;resize:vertical;box-sizing:border-box">${esc(booking.notes||'')}</textarea>
+
+        <div class="er-section">
+          <div class="er-label">Notes for driver</div>
+          <textarea id="erNotes" class="er-textarea" rows="3" placeholder="e.g. extra luggage, special requests…">${esc(booking.notes||'')}</textarea>
         </div>
-        <div style="display:flex;gap:10px">
-          <button id="erSave" style="flex:1;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">Save changes</button>
-          <button id="erCancel" style="padding:12px 18px;background:var(--card);color:var(--fg);border:1px solid var(--border-md);border-radius:10px;font-size:15px;cursor:pointer">Cancel</button>
+
+        <div class="er-actions">
+          <button id="erSave" class="er-btn primary">Save changes</button>
+          <button id="erCancel" class="er-btn ghost">Discard</button>
         </div>
       </div>
     </div>`;
@@ -392,12 +443,20 @@ function renderReviews(uid) {
     const stars = Array.from({length:5},(_,i) =>
       `<span class="review-star${i < r.rating ? '' : ' empty'}">★</span>`
     ).join('');
+    const initials = r.driver.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
     return `<div class="review-item">
-      <div class="review-avatar">${r.driver[0]}</div>
+      <div class="review-avatar" style="
+        width:38px;height:38px;border-radius:50%;flex-shrink:0;
+        background:linear-gradient(135deg,var(--brand),var(--brand-glow));
+        display:flex;align-items:center;justify-content:center;
+        font-size:12px;font-weight:700;color:#fff;letter-spacing:.04em">${initials}</div>
       <div style="flex:1;min-width:0">
-        <div class="review-stars">${stars}</div>
-        <div class="review-text">${r.text}</div>
-        <div class="review-meta">${r.driver} · Ride to ${r.route} · ${fmtDate(r.date, true)}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">
+          <span style="font-size:13px;font-weight:600">${esc(r.driver)}</span>
+          <div class="review-stars" style="font-size:11px">${stars}</div>
+        </div>
+        <div class="review-text" style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:5px">${esc(r.text)}</div>
+        <div class="review-meta" style="font-size:11px;color:var(--muted)">Ride to ${esc(r.route)} · ${esc(fmtDate(r.date, true))}</div>
       </div>
     </div>`;
   }).join('');
@@ -412,13 +471,14 @@ function renderRecentRides(rides) {
 /* ── CHART — SVG cartesian grid ── */
 const CHART_DATA={
   week(rides){
-    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const today=new Date(),dow=today.getDay()||7;
-    return days.map((_,i)=>{
-      const d=new Date(today);d.setDate(d.getDate()-(dow-1-i));d.setHours(0,0,0,0);
+    // Last 7 days (today − 6 → today), so there's always data visible
+    const today=new Date();
+    const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    return Array.from({length:7},(_,i)=>{
+      const d=new Date(today);d.setDate(d.getDate()-(6-i));d.setHours(0,0,0,0);
       const nd=new Date(d);nd.setDate(nd.getDate()+1);
       const s=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=d&&new Date(r.date)<nd).reduce((a,r)=>a+r.fare,0);
-      return {label:days[i],val:s};
+      return {label:DAY_NAMES[d.getDay()],val:s};
     });
   },
   month(rides){
@@ -456,14 +516,8 @@ function renderChart(rides,range){
   // More accurate: sum actual ride counts per period
   let rangeCompletedCount=0;
   if(range==='week'){
-    const today=new Date(),dow=today.getDay()||7;
-    rangeCompletedCount=rides.filter(r=>{
-      if(r.status!=='completed') return false;
-      const rd=new Date(r.date);
-      const monday=new Date(today);monday.setDate(today.getDate()-(dow-1));monday.setHours(0,0,0,0);
-      const sunday=new Date(monday);sunday.setDate(monday.getDate()+7);
-      return rd>=monday&&rd<sunday;
-    }).length;
+    const since=new Date();since.setDate(since.getDate()-6);since.setHours(0,0,0,0);
+    rangeCompletedCount=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=since).length;
   } else if(range==='month'){
     const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
     rangeCompletedCount=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=ms).length;
@@ -698,7 +752,68 @@ function renderCards(uid){
 function renderTransactions(uid){
   const rides=RideData.getRides(uid);
   const tb=document.getElementById('txTbody');
-  tb.innerHTML=rides.slice(0,10).map(r=>`<tr><td class="tx-desc">Ride to ${esc(r.to)}</td><td class="tx-date">${esc(fmtDate(r.date))}</td><td class="tx-amt" style="text-align:right">${r.status==='cancelled'?'—':'€'+esc(String(r.fare.toFixed(2)))}</td><td>${statusPill(r.status)}</td></tr>`).join('');
+  tb.innerHTML=rides.slice(0,10).map(r=>`
+    <tr>
+      <td class="tx-desc">
+        <span class="tx-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px;flex-shrink:0;background:${r.status==='completed'?'var(--green)':r.status==='cancelled'?'var(--accent)':'var(--brand)'}"></span>Ride to ${esc(r.to)}
+      </td>
+      <td class="tx-date">${esc(fmtDate(r.date))}</td>
+      <td class="tx-amt" style="text-align:right">${r.status==='cancelled'?'<span style="color:var(--faint)">—</span>':'€'+esc(String(r.fare.toFixed(2)))}</td>
+      <td>${statusPill(r.status)}</td>
+    </tr>`).join('');
+}
+
+/* ── Notifications ─────────────────────────────────────────────── */
+function renderNotifications(uid) {
+  const el = document.getElementById('notifList');
+  if (!el) return;
+  const bookings = RideData.getBookings(uid);
+  const rides    = RideData.getRides(uid).filter(r=>r.status==='completed');
+  const fid      = RideData.getFid(uid);
+  const now      = Date.now();
+  const notifs   = [];
+
+  // Upcoming ride within next 48h
+  const soon = bookings.find(b => {
+    const dt = new Date(b.datetime).getTime();
+    return dt > now && dt < now + 48*3600000;
+  });
+  if (soon) {
+    const hrs = Math.round((new Date(soon.datetime).getTime()-now)/3600000);
+    notifs.push({ icon:'📅', text:`Upcoming ride to <b>${esc(soon.to)}</b> in ${hrs < 2 ? 'less than 2 hours' : hrs+' hours'}.`, time:'Upcoming', read:false });
+  }
+
+  // Last earned points
+  const lastRide = rides[0];
+  if (lastRide) {
+    notifs.push({ icon:'⭐', text:`You earned <b>+${lastRide.pts} pts</b> on your ride to ${esc(lastRide.to)}.`, time:fmtDate(lastRide.date,true), read:notifs.length>0 });
+  }
+
+  // Fidelity tier approaching
+  const GOLD=2000;
+  if (fid.totalEarned<GOLD && GOLD-fid.totalEarned<=200) {
+    notifs.push({ icon:'🏆', text:`Only <b>${GOLD-fid.totalEarned} pts</b> left to unlock Gold tier!`, time:'Tip', read:true });
+  }
+
+  // Promo
+  notifs.push({ icon:'🎁', text:'Weekend promo: <b>20% off</b> your next 3 rides. Use <b>RIDE20</b>.', time:'3 days ago', read:true });
+
+  const dot = document.getElementById('notifDot');
+  const unreadCount = notifs.filter(n=>!n.read).length;
+  if (dot) { dot.style.display = unreadCount > 0 ? '' : 'none'; dot.textContent = unreadCount > 0 ? unreadCount : ''; }
+
+  if (!notifs.length) {
+    el.innerHTML = `<div class="tb-dd-empty">No notifications</div>`;
+    return;
+  }
+  el.innerHTML = notifs.map(n=>`
+    <div class="notif-item${n.read?'':' unread'}">
+      <span class="notif-icon">${n.icon}</span>
+      <div class="notif-content">
+        <div class="notif-text">${n.text}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>
+    </div>`).join('');
 }
 function initAddCard(uid){
   const toggle=document.getElementById('addCardToggle'),form=document.getElementById('addCardForm'),
@@ -909,6 +1024,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // Render
   renderDashboard(user,uid);
+  renderNotifications(uid);
   // Handle #fidelity hash navigation (from external links)
   if (window.location.hash === '#fidelity') {
     switchPanel('fidelity');
