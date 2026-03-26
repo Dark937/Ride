@@ -355,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (splineBg) {
         // Very subtle parallax — background barely moves while page scrolls
-        splineBg.style.transform = `translateY(${scrollY * 0.07}px)`;
+        splineBg.style.transform = `translateY(${scrollY * 0.04}px)`;
       }
 
       if (contentInner) {

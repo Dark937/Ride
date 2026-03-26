@@ -155,7 +155,7 @@ function switchPanel(name) {
    TOPBAR DROPDOWNS
    ════════════════════════════════════════════════════════ */
 function closeAllDropdowns() {
-  document.querySelectorAll('.tb-dropdown').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.tb-dropdown,.st-dropdown').forEach(d=>d.classList.remove('open'));
 }
 function toggleDropdown(id) {
   const dd=document.getElementById(id);
@@ -164,7 +164,7 @@ function toggleDropdown(id) {
   if(!wasOpen) dd.classList.add('open');
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('.tb-icon-btn')&&!e.target.closest('.tb-avatar')&&!e.target.closest('.tb-dropdown')&&!e.target.closest('#tbAvatar'))
+  if(!e.target.closest('.tb-icon-btn')&&!e.target.closest('.tb-avatar')&&!e.target.closest('.tb-dropdown')&&!e.target.closest('.st-dropdown')&&!e.target.closest('#tbAvatar'))
     closeAllDropdowns();
 });
 
@@ -830,16 +830,101 @@ function renderWallet(uid) {
   }
 }
 
-function addToWallet(uid, amount) {
+const WALLET_MAX_PER_HOUR = 500; // max €500/hour
+const WALLET_MAX_TOPUPS_PER_HOUR = 5; // max 5 top-ups/hour
+
+async function addToWallet(uid, amount) {
+  // Rate-limit check
+  const nowMs = Date.now();
+  const oneHourAgo = nowMs - 3600000;
+  const timesKey = 'ride_wallet_topup_times_' + uid;
+  const recentTimes = JSON.parse(localStorage.getItem(timesKey) || '[]').filter(t => t > oneHourAgo);
+
+  if (recentTimes.length >= WALLET_MAX_TOPUPS_PER_HOUR) {
+    toast('⚠ Too many top-ups. Please wait before adding more funds.');
+    return;
+  }
+  const recentTotal = recentTimes.reduce((s,t,i,arr) => {
+    // stored as {ts, amount}
+    return s + (JSON.parse(localStorage.getItem(timesKey+'_amounts')||'[]')[i] || 0);
+  }, 0);
+
+  // Simpler approach: store array of {ts, amount}
+  const histKey = 'ride_wallet_topup_hist_' + uid;
+  const hist = JSON.parse(localStorage.getItem(histKey) || '[]').filter(e => e.ts > oneHourAgo);
+  const hourlyTotal = hist.reduce((s, e) => s + e.amount, 0);
+
+  if (hourlyTotal + amount > WALLET_MAX_PER_HOUR) {
+    const remaining = Math.max(0, WALLET_MAX_PER_HOUR - hourlyTotal);
+    toast(`⚠ Hourly limit reached. You can add up to €${remaining.toFixed(0)} more this hour.`);
+    return;
+  }
+  if (hist.length >= WALLET_MAX_TOPUPS_PER_HOUR) {
+    toast('⚠ Too many top-ups this hour. Try again later.');
+    return;
+  }
+
+  // Fake payment flow
+  await runFakePayment(amount);
+
+  // Commit to wallet
   const bal = RideData.getWallet(uid) + amount;
   const txs = RideData.getWalletTxs(uid);
   txs.unshift({ type:'credit', label:'Funds added', date:new Date().toISOString(), amount });
   RideData.saveWallet(uid, bal, txs);
-  toast(`✓ €${amount.toFixed(2)} added to wallet`);
+
+  // Save rate-limit history
+  hist.push({ ts: nowMs, amount });
+  localStorage.setItem(histKey, JSON.stringify(hist));
+
   renderWallet(uid);
-  // Update welcome strip and account panel wallet display
   const wsW = document.getElementById('wsWallet'); if (wsW) wsW.textContent = '€'+bal.toFixed(2);
   const psW = document.getElementById('psWallet'); if (psW) psW.textContent = '€'+bal.toFixed(2);
+}
+
+function runFakePayment(amount) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('walletPayOverlay');
+    const spinner = document.getElementById('walletPaySpinner');
+    const successIcon = document.getElementById('walletPaySuccessIcon');
+    const title = document.getElementById('walletPayTitle');
+    const status = document.getElementById('walletPayStatus');
+    const amtDisplay = document.getElementById('walletPayAmountDisplay');
+
+    // Reset state
+    spinner.style.display = '';
+    successIcon.style.display = 'none';
+    title.textContent = 'Processing payment';
+    status.textContent = 'Connecting to payment provider…';
+    amtDisplay.textContent = '€' + amount.toFixed(2);
+
+    overlay.classList.add('open');
+
+    const steps = [
+      { delay: 900,  msg: 'Authorising transaction…' },
+      { delay: 1100, msg: 'Confirming with bank…' },
+      { delay: 800,  msg: 'Finalising top-up…' },
+    ];
+
+    let i = 0;
+    function nextStep() {
+      if (i >= steps.length) {
+        // Success
+        spinner.style.display = 'none';
+        successIcon.style.display = '';
+        title.textContent = 'Payment successful!';
+        status.textContent = '€' + amount.toFixed(2) + ' added to your Ride Wallet';
+        setTimeout(() => {
+          overlay.classList.remove('open');
+          resolve();
+        }, 1400);
+        return;
+      }
+      const s = steps[i++];
+      setTimeout(() => { status.textContent = s.msg; nextStep(); }, s.delay);
+    }
+    setTimeout(nextStep, 700);
+  });
 }
 
 function renderCards(uid){
