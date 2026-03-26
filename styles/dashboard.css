@@ -103,7 +103,7 @@ html,body{
   border-right:1px solid var(--border);
   display:flex;
   flex-direction:column;
-  padding:16px 10px 14px;
+  padding:calc(var(--topbar-h) + 12px) 10px 14px;
   overflow:hidden;
   z-index:110;
 }
@@ -126,14 +126,17 @@ html,body{
   display:flex;align-items:center;gap:10px;
   padding:9px 11px;border-radius:10px;
   font-size:13px;font-weight:500;color:var(--muted);
-  transition:background .14s,color .14s;cursor:pointer;
+  transition:background .15s,color .15s;cursor:pointer;
 }
-.sb-item:hover{background:var(--surface);color:var(--text-2)}
-.sb-item.active{background:var(--brand-dim);color:var(--brand)}
 .sb-item svg{
   width:15px;height:15px;stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;
+  opacity:.7;transition:opacity .15s;
 }
+.sb-item:hover{background:var(--surface-2);color:var(--text-2)}
+.sb-item:hover svg{opacity:.9}
+.sb-item.active{background:var(--brand-dim);color:var(--brand)}
+.sb-item.active svg{opacity:1;}
 
 /* ══════════════════════════════════
    MAIN AREA
@@ -168,7 +171,7 @@ html,body{
 
 .tb-left{display:flex;align-items:center;gap:10px}
 .tb-center{display:flex;align-items:center;justify-content:center}
-.tb-center-logo{height:18px;opacity:.9}
+.tb-center-logo{height:22px;opacity:.9}
 .tb-section-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
 .tb-right{display:flex;align-items:center;gap:8px;justify-content:flex-end}
 
@@ -1137,6 +1140,80 @@ select option{background:var(--card-bg);color:var(--text)}
 .ui-btn.cancel:hover{opacity:.8}
 .ui-btn.edit{background:var(--surface-2);color:var(--muted)}
 .ui-btn.edit:hover{opacity:.8}
+
+/* ══════════════════════════════════
+   PROFILE DROPDOWN (settings-style)
+   ══════════════════════════════════ */
+.st-dropdown{
+  position:fixed;
+  top:calc(var(--topbar-h) + 6px);right:16px;
+  width:240px;
+  background:var(--card-bg);border:1px solid var(--border-md);
+  border-radius:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  z-index:300;padding:6px;
+  opacity:0;pointer-events:none;
+  transform:translateY(-6px) scale(.97);
+  transition:opacity .18s,transform .18s cubic-bezier(.22,1,.36,1);
+}
+.st-dropdown.open{opacity:1;pointer-events:auto;transform:none}
+.st-dd-user{display:flex;align-items:center;gap:10px;padding:10px 10px 12px}
+.st-dd-avatar{
+  width:36px;height:36px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;overflow:hidden;
+}
+.st-dd-avatar img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.st-dd-info{flex:1;min-width:0}
+.st-dd-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-dd-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.st-dd-divider{height:1px;background:var(--border);margin:2px 0}
+.st-dd-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:9px;
+  font-size:13px;font-weight:500;color:var(--text-2);
+  transition:background .12s;cursor:pointer;width:100%;text-align:left;border:none;background:none;
+}
+.st-dd-item svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;color:var(--muted)}
+.st-dd-item:hover{background:var(--surface-2)}
+.st-dd-item.danger{color:var(--accent)}
+.st-dd-item.danger svg{color:var(--accent)}
+.st-dd-item.danger:hover{background:var(--accent-dim)}
+
+/* ── Wallet payment loading overlay ── */
+.wallet-pay-overlay{
+  position:fixed;inset:0;z-index:600;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.wallet-pay-overlay.open{opacity:1;pointer-events:auto}
+.wallet-pay-box{
+  background:var(--card-bg);border:1px solid var(--border-md);
+  border-radius:20px;padding:32px 28px;width:min(340px,90vw);text-align:center;
+  transform:translateY(12px) scale(.97);
+  transition:transform .22s cubic-bezier(.22,1,.36,1);
+}
+.wallet-pay-overlay.open .wallet-pay-box{transform:none}
+.wallet-pay-spinner{
+  width:48px;height:48px;border-radius:50%;
+  border:3px solid var(--border-md);border-top-color:var(--brand);
+  animation:spin .7s linear infinite;margin:0 auto 20px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wallet-pay-title{font-size:16px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.wallet-pay-status{font-size:13px;color:var(--muted);min-height:20px;transition:opacity .2s}
+.wallet-pay-amount{
+  font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--brand);
+  margin:16px 0 0;
+}
+.wallet-pay-success-icon{
+  width:48px;height:48px;border-radius:50%;background:var(--green-dim);color:var(--green);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
+}
+.wallet-pay-success-icon svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 
 /* ══════════════════════════════════
    TOAST
