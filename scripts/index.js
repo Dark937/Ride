@@ -59,6 +59,24 @@ async function initTopbarDropdown() {
     dropdown.querySelectorAll("[data-guest]").forEach(el => el.style.display = "none");
     dropdown.querySelectorAll("[data-user]").forEach(el  => el.style.display = "");
 
+    // Carica punti fedeltà nel dropdown
+    const ddFidelityMini  = document.getElementById("ddFidelityMini");
+    const ddFidelityPtsVal = document.getElementById("ddFidelityPtsVal");
+    const ddFidelityBar   = document.getElementById("ddFidelityBar");
+    const rideToken = localStorage.getItem("ride_token");
+    if (rideToken && ddFidelityMini) {
+      fetch("/api/fidelity", { headers: { "Authorization": "Bearer " + rideToken } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data) return;
+          const pts = data.pts || 0;
+          if (ddFidelityPtsVal) ddFidelityPtsVal.textContent = pts.toLocaleString();
+          if (ddFidelityBar) ddFidelityBar.style.width = Math.min(100, (pts / 1000) * 100) + "%";
+          ddFidelityMini.style.display = "";
+        })
+        .catch(() => {});
+    }
+
     // Modale di disconnessione
     const soModal = _buildSignOutModal();
     dropdown.querySelector(".dd-signout")?.addEventListener("click", e => {

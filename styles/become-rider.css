@@ -134,14 +134,54 @@
 .br-result-btn:hover { opacity: .88; }
 
 /* Light mode */
-[data-theme="light"] .topbar { background: rgba(255,255,255,.88); }
+[data-theme="light"] .topbar { background: rgba(255,255,255,.92); border-bottom-color: rgba(0,0,30,.10); }
 [data-theme="light"] .br-back-btn { color: rgba(0,0,30,.45); }
 [data-theme="light"] .br-back-btn:hover { color: rgba(0,0,30,.85); }
 [data-theme="light"] .br-hero-title { color: #0a0a14; }
-[data-theme="light"] .br-field input, [data-theme="light"] .br-field textarea { color: #0a0a14; background: rgba(0,0,30,.04); border-color: rgba(0,0,30,.12); }
-[data-theme="light"] .br-field input::placeholder, [data-theme="light"] .br-field textarea::placeholder { color: rgba(0,0,30,.25); }
-[data-theme="light"] .br-card { background: #fff; border-color: rgba(0,0,30,.08); }
-[data-theme="light"] .br-result { background: #fff; border-color: rgba(0,0,30,.08); }
+[data-theme="light"] .br-hero-sub { color: rgba(0,0,30,.52); }
+[data-theme="light"] .br-hero-badge {
+  color: var(--brand);
+  background: rgba(38,81,240,.08);
+  border-color: rgba(38,81,240,.20);
+}
+[data-theme="light"] .br-perk {
+  background: #fff;
+  border-color: rgba(0,0,30,.12);
+  color: rgba(0,0,30,.72);
+}
+[data-theme="light"] .br-perk svg { stroke: var(--brand); }
+[data-theme="light"] .br-card {
+  background: #fff;
+  border-color: rgba(0,0,30,.10);
+  box-shadow: 0 4px 20px rgba(0,0,30,.06);
+}
+[data-theme="light"] .br-card-header h2 { color: #0a0a14; }
+[data-theme="light"] .br-card-header p { color: rgba(0,0,30,.52); }
+[data-theme="light"] .br-section-label {
+  color: rgba(0,0,30,.40);
+  border-bottom-color: rgba(0,0,30,.08);
+}
+[data-theme="light"] .br-field label { color: rgba(0,0,30,.65); }
+[data-theme="light"] .br-optional { color: rgba(0,0,30,.35); }
+[data-theme="light"] .br-field input, [data-theme="light"] .br-field textarea {
+  color: #0a0a14;
+  background: #f7f8fc;
+  border-color: rgba(0,0,30,.14);
+}
+[data-theme="light"] .br-field input:focus, [data-theme="light"] .br-field textarea:focus {
+  border-color: var(--brand);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(38,81,240,.10);
+}
+[data-theme="light"] .br-field input::placeholder, [data-theme="light"] .br-field textarea::placeholder { color: rgba(0,0,30,.28); }
+[data-theme="light"] .br-char-count { color: rgba(0,0,30,.30); }
+[data-theme="light"] .br-result {
+  background: #fff;
+  border-color: rgba(0,0,30,.10);
+  box-shadow: 0 4px 20px rgba(0,0,30,.06);
+}
+[data-theme="light"] .br-result h2 { color: #0a0a14; }
+[data-theme="light"] .br-result p { color: rgba(0,0,30,.52); }
 
 /* Responsive */
 @media (max-width: 520px) {
