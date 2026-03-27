@@ -1091,13 +1091,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   if(!user){window.location.href='login.html?redirect=dashboard.html';return;}
   const uid = user.id || user._id?.toString();
 
-  // Apply user's saved preferences from DB
-  Lang.apply();
-  Theme.apply();
-  if(user.reduceMotion !== undefined && user.reduceMotion !== null) {
-    Motion.set(user.reduceMotion === 'true');
-    Motion.apply();
-  }
+  // Apply server-stored preferences (theme, lang, motion)
+  if (user.theme)        { Theme.set(user.theme);               Theme.apply(); }
+  if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
+  if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
   // Sync server data → localStorage (auto-completes past rides, awards points)
   await syncFromServer(uid);
