@@ -1,24 +1,15 @@
-/* ═══════════════════════════════════════════════════════════════════
-   RIDE — INDEX PAGE JS  (scripts/index.js)
-   Requires: shared.js loaded before this file.
-   ═══════════════════════════════════════════════════════════════════ */
 "use strict";
 
-/* ── LANG FLAGS MAP ────────────────────────────────────────────────── */
 const LANG_ORDER = ["en","it","fr","es","zh"];
 
-/* ── TOPBAR DROPDOWN + GUEST CONTROLS ─────────────────────────────── */
 async function initTopbarDropdown() {
   const profileBtn = document.getElementById("profileBtn");
   const dropdown   = document.getElementById("profileDropdown");
   if (!profileBtn || !dropdown) return;
 
-  // No theme toggle on landing page.
   const langBtn = document.getElementById("langToggleBtn");
+  const user    = await Session.get();
 
-  const user = await Session.get();
-
-  // ── Wire lang toggle (same for guest & logged-in) ──
   if (langBtn) {
     langBtn.addEventListener("click", () => {
       const next = LANG_ORDER[(LANG_ORDER.indexOf(Lang.get()) + 1) % LANG_ORDER.length];
@@ -29,11 +20,10 @@ async function initTopbarDropdown() {
   }
 
   if (user) {
-    /* ── LOGGED IN ── */
-    // Hide lang toggle when user is logged in (preferences are in settings)
+    // Utente autenticato
     if (langBtn) langBtn.style.display = "none";
 
-    // Update hero CTA: "Get Started" → "Book Now" → book-ride.html
+    // CTA primario: "Inizia" → "Prenota ora"
     const primaryCta = document.querySelector(".actions .btn-primary");
     if (primaryCta) {
       primaryCta.href = "book-ride.html";
@@ -44,7 +34,7 @@ async function initTopbarDropdown() {
         span.textContent = t.bookNow || "Book now";
       }
     }
-    // "Sign in" → "My dashboard" when already logged in
+    // CTA secondario: "Accedi" → "Il mio dashboard"
     const secondaryCta = document.querySelector(".actions .btn-secondary");
     if (secondaryCta) {
       secondaryCta.href = "dashboard.html";
@@ -69,7 +59,25 @@ async function initTopbarDropdown() {
     dropdown.querySelectorAll("[data-guest]").forEach(el => el.style.display = "none");
     dropdown.querySelectorAll("[data-user]").forEach(el  => el.style.display = "");
 
-    // Sign-out modal
+    // Carica punti fedeltà nel dropdown
+    const ddFidelityMini  = document.getElementById("ddFidelityMini");
+    const ddFidelityPtsVal = document.getElementById("ddFidelityPtsVal");
+    const ddFidelityBar   = document.getElementById("ddFidelityBar");
+    const rideToken = localStorage.getItem("ride_token");
+    if (rideToken && ddFidelityMini) {
+      fetch("/api/fidelity", { headers: { "Authorization": "Bearer " + rideToken } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data) return;
+          const pts = data.pts || 0;
+          if (ddFidelityPtsVal) ddFidelityPtsVal.textContent = pts.toLocaleString();
+          if (ddFidelityBar) ddFidelityBar.style.width = Math.min(100, (pts / 1000) * 100) + "%";
+          ddFidelityMini.style.display = "";
+        })
+        .catch(() => {});
+    }
+
+    // Modale di disconnessione
     const soModal = _buildSignOutModal();
     dropdown.querySelector(".dd-signout")?.addEventListener("click", e => {
       e.preventDefault(); e.stopPropagation();
@@ -82,14 +90,13 @@ async function initTopbarDropdown() {
     document.addEventListener("keydown", e => { if (e.key === "Escape") soModal.classList.remove("is-open"); });
 
   } else {
-    /* ── GUEST ── */
-    // Show lang toggle for guests
+    // Ospite non autenticato
     if (langBtn) langBtn.style.display = "";
     dropdown.querySelectorAll("[data-user]").forEach(el  => el.style.display = "none");
     dropdown.querySelectorAll("[data-guest]").forEach(el => el.style.display = "");
   }
 
-  // Dropdown open/close
+  // Apertura/chiusura dropdown profilo
   profileBtn.addEventListener("click", e => { e.stopPropagation(); dropdown.classList.toggle("is-open"); });
   document.addEventListener("click", e => {
     if (!profileBtn.closest(".profile-btn-wrap")?.contains(e.target))
@@ -113,12 +120,11 @@ function _buildSignOutModal() {
   document.body.appendChild(m); return m;
 }
 
-/* ── APPLY LANDING TRANSLATIONS ───────────────────────────────────── */
+// Applica le traduzioni alla landing page
 function applyLandingTranslations() {
   const t = LANGS[Lang.get()] || LANGS.en;
 
-  // All data-i18n-key elements — single stable pass
-  // Skips the parallax title/text (handled separately below to avoid fighting parallax JS)
+  // Aggiorna tutti gli elementi data-i18n-key (escluse le label del parallax gestite a parte)
   const PARALLAX_IDS = new Set(["featureTitle", "featureText"]);
   document.querySelectorAll("[data-i18n-key]").forEach(el => {
     if (PARALLAX_IDS.has(el.id)) return; // handled separately
@@ -129,12 +135,12 @@ function applyLandingTranslations() {
     svgs.forEach(s => el.insertBefore(s, el.firstChild));
   });
 
-  // Nav links
+  // Link di navigazione
   const navLinks = document.querySelectorAll(".nav-overlay .nav-link");
   const navKeys  = ["home","features","vehicles","fidelity","drive"];
   navLinks.forEach((a, i) => { if (navKeys[i] && t[navKeys[i]]) a.textContent = t[navKeys[i]]; });
 
-  // Profile dropdown
+  // Dropdown profilo
   const _set = (el, text) => {
     if (!el || !text) return;
     const svgs = [...el.querySelectorAll("svg")];
@@ -150,7 +156,7 @@ function applyLandingTranslations() {
   if (gi[0]) _set(gi[0], t.signIn        || "Sign in");
   if (gi[1]) _set(gi[1], t.createAccount || "Create account");
 
-  // Feature panels: translate data-title / data-text attributes
+  // Pannelli feature: aggiorna attributi data-title / data-text
   document.querySelectorAll(".feature-panel[data-i18n-title]").forEach(panel => {
     const tk = panel.dataset.i18nTitle;
     const vk = panel.dataset.i18nText;
@@ -158,7 +164,7 @@ function applyLandingTranslations() {
     if (vk && t[vk]) panel.dataset.text  = t[vk];
   });
 
-  // Update currently visible feature title/text immediately
+  // Aggiorna titolo/testo del pannello attivo
   const featureTitle = document.getElementById("featureTitle");
   const featureText  = document.getElementById("featureText");
   if (featureTitle && featureText) {
@@ -169,27 +175,27 @@ function applyLandingTranslations() {
     }
   }
 
-  // Footer copyright
+  // Copyright nel footer
   const ftCopy = document.querySelector(".footer-bottom p");
   if (ftCopy && t.footerCopyright) ftCopy.textContent = t.footerCopyright;
 
   Lang.apply();
 }
 
-/* ── BOOTSTRAP ────────────────────────────────────────────────────── */
+// Inizializzazione
 document.addEventListener("DOMContentLoaded", async () => {
-  Theme.apply();   // apply system/stored theme on landing too
+  Theme.apply();
   Motion.apply();
   Lang.apply();
 
-  await initTopbarDropdown(); // Session.get() may load user lang/theme from DB
-  Lang.apply();               // re-apply after user prefs loaded
-  Theme.apply();              // re-apply theme after user prefs loaded
+  await initTopbarDropdown();
+  Lang.apply();
+  Theme.apply();
   applyLandingTranslations();
 });
-/* ── SPOTLIGHT CARD EFFECT ──────────────────────────────────────────── */
+
+// Effetto spotlight sulle card al passaggio del cursore
 (function initSpotlight() {
-  // Cache card elements — refresh on resize (avoid querySelectorAll every frame)
   let cards = [];
 
   function refreshCards() {
@@ -208,9 +214,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Element-relative coordinates: cursor position within each card.
-  // This is more reliable than background-attachment:fixed because it works
-  // even when cards have CSS transforms (tilt effect) applied.
+  // Coordinate relative alla card (funziona anche con CSS transforms attivi)
   let lastRaf = null;
   document.addEventListener('pointermove', function(e) {
     if (lastRaf) return;
@@ -224,7 +228,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const rect = card.getBoundingClientRect();
         const over = cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
 
-        // Per-card relative coords so the spotlight tracks the cursor within the card
         card.style.setProperty('--mx', (cx - rect.left).toFixed(1) + 'px');
         card.style.setProperty('--my', (cy - rect.top).toFixed(1)  + 'px');
         card.style.setProperty('--hue', hue);
