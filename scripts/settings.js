@@ -4,6 +4,43 @@
    ═══════════════════════════════════════════════════════════════════ */
 "use strict";
 
+/* ── SERVER HELPERS ──────────────────────────────────────────────── */
+function getToken() { return localStorage.getItem('ride_token') || null; }
+
+async function patchProfile(data) {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) return (await res.json()).user;
+  } catch (_) {}
+  return null;
+}
+
+/* Resize image to maxPx × maxPx JPEG before uploading */
+function resizePhoto(file, maxPx = 256, quality = 0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 /* ── TOAST ──────────────────────────────────────────────────────────── */
 function showToast(msg) {
   const t   = document.getElementById("toast");
@@ -92,8 +129,22 @@ async function populateUserUI(user) {
 
 /* ── ACCOUNT PANEL ───────────────────────────────────────────────── */
 async function initAccount() {
-  const user = await Session.get();
+  // Auth: prefer JWT → server profile; fallback to local SQLite session
+  let user = null;
+  const token = getToken();
+  if (token) {
+    try {
+      const r = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (r.ok) { const d = await r.json(); user = d.user; }
+    } catch (_) {}
+  }
+  if (!user) user = await Session.get();
   if (!user) { window.location.href = "login.html"; return; }
+
+  // Apply server-stored preferences
+  if (user.theme)        { Theme.set(user.theme);               Theme.apply(); }
+  if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
+  if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
   await populateUserUI(user);
 
@@ -116,14 +167,13 @@ async function initAccount() {
 
   photoInput?.addEventListener("change", async e => {
     const file = e.target.files?.[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async ev => {
-      const current = await Session.get();
-      await Session.save({ ...current, photo: ev.target.result });
-      await populateUserUI(await Session.get());
-      showToast("Photo updated!");
-    };
-    reader.readAsDataURL(file);
+    const dataUrl = await resizePhoto(file);
+    if (!dataUrl) { showToast("Failed to process photo."); return; }
+    const current = await Session.get();
+    if (current) await Session.save({ ...current, photo: dataUrl });
+    await patchProfile({ photo: dataUrl });
+    await populateUserUI(await Session.get() || user);
+    showToast("Photo updated!");
   });
 
   // Save / cancel
@@ -143,13 +193,12 @@ async function initAccount() {
     });
     if (!ok) return;
     setLoading(saveBtn, true);
-    const current = await Session.get();
+    const current = await Session.get() || user;
     const newFirst = document.getElementById("dFirst")?.value.trim() || current.firstName;
     const newLast  = document.getElementById("dLast")?.value.trim()  || current.lastName;
     // Recompute initials whenever name changes
     const newInitials = ((newFirst[0]||"") + (newLast[0]||"")).toUpperCase() || current.initials || "R";
-    await Session.save({
-      ...current,
+    const profileData = {
       firstName: newFirst,
       lastName:  newLast,
       initials:  newInitials,
@@ -158,9 +207,11 @@ async function initAccount() {
       city:      document.getElementById("dCity")?.value.trim()    || null,
       country:   document.getElementById("dCountry")?.value.trim() || null,
       birthday:  document.getElementById("dBirthday")?.value       || null,
-    });
+    };
+    await Session.save({ ...current, ...profileData });
+    await patchProfile(profileData);
     setLoading(saveBtn, false);
-    await populateUserUI(await Session.get());
+    await populateUserUI(await Session.get() || user);
     showToast("Changes saved!");
   });
 
@@ -311,6 +362,7 @@ async function initAppearance() {
       // Persist to account if logged in
       const u = await Session.get();
       if (u) await Session.save({ ...u, theme: next });
+      patchProfile({ theme: next });
     });
   }
 
@@ -334,6 +386,7 @@ async function initAppearance() {
       // Persist to account if logged in
       const u = await Session.get();
       if (u) await Session.save({ ...u, reduceMotion: String(motionToggle.checked) });
+      patchProfile({ reduceMotion: String(motionToggle.checked) });
     });
   }
 
@@ -355,9 +408,10 @@ async function initAppearance() {
     const newLang = sel.dataset.lang;
     // Fetch the session FIRST — Session.get() internally calls Lang.set(user.lang)
     // which would overwrite the new choice if called after Lang.set(newLang).
-    const user = await Session.get();
+    const u = await Session.get();
     Lang.set(newLang);
-    if (user) await Session.save({ ...user, lang: newLang });
+    if (u) await Session.save({ ...u, lang: newLang });
+    patchProfile({ lang: newLang });
     // Apply AFTER all async work so no subsequent Lang.set() can overwrite
     Lang.apply();
     showToast(Lang.t("saveLanguage") || "Language saved!");

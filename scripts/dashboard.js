@@ -1070,24 +1070,16 @@ function renderAccount(user,uid){
 document.addEventListener('DOMContentLoaded', async ()=>{
   Theme.apply(); Motion.apply(); Lang.apply();
 
-  const user=await Session.get();
-  if(!user){window.location.href='login.html?redirect=dashboard.html';return;}
-  // Apply user's saved preferences from DB
-  Lang.apply();
-  Theme.apply();
-  if(user.reduceMotion !== undefined && user.reduceMotion !== null) {
-    Motion.set(user.reduceMotion === 'true');
-    Motion.apply();
-  }
-  const uid=user.id;
-
-  // Check accountType from server — redirect riders to driver dashboard
+  // Auth: prefer JWT → server profile; fallback to local SQLite session
+  let user = null;
   const token = getToken();
   if (token) {
     try {
       const profRes = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
       if (profRes.ok) {
         const profData = await profRes.json();
+        user = profData.user;
+        // Redirect riders to driver dashboard
         if ((profData.user?.accountType || 'user') === 'rider') {
           window.location.href = 'driver-dashboard.html';
           return;
@@ -1095,6 +1087,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       }
     } catch (_) {}
   }
+  if (!user) user = await Session.get();
+  if(!user){window.location.href='login.html?redirect=dashboard.html';return;}
+  const uid = user.id || user._id?.toString();
+
+  // Apply server-stored preferences (theme, lang, motion)
+  if (user.theme)        { Theme.set(user.theme);               Theme.apply(); }
+  if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
+  if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
   // Sync server data → localStorage (auto-completes past rides, awards points)
   await syncFromServer(uid);

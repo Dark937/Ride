@@ -191,6 +191,11 @@ html, body {
   stroke: currentColor; fill: none;
   stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
 }
+.bk-logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .bk-logo img { height: 22px; }
 .bk-avatar {
   width: 32px; height: 32px; border-radius: 50%;

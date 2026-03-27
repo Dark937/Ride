@@ -149,8 +149,8 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// FIX V-05: limit JSON body size to prevent payload attacks
-app.use(express.json({ limit: '16kb' }));
+// FIX V-05: limit JSON body size — raised to 512kb to allow base64 profile photos
+app.use(express.json({ limit: '512kb' }));
 
 // CSRF-equivalent: verify Origin/Referer on all state-mutating POST requests.
 // Since the API uses stateless JWT (no session cookies), CSRF risk is low, but
@@ -221,11 +221,15 @@ const userSchema = new mongoose.Schema({
   password:  { type: String, required: true },
   initials:  { type: String, maxlength: 4 },
   createdAt: { type: Date, default: Date.now },
-  phone:     { type: String, maxlength: 32, default: null },
-  city:      { type: String, maxlength: 100, default: null },
-  country:   { type: String, maxlength: 100, default: null },
-  birthday:  { type: Date, default: null },
+  phone:       { type: String, maxlength: 32, default: null },
+  city:        { type: String, maxlength: 100, default: null },
+  country:     { type: String, maxlength: 100, default: null },
+  birthday:    { type: Date, default: null },
   accountType: { type: String, enum: ['user', 'rider'], default: 'user' },
+  photo:       { type: String, maxlength: 350000, default: null }, // base64 data URL, max ~256KB
+  theme:       { type: String, enum: ['dark', 'light'], default: null },
+  lang:        { type: String, maxlength: 8, default: null },
+  reduceMotion:{ type: String, enum: ['true', 'false'], default: null },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -349,11 +353,20 @@ app.post('/api/register', authLimiter, async (req, res) => {
     res.status(201).json({
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName:  user.lastName,
-        email:     user.email,
-        initials:  user.initials,
-        createdAt: user.createdAt,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
       },
       token,
     });
@@ -396,11 +409,20 @@ app.post('/api/login', authLimiter, async (req, res) => {
     res.json({
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName:  user.lastName,
-        email:     user.email,
-        initials:  user.initials,
-        createdAt: user.createdAt,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
       },
       token,
     });
@@ -440,6 +462,68 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('[profile]', error);
     res.status(500).json({ error: 'Failed to get profile.' });
+  }
+});
+
+// Update profile (name, contact, photo, settings)
+app.patch('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const ALLOWED = ['firstName','lastName','phone','city','country','birthday',
+                     'photo','theme','lang','reduceMotion','initials'];
+    const update = {};
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+
+    // Validate strings
+    if (update.firstName !== undefined) {
+      if (typeof update.firstName !== 'string' || !update.firstName.trim())
+        return res.status(400).json({ error: 'Invalid first name.' });
+      update.firstName = update.firstName.trim().slice(0, 64);
+    }
+    if (update.lastName !== undefined) {
+      if (typeof update.lastName !== 'string' || !update.lastName.trim())
+        return res.status(400).json({ error: 'Invalid last name.' });
+      update.lastName = update.lastName.trim().slice(0, 64);
+    }
+    if (update.theme && !['dark','light'].includes(update.theme))
+      return res.status(400).json({ error: 'Invalid theme.' });
+    if (update.reduceMotion && !['true','false'].includes(update.reduceMotion))
+      return res.status(400).json({ error: 'Invalid reduceMotion value.' });
+    if (update.lang && (typeof update.lang !== 'string' || update.lang.length > 8))
+      return res.status(400).json({ error: 'Invalid lang.' });
+
+    // Photo validation
+    if (update.photo !== undefined && update.photo !== null) {
+      if (typeof update.photo !== 'string')
+        return res.status(400).json({ error: 'Invalid photo.' });
+      if (update.photo.length > 350000)
+        return res.status(400).json({ error: 'Photo too large (max ~256 KB).' });
+      if (!/^data:image\/(jpeg|png|webp|gif);base64,/.test(update.photo))
+        return res.status(400).json({ error: 'Invalid photo format.' });
+    }
+
+    // Auto-recompute initials when name changes
+    if (update.firstName || update.lastName) {
+      const cur = await User.findById(req.user.userId).select('firstName lastName');
+      if (cur) {
+        const f = update.firstName || cur.firstName;
+        const l = update.lastName  || cur.lastName;
+        update.initials = ((f[0]||'') + (l[0]||'')).toUpperCase();
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: update },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    res.json({ user });
+  } catch (err) {
+    console.error('[profile PATCH]', err);
+    res.status(500).json({ error: 'Failed to update profile.' });
   }
 });
 
