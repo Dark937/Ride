@@ -1220,7 +1220,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   });
 
   // Profile dropdown actions
-  document.getElementById('ddFidelityCard')?.addEventListener('click',()=>{switchPanel('fidelity');renderFidelity(uid);closeAllDropdowns();});
   document.getElementById('ddSignOut').addEventListener('click',()=>{
     closeAllDropdowns();
     document.getElementById('soModal').classList.add('is-open');
