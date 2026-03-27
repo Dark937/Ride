@@ -37,7 +37,7 @@ function applySecurityHeaders(req, res, next) {
     // Images: self + data URIs + blob + CartoDB tiles + OSM tiles + Spline + Unsplash
     "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://prod.spline.design https://cdn.spline.design https://images.unsplash.com",
     // API calls: self + Nominatim + OSRM + unpkg + Spline scene/CDN
-    "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://unpkg.com https://prod.spline.design https://cdn.spline.design",
+    "connect-src 'self' https://nominatim.openstreetmap.org https://photon.komoot.io https://router.project-osrm.org https://unpkg.com https://prod.spline.design https://cdn.spline.design https://api.anthropic.com",
     // WASM workers + Spline workers
     "worker-src 'self' blob: https://unpkg.com",
     // No iframes
@@ -225,6 +225,7 @@ const userSchema = new mongoose.Schema({
   city:      { type: String, maxlength: 100, default: null },
   country:   { type: String, maxlength: 100, default: null },
   birthday:  { type: Date, default: null },
+  accountType: { type: String, enum: ['user', 'rider'], default: 'user' },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -262,6 +263,26 @@ const fidelitySchema = new mongoose.Schema({
   totalEarned: { type: Number, default: 0, min: 0 },
 });
 const Fidelity = mongoose.model('Fidelity', fidelitySchema);
+
+// ── Driver Application schema ────────────────────────────────────────────────
+const driverApplicationSchema = new mongoose.Schema({
+  userId:       { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+  firstName:    { type: String, required: true, maxlength: 64 },
+  lastName:     { type: String, required: true, maxlength: 64 },
+  email:        { type: String, required: true, maxlength: 254 },
+  phone:        { type: String, required: true, maxlength: 32 },
+  city:         { type: String, required: true, maxlength: 100 },
+  experience:   { type: Number, required: true, min: 0, max: 60 },
+  vehicleMake:  { type: String, required: true, maxlength: 64 },
+  vehicleModel: { type: String, required: true, maxlength: 64 },
+  vehicleYear:  { type: Number, required: true, min: 1990, max: 2030 },
+  licenseNumber:{ type: String, required: true, maxlength: 32 },
+  statement:    { type: String, required: true, maxlength: 1000 },
+  decision:     { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  aiReason:     { type: String, maxlength: 500 },
+  createdAt:    { type: Date, default: Date.now },
+});
+const DriverApplication = mongoose.model('DriverApplication', driverApplicationSchema);
 
 // ── Input validation helper ──────────────────────────────────────────────────
 // FIX V-10: centralised validation; rejects non-string types (NoSQL object injection)
@@ -525,6 +546,115 @@ app.post('/api/bookings/:id/complete', authenticateToken, async (req, res) => {
   } catch (err) { console.error('[bookings complete]', err); res.status(500).json({ error: 'Failed to complete booking.' }); }
 });
 
+// ── Rider Application ────────────────────────────────────────────────────────
+const applyRiderLimiter = makeRateLimiter(3, 24*60*60*1000, 'You can only submit 3 applications per day.');
+
+app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, res) => {
+  try {
+    const uid = req.user.userId;
+    // Check if user is already a rider
+    const user = await User.findById(uid).lean();
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if ((user.accountType || 'user') === 'rider') {
+      return res.status(400).json({ error: 'Your account is already a rider account.' });
+    }
+
+    // Check 24h submission limit per user (DB-based)
+    const yesterday = new Date(Date.now() - 24*60*60*1000);
+    const recentApps = await DriverApplication.countDocuments({ userId: uid, createdAt: { $gte: yesterday } });
+    if (recentApps >= 3) {
+      return res.status(429).json({ error: 'You have already submitted 3 applications today. Please wait 24 hours.' });
+    }
+
+    const { firstName, lastName, phone, city, experience, vehicleMake, vehicleModel, vehicleYear, licenseNumber, statement } = req.body;
+
+    // Basic validation
+    if (!firstName || !lastName || !phone || !city || experience == null || !vehicleMake || !vehicleModel || !vehicleYear || !licenseNumber || !statement) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (typeof statement !== 'string' || statement.length < 20) {
+      return res.status(400).json({ error: 'Personal statement must be at least 20 characters.' });
+    }
+
+    // Save application first
+    const app2 = await new DriverApplication({
+      userId: uid, firstName, lastName, email: user.email,
+      phone, city, experience: Number(experience),
+      vehicleMake, vehicleModel, vehicleYear: Number(vehicleYear),
+      licenseNumber, statement, decision: 'pending',
+    }).save();
+
+    // Analyze with Claude AI (requires ANTHROPIC_API_KEY in .env)
+    let decision = 'pending';
+    let aiReason = 'Manual review required.';
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 256,
+            messages: [{
+              role: 'user',
+              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nVehicle: ${vehicleMake} ${vehicleModel} (${vehicleYear})\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, vehicle from 2015 or newer, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
+            }],
+          }),
+        });
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          const raw = aiData?.content?.[0]?.text?.trim() || '';
+          const parsed = JSON.parse(raw);
+          if (parsed.decision === 'approved' || parsed.decision === 'rejected') {
+            decision = parsed.decision;
+            aiReason = (parsed.reason || '').slice(0, 500);
+          }
+        }
+      } catch (_) { /* AI unavailable — keep pending */ }
+    }
+
+    // Update application with decision
+    await DriverApplication.findByIdAndUpdate(app2._id, { decision, aiReason });
+
+    // If approved, update user account type
+    if (decision === 'approved') {
+      await User.findByIdAndUpdate(uid, { accountType: 'rider' });
+    }
+
+    // Send email notification (requires SMTP config in .env)
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && decision !== 'pending') {
+      try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT || 587),
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        });
+        const isApproved = decision === 'approved';
+        await transporter.sendMail({
+          from: `"Ride" <${process.env.SMTP_USER}>`,
+          to: user.email,
+          subject: isApproved ? 'Welcome to the Ride team! 🎉' : 'Your Ride driver application',
+          html: isApproved
+            ? `<h2>Congratulations, ${firstName}!</h2><p>Your application to become a Ride driver has been <strong>approved</strong>. Your account has been upgraded to a rider account. Welcome to the team!</p><p>Reason: ${aiReason}</p>`
+            : `<h2>Hi ${firstName},</h2><p>Thank you for applying to become a Ride driver. Unfortunately, your application has been <strong>rejected</strong> at this time.</p><p>Reason: ${aiReason}</p><p>You may apply again after reviewing the requirements.</p>`,
+        });
+      } catch (_) { /* email failure is non-critical */ }
+    }
+
+    res.json({ ok: true, decision, reason: aiReason });
+  } catch (err) {
+    console.error('[apply-rider]', err);
+    res.status(500).json({ error: 'Failed to process application.' });
+  }
+});
+
 // ── Fidelity endpoints ───────────────────────────────────────────────────────
 app.get('/api/fidelity', authenticateToken, async (req, res) => {
   try {
@@ -539,7 +669,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'book-ride.html'
+  booking:'book-ride.html', 'become-rider':'become-rider.html'
 };
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {
