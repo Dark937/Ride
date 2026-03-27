@@ -86,16 +86,30 @@
         </div>
       </div>
 
-      <div class="br-section-label" style="margin-top:20px">License & Experience</div>
+      <div class="br-section-label" style="margin-top:20px">Vehicle & License</div>
       <div class="br-row">
         <div class="br-field">
-          <label for="brLicense">Driving license number</label>
-          <input type="text" id="brLicense" name="licenseNumber" maxlength="32" required placeholder="Your license ID">
+          <label for="brMake">Vehicle make</label>
+          <input type="text" id="brMake" name="vehicleMake" maxlength="64" required placeholder="e.g. BMW, Mercedes">
+        </div>
+        <div class="br-field">
+          <label for="brModel">Vehicle model</label>
+          <input type="text" id="brModel" name="vehicleModel" maxlength="64" required placeholder="e.g. 7 Series, E-Class">
+        </div>
+      </div>
+      <div class="br-row">
+        <div class="br-field">
+          <label for="brYear">Vehicle year</label>
+          <input type="number" id="brYear" name="vehicleYear" min="2015" max="2030" required placeholder="2015 or newer">
         </div>
         <div class="br-field">
           <label for="brExp">Driving experience (years)</label>
           <input type="number" id="brExp" name="experience" min="0" max="60" required placeholder="e.g. 5">
         </div>
+      </div>
+      <div class="br-field br-field-full">
+        <label for="brLicense">Driving license number</label>
+        <input type="text" id="brLicense" name="licenseNumber" maxlength="32" required placeholder="Your license ID">
       </div>
 
       <div class="br-section-label" style="margin-top:20px">Personal Statement</div>

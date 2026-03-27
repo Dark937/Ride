@@ -273,9 +273,9 @@ const driverApplicationSchema = new mongoose.Schema({
   phone:        { type: String, required: true, maxlength: 32 },
   city:         { type: String, required: true, maxlength: 100 },
   experience:   { type: Number, required: true, min: 0, max: 60 },
-  vehicleMake:  { type: String, maxlength: 64, default: null },
-  vehicleModel: { type: String, maxlength: 64, default: null },
-  vehicleYear:  { type: Number, min: 1990, max: 2030, default: null },
+  vehicleMake:  { type: String, required: true, maxlength: 64 },
+  vehicleModel: { type: String, required: true, maxlength: 64 },
+  vehicleYear:  { type: Number, required: true, min: 1990, max: 2030 },
   licenseNumber:{ type: String, required: true, maxlength: 32 },
   statement:    { type: String, required: true, maxlength: 1000 },
   decision:     { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
@@ -566,10 +566,10 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
       return res.status(429).json({ error: 'You have already submitted 3 applications today. Please wait 24 hours.' });
     }
 
-    const { firstName, lastName, phone, city, experience, licenseNumber, statement } = req.body;
+    const { firstName, lastName, phone, city, experience, vehicleMake, vehicleModel, vehicleYear, licenseNumber, statement } = req.body;
 
     // Basic validation
-    if (!firstName || !lastName || !phone || !city || experience == null || !licenseNumber || !statement) {
+    if (!firstName || !lastName || !phone || !city || experience == null || !vehicleMake || !vehicleModel || !vehicleYear || !licenseNumber || !statement) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
     if (typeof statement !== 'string' || statement.length < 20) {
@@ -580,6 +580,7 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
     const app2 = await new DriverApplication({
       userId: uid, firstName, lastName, email: user.email,
       phone, city, experience: Number(experience),
+      vehicleMake, vehicleModel, vehicleYear: Number(vehicleYear),
       licenseNumber, statement, decision: 'pending',
     }).save();
 
@@ -601,7 +602,7 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
             max_tokens: 256,
             messages: [{
               role: 'user',
-              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, complete information provided, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
+              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nVehicle: ${vehicleMake} ${vehicleModel} (${vehicleYear})\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, vehicle from 2015 or newer, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
             }],
           }),
         });
@@ -668,8 +669,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'book-ride.html', 'become-rider':'become-rider.html',
-  'driver-dashboard':'driver-dashboard.html'
+  booking:'book-ride.html', 'become-rider':'become-rider.html'
 };
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {
