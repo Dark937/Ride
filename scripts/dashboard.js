@@ -1081,6 +1081,21 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
   const uid=user.id;
 
+  // Check accountType from server — redirect riders to driver dashboard
+  const token = getToken();
+  if (token) {
+    try {
+      const profRes = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (profRes.ok) {
+        const profData = await profRes.json();
+        if ((profData.user?.accountType || 'user') === 'rider') {
+          window.location.href = 'driver-dashboard.html';
+          return;
+        }
+      }
+    } catch (_) {}
+  }
+
   // Sync server data → localStorage (auto-completes past rides, awards points)
   await syncFromServer(uid);
 
@@ -1205,7 +1220,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   });
 
   // Profile dropdown actions
-  document.getElementById('ddFidelityCard')?.addEventListener('click',()=>{switchPanel('fidelity');renderFidelity(uid);closeAllDropdowns();});
   document.getElementById('ddSignOut').addEventListener('click',()=>{
     closeAllDropdowns();
     document.getElementById('soModal').classList.add('is-open');

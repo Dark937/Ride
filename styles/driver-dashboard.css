@@ -1,0 +1,230 @@
+/* ════════════════════════════════════════
+   DRIVER DASHBOARD — extra styles
+   Uses dashboard.css as base
+   ════════════════════════════════════════ */
+
+/* Online toggle button in topbar */
+.dd-online-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-md, rgba(255,255,255,.12));
+  background: var(--surface, rgba(255,255,255,.05));
+  color: var(--text-2, rgba(255,255,255,.7));
+  cursor: pointer;
+  transition: background .14s, border-color .14s, color .14s;
+  margin-right: 8px;
+}
+.dd-online-toggle.online {
+  background: rgba(34,197,94,.12);
+  border-color: rgba(34,197,94,.3);
+  color: #22c55e;
+}
+.dd-online-toggle:hover { opacity: .85; }
+
+.dot-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-indicator.offline { background: var(--muted, rgba(255,255,255,.35)); }
+.dot-indicator.online  { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.6); }
+
+/* Status card body */
+.dd-status-body {
+  padding: 16px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dd-status-desc {
+  font-size: 13.5px;
+  color: var(--muted, rgba(255,255,255,.5));
+  line-height: 1.55;
+}
+.dd-go-online-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: var(--brand, #3d5eff);
+  color: #fff;
+  transition: opacity .14s;
+  cursor: pointer;
+}
+.dd-go-online-btn:hover { opacity: .88; }
+.dd-go-online-btn.go-offline {
+  background: rgba(34,197,94,.15);
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,.3);
+}
+
+/* Assigned ride empty */
+.dd-no-ride {
+  padding: 20px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted, rgba(255,255,255,.4));
+}
+
+/* Ride list rows */
+.dd-ride-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,.06));
+}
+.dd-ride-row:last-child { border-bottom: none; }
+.dd-ride-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface, rgba(255,255,255,.05));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dd-ride-icon svg { width: 16px; height: 16px; stroke: var(--brand, #3d5eff); fill: none; stroke-width: 1.8; stroke-linecap: round; }
+.dd-ride-info { flex: 1; min-width: 0; }
+.dd-ride-route {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.dd-ride-meta {
+  font-size: 12px;
+  color: var(--muted, rgba(255,255,255,.45));
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dd-ride-fare {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--green, #22c55e);
+  white-space: nowrap;
+}
+.dd-empty {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted, rgba(255,255,255,.35));
+}
+
+/* Filter row */
+.dd-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.dd-filter-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-md, rgba(255,255,255,.1));
+  color: var(--muted, rgba(255,255,255,.5));
+  background: transparent;
+  cursor: pointer;
+  transition: all .13s;
+}
+.dd-filter-btn.active, .dd-filter-btn:hover {
+  background: var(--brand, #3d5eff);
+  border-color: var(--brand, #3d5eff);
+  color: #fff;
+}
+
+/* Earnings grid */
+.dd-earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) { .dd-earnings-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .dd-earnings-grid { grid-template-columns: 1fr 1fr; } }
+
+.dd-earn-card {
+  background: var(--card-bg, rgba(255,255,255,.04));
+  border: 1px solid var(--border, rgba(255,255,255,.08));
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.dd-earn-card.accent {
+  background: rgba(61,94,255,.08);
+  border-color: rgba(61,94,255,.2);
+}
+.dd-earn-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted, rgba(255,255,255,.4));
+  margin-bottom: 8px;
+}
+.dd-earn-val {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text, #fff);
+}
+.dd-earn-card.accent .dd-earn-val { color: var(--brand, #3d5eff); }
+
+/* Account profile */
+.dd-account-profile {
+  padding: 8px 0;
+}
+.dd-profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,.06));
+  font-size: 13.5px;
+}
+.dd-profile-row:last-child { border-bottom: none; }
+.dd-profile-label { color: var(--muted, rgba(255,255,255,.45)); font-weight: 500; }
+.dd-profile-val   { color: var(--text, #fff); font-weight: 600; }
+
+/* Driver badge */
+.dd-badge-body { padding: 16px 0 4px; display: flex; flex-direction: column; gap: 12px; }
+.dd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34,197,94,.1);
+  border: 1px solid rgba(34,197,94,.25);
+  padding: 8px 16px;
+  border-radius: 999px;
+  width: fit-content;
+}
+.dd-badge svg { width: 14px; height: 14px; stroke: #22c55e; fill: none; }
+.dd-badge-desc {
+  font-size: 13px;
+  color: var(--muted, rgba(255,255,255,.5));
+  line-height: 1.55;
+}
+
+/* Light mode overrides */
+[data-theme="light"] .dd-online-toggle {
+  color: rgba(0,0,30,.6);
+  background: rgba(0,0,30,.04);
+  border-color: rgba(0,0,30,.1);
+}
+[data-theme="light"] .dd-online-toggle.online { color: #16a34a; background: rgba(22,163,74,.1); border-color: rgba(22,163,74,.3); }
