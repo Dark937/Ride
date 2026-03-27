@@ -7,6 +7,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   Theme.apply(); Lang.apply();
 
   const user = await Session.get();
+
+  // Not logged in — redirect to login
+  if (!user) {
+    window.location.href = 'login.html?redirect=become-rider.html';
+    return;
+  }
+
+  // Fetch fresh profile from server to get accountType
+  let accountType = 'user';
+  const token = getToken();
+  if (token) {
+    try {
+      const profRes = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (profRes.ok) {
+        const profData = await profRes.json();
+        accountType = profData.user?.accountType || 'user';
+      }
+    } catch (_) {}
+  }
+
   const form     = document.getElementById('brForm');
   const submitBtn = document.getElementById('brSubmit');
   const submitLbl = document.getElementById('brSubmitLabel');
@@ -18,30 +38,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resultTitle = document.getElementById('brResultTitle');
   const resultMsg   = document.getElementById('brResultMsg');
 
-  // Pre-fill user info if logged in
-  if (user) {
-    const first = document.getElementById('brFirst');
-    const last  = document.getElementById('brLast');
-    const phone = document.getElementById('brPhone');
-    const city  = document.getElementById('brCity');
-    if (first && user.firstName) first.value = user.firstName;
-    if (last  && user.lastName)  last.value  = user.lastName;
-    if (phone && user.phone)     phone.value = user.phone;
-    if (city  && user.city)      city.value  = user.city;
+  // Pre-fill user info
+  const first = document.getElementById('brFirst');
+  const last  = document.getElementById('brLast');
+  const phone = document.getElementById('brPhone');
+  const city  = document.getElementById('brCity');
+  if (first && user.firstName) first.value = user.firstName;
+  if (last  && user.lastName)  last.value  = user.lastName;
+  if (phone && user.phone)     phone.value = user.phone;
+  if (city  && user.city)      city.value  = user.city;
 
-    // Already a rider?
-    if ((user.accountType || 'user') === 'rider') {
-      formCard.innerHTML = `<div style="text-align:center;padding:32px 0">
-        <div style="font-size:40px;margin-bottom:12px">🏁</div>
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:8px">You're already a Ride driver!</h2>
-        <p style="font-size:13.5px;color:var(--muted)">Your account already has rider status. Head to your dashboard to manage rides.</p>
-        <a href="dashboard.html" class="br-result-btn" style="margin-top:20px;display:inline-flex">Go to Dashboard</a>
-      </div>`;
-      return;
-    }
-  } else {
-    // Not logged in — redirect
-    window.location.href = 'login.html?redirect=become-rider.html';
+  // Already a rider?
+  if (accountType === 'rider') {
+    formCard.innerHTML = `<div style="text-align:center;padding:32px 0">
+      <div style="font-size:40px;margin-bottom:12px">🏁</div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:8px">You're already a Ride driver!</h2>
+      <p style="font-size:13.5px;color:var(--muted)">Your account already has rider status. Head to your driver dashboard.</p>
+      <a href="driver-dashboard.html" class="br-result-btn" style="margin-top:20px;display:inline-flex">Go to Driver Dashboard</a>
+    </div>`;
     return;
   }
 
@@ -62,9 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       lastName:     document.getElementById('brLast')?.value.trim(),
       phone:        document.getElementById('brPhone')?.value.trim(),
       city:         document.getElementById('brCity')?.value.trim(),
-      vehicleMake:  document.getElementById('brMake')?.value.trim(),
-      vehicleModel: document.getElementById('brModel')?.value.trim(),
-      vehicleYear:  document.getElementById('brYear')?.value.trim(),
       experience:   document.getElementById('brExp')?.value.trim(),
       licenseNumber:document.getElementById('brLicense')?.value.trim(),
       statement:    document.getElementById('brStatement')?.value.trim(),
@@ -79,11 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (data.statement.length < 20) {
       showError('Personal statement must be at least 20 characters.');
-      return;
-    }
-    const year = parseInt(data.vehicleYear);
-    if (isNaN(year) || year < 2015) {
-      showError('Vehicle must be from 2015 or newer.');
       return;
     }
 
@@ -131,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       resultIcon.textContent = '🎉';
       resultTitle.textContent = 'Application approved!';
       resultMsg.textContent = `Congratulations! You've been approved as a Ride driver. ${reason ? 'Note: ' + reason : 'Check your email for details.'}`;
+      document.querySelector('.br-result-btn')?.setAttribute('href', 'driver-dashboard.html');
     } else if (decision === 'rejected') {
       resultIcon.className = 'br-result-icon rejected';
       resultIcon.textContent = '❌';
