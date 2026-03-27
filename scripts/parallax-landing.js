@@ -1,3 +1,36 @@
+/* ── SKELETON DISMISSAL ─────────────────────────────────────────── */
+(function () {
+  const SKEL_MIN_MS = 900; // always show at least 900ms so it feels intentional
+  const skelEl = document.getElementById("site-skeleton");
+  if (!skelEl) return;
+
+  const t0 = performance.now();
+  let dismissed = false;
+
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    const wait = Math.max(0, SKEL_MIN_MS - (performance.now() - t0));
+    setTimeout(() => {
+      skelEl.classList.add("skel-done");
+      document.body.classList.add("skel-revealed");
+      // Remove from DOM after CSS transition finishes (~600 ms)
+      setTimeout(() => skelEl.remove(), 700);
+    }, wait);
+  }
+
+  if (document.readyState === "complete") {
+    dismiss();
+  } else {
+    window.addEventListener("load", dismiss, { once: true });
+  }
+  // Hard failsafe — always remove after 6 s regardless
+  setTimeout(dismiss, 6000);
+})();
+
+/* ── THEME WATCH (bfcache + cross-tab) ──────────────────────────── */
+if (typeof Theme !== "undefined") Theme.watch();
+
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("js-reveal");
 
