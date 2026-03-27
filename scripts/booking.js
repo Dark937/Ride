@@ -422,16 +422,25 @@ function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
   async function fetchSuggestions(query) {
+    if (query.length < 3) return [];
     // Photon (komoot) — Elasticsearch-backed, much better partial/fuzzy matching
+    // Only use supported lang codes; fall back to 'en'
+    const SUPPORTED_LANGS = ['en', 'de', 'fr'];
+    const rawLang = (navigator.language || 'en').split('-')[0];
+    const lang = SUPPORTED_LANGS.includes(rawLang) ? rawLang : 'en';
     let locationBias = '';
     if (state.pickup?.lat && state.pickup?.lng) {
       locationBias = `&lat=${state.pickup.lat}&lon=${state.pickup.lng}`;
     }
-    const lang = (navigator.language || 'it').split('-')[0];
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=${lang}${locationBias}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.features || [];
+    try {
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=${lang}${locationBias}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.features || [];
+    } catch (_) {
+      return [];
+    }
   }
 
   function formatResult(r) {

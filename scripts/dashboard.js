@@ -63,54 +63,17 @@ async function syncFromServer(uid) {
    ════════════════════════════════════════════════════════ */
 const RideData = {
   K: k => k + '_' + (localStorage.getItem('current_user_id')||''),
-  seed(uid) {
-    const rk = 'ride_rides_'+uid, bk='ride_bookings_'+uid,
-          ck='ride_cards_'+uid, fk='ride_fidelity_'+uid;
-    if (!localStorage.getItem(rk)) {
-      const now = Date.now();
-      const H = 3600000, D = 86400000;
-      localStorage.setItem(rk, JSON.stringify([
-        // Recent rides (last 7 days) make the spending chart non-empty
-        {id:'r1',from:'Piazza Navona',to:'Fiumicino Airport',date:new Date(now-1*D-2*H).toISOString(),status:'completed',fare:38.50,car:'Ferrari Roma',pts:39},
-        {id:'r2',from:'Termini Station',to:'Colosseo',date:new Date(now-2*D-4*H).toISOString(),status:'completed',fare:11.20,car:'Lamborghini Urus',pts:11},
-        {id:'r3',from:'Trastevere',to:'EUR Centro',date:new Date(now-3*D).toISOString(),status:'cancelled',fare:0,car:'Porsche Taycan',pts:0},
-        {id:'r4',from:'Prati',to:'Testaccio',date:new Date(now-4*D-1*H).toISOString(),status:'completed',fare:9.80,car:'Aston Martin DBX',pts:10},
-        {id:'r5',from:'Via Veneto',to:'Tiburtina',date:new Date(now-5*D-3*H).toISOString(),status:'completed',fare:16.40,car:'Bentley Flying Spur',pts:16},
-        {id:'r6',from:'Colosseo',to:'Villa Borghese',date:new Date(now-6*D-1*H).toISOString(),status:'completed',fare:8.20,car:'Ferrari Roma',pts:8},
-        {id:'r7',from:'Ostiense',to:'Parioli',date:new Date(now-9*D).toISOString(),status:'completed',fare:14.60,car:'Rolls Royce Ghost',pts:15},
-        {id:'r8',from:'Piazza Venezia',to:'Gianicolo',date:new Date(now-14*D).toISOString(),status:'completed',fare:7.50,car:'Lamborghini Urus',pts:8},
-        {id:'r9',from:'Pantheon',to:'Pigneto',date:new Date(now-18*D).toISOString(),status:'completed',fare:12.80,car:'Porsche Taycan',pts:13},
-        {id:'r10',from:'EUR',to:'Fiumicino Airport',date:new Date(now-28*D).toISOString(),status:'completed',fare:28.00,car:'Bentley Flying Spur',pts:28},
-        {id:'r11',from:'Trastevere',to:'Parioli',date:new Date(now-42*D).toISOString(),status:'completed',fare:11.00,car:'Ferrari Roma',pts:11},
-        {id:'r12',from:'Termini',to:'Ostia Lido',date:new Date(now-55*D).toISOString(),status:'completed',fare:32.00,car:'Rolls Royce Ghost',pts:32},
-      ]));
-    }
-    if (!localStorage.getItem(bk)) {
-      const t1=new Date(); t1.setDate(t1.getDate()+1); t1.setHours(9,30,0,0);
-      const t2=new Date(); t2.setDate(t2.getDate()+5); t2.setHours(14,0,0,0);
-      localStorage.setItem(bk, JSON.stringify([
-        {id:'b1',from:'Via del Corso 1',to:'Fiumicino Airport',datetime:t1.toISOString(),car:'Ferrari Roma',fare:38.50},
-        {id:'b2',from:'Hotel Eden, Roma',to:'Napoli Centrale',datetime:t2.toISOString(),car:'Bentley Flying Spur',fare:95.00},
-      ]));
-    }
-    if (!localStorage.getItem(ck)) {
-      localStorage.setItem(ck, JSON.stringify([
-        {id:'c1',brand:'VISA',cls:'visa',num:'•••• •••• •••• 4242',exp:'12/26',name:'Marco Rossi',dflt:true},
-        {id:'c2',brand:'MC',cls:'mc',num:'•••• •••• •••• 8888',exp:'09/27',name:'Marco Rossi',dflt:false},
-      ]));
-    }
-    if (!localStorage.getItem(fk)) {
-      localStorage.setItem(fk, JSON.stringify({pts:1240,redeemed:360,totalEarned:1600}));
-    }
-  },
-  getRides(uid)    { return JSON.parse(localStorage.getItem('ride_rides_'+uid)||'[]'); },
-  getBookings(uid) { return JSON.parse(localStorage.getItem('ride_bookings_'+uid)||'[]'); },
-  getCards(uid)    { return JSON.parse(localStorage.getItem('ride_cards_'+uid)||'[]'); },
-  getFid(uid)      { return JSON.parse(localStorage.getItem('ride_fidelity_'+uid)||'{"pts":0,"redeemed":0,"totalEarned":0}'); },
-  saveCards(uid,v) { localStorage.setItem('ride_cards_'+uid, JSON.stringify(v)); },
-  saveBookings(uid,v){ localStorage.setItem('ride_bookings_'+uid, JSON.stringify(v)); },
-  getWallet(uid)   { return parseFloat(localStorage.getItem('ride_wallet_'+uid)||'0'); },
-  getWalletTxs(uid){ return JSON.parse(localStorage.getItem('ride_wallet_txs_'+uid)||'[]'); },
+  seed() { /* no demo data — histories are empty by default */ },
+  getRides(uid)       { return JSON.parse(localStorage.getItem('ride_rides_'+uid)||'[]'); },
+  getBookings(uid)    { return JSON.parse(localStorage.getItem('ride_bookings_'+uid)||'[]'); },
+  getCards(uid)       { return JSON.parse(localStorage.getItem('ride_cards_'+uid)||'[]'); },
+  getFid(uid)         { return JSON.parse(localStorage.getItem('ride_fidelity_'+uid)||'{"pts":0,"redeemed":0,"totalEarned":0}'); },
+  getFidHistory(uid)  { return JSON.parse(localStorage.getItem('ride_fidelity_history_'+uid)||'[]'); },
+  saveFidHistory(uid,v){ localStorage.setItem('ride_fidelity_history_'+uid, JSON.stringify(v)); },
+  saveCards(uid,v)    { localStorage.setItem('ride_cards_'+uid, JSON.stringify(v)); },
+  saveBookings(uid,v) { localStorage.setItem('ride_bookings_'+uid, JSON.stringify(v)); },
+  getWallet(uid)      { return parseFloat(localStorage.getItem('ride_wallet_'+uid)||'0'); },
+  getWalletTxs(uid)  { return JSON.parse(localStorage.getItem('ride_wallet_txs_'+uid)||'[]'); },
   saveWallet(uid,bal,txs){ localStorage.setItem('ride_wallet_'+uid,String(bal)); localStorage.setItem('ride_wallet_txs_'+uid,JSON.stringify(txs)); },
 };
 
@@ -178,8 +141,9 @@ function renderDashboard(user, uid) {
   document.getElementById('wsGreeting').textContent=`${g}, ${user.firstName||'Rider'} ✦`;
   document.getElementById('wsDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const ms=new Date(); ms.setDate(1); ms.setHours(0,0,0,0);
-  const monthSpent=rides.filter(r=>r.status==='completed'&&new Date(r.date)>=ms).reduce((s,r)=>s+r.fare,0);
-  document.getElementById('wsRides').textContent=rides.length;
+  const completedRides=rides.filter(r=>r.status==='completed');
+  const monthSpent=completedRides.filter(r=>new Date(r.date)>=ms).reduce((s,r)=>s+r.fare,0);
+  document.getElementById('wsRides').textContent=completedRides.length;
   document.getElementById('wsPts').textContent=fid.pts.toLocaleString();
   document.getElementById('wsSpent').textContent='€'+monthSpent.toFixed(0);
   document.getElementById('wsWallet').textContent='€'+RideData.getWallet(uid).toFixed(2);
@@ -647,6 +611,11 @@ function doRedeem(cp, uid, pts) {
   fid.redeemed = (fid.redeemed || 0) + cp.cost;
   localStorage.setItem('ride_fidelity_' + uid, JSON.stringify(fid));
 
+  // Save redemption event to fidelity history
+  const fidHist = RideData.getFidHistory(uid);
+  fidHist.unshift({ type:'redeem', pts: -cp.cost, label: 'Redeemed: ' + cp.name, date: new Date().toISOString() });
+  RideData.saveFidHistory(uid, fidHist.slice(0, 50));
+
   const code = generateCouponCode();
   const expiry = new Date(); expiry.setDate(expiry.getDate() + 30);
   const coupons = JSON.parse(localStorage.getItem('ride_coupons_' + uid) || '[]');
@@ -822,11 +791,26 @@ function renderFidelity(uid){
     s2.addEventListener('click',()=>openCouponModal('All Rewards',PARTNER_COUPONS,fid.pts));
   }
 
-  // History
+  // History — build from real completed rides + real redemption events
   const histEl=document.getElementById('fidHistory');
-  const entries=rides.slice(0,8).map(r=>({title:'Ride to '+esc(r.to),date:r.date,pts:'+'+esc(String(r.pts)),plus:true}));
-  entries.splice(2,0,{title:'Points redeemed — discount applied',date:new Date(Date.now()-10*86400000).toISOString(),pts:'-120',plus:false});
-  histEl.innerHTML=entries.map(e=>`<div class="fid-row"><div class="fid-row-icon" style="background:${e.plus?'var(--green-dim)':'var(--accent-dim)'};color:${e.plus?'var(--green)':'var(--accent)'}"><svg viewBox="0 0 24 24">${e.plus?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg></div><div class="fid-row-info"><div class="fid-row-title">${e.title}</div><div class="fid-row-date">${esc(fmtDate(e.date))}</div></div><div class="fid-row-pts ${e.plus?'plus':'minus'}">${e.pts} pts</div></div>`).join('');
+  const earnEntries=rides.map(r=>({
+    type:'earn', pts:+(r.pts||Math.round(r.fare)), label:'Ride to '+esc(r.to), date:r.date
+  }));
+  const redeemEntries=RideData.getFidHistory(uid).filter(e=>e.type==='redeem').map(e=>({
+    type:'redeem', pts:e.pts, label:esc(e.label), date:e.date
+  }));
+  const allEntries=[...earnEntries,...redeemEntries]
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))
+    .slice(0,12);
+  if(!allEntries.length){
+    histEl.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">No points history yet.</div>`;
+  } else {
+    histEl.innerHTML=allEntries.map(e=>{
+      const plus=e.type==='earn';
+      const ptsLabel=plus?`+${e.pts}`:`${e.pts}`;
+      return `<div class="fid-row"><div class="fid-row-icon" style="background:${plus?'var(--green-dim)':'var(--accent-dim)'};color:${plus?'var(--green)':'var(--accent)'}"><svg viewBox="0 0 24 24">${plus?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg></div><div class="fid-row-info"><div class="fid-row-title">${e.label}</div><div class="fid-row-date">${esc(fmtDate(e.date))}</div></div><div class="fid-row-pts ${plus?'plus':'minus'}">${ptsLabel} pts</div></div>`;
+    }).join('');
+  }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -841,11 +825,8 @@ function renderWallet(uid) {
   const balEl = document.getElementById('walletBalance');
   if (balEl) balEl.textContent = bal.toFixed(2);
 
-  // Combine wallet txs with ride debits for display
-  const rideDebits = RideData.getRides(uid).filter(r=>r.status==='completed').map(r=>({
-    type:'debit', label:'Ride to '+r.to, date:r.date, amount:r.fare
-  }));
-  const allTxs = [...txs, ...rideDebits].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,12);
+  // Show only real wallet transactions (top-ups, wallet-paid rides, fidelity credits)
+  const allTxs = [...txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,20);
 
   const listEl = document.getElementById('walletTxList');
   if (listEl) {
@@ -1111,7 +1092,7 @@ function renderAccount(user,uid){
   document.getElementById('profileName').textContent=name||'—';
   document.getElementById('profileEmail').textContent=user.email||'—';
   document.getElementById('profileSince').textContent=user.createdAt?'Member since '+fmtDate(user.createdAt):'';
-  document.getElementById('psRides').textContent=rides.length;
+  document.getElementById('psRides').textContent=rides.filter(r=>r.status==='completed').length;
   document.getElementById('psPts').textContent=fid.pts.toLocaleString();
   document.getElementById('psWallet').textContent='€'+RideData.getWallet(uid).toFixed(2);
   document.getElementById('infoFirst').textContent=user.firstName||'—';
