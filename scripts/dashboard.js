@@ -190,11 +190,11 @@ function renderDashboard(user, uid) {
   document.getElementById('fidMiniPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidMiniBar').style.width=pct+'%';
   document.getElementById('fidMiniNext').textContent=
-    isGoldMini?`${pct.toFixed(0)}% · Gold ✦`:`${pct.toFixed(0)}% · ${Math.max(0,GOLD_THRESHOLD-fid.totalEarned)} to Gold`;
+    isGoldMini?`${pct.toFixed(0)}% · ${Lang.t('goldUnlocked')}`:`${pct.toFixed(0)}% · ${Lang.t('ptsToGold').replace('{n}',Math.max(0,GOLD_THRESHOLD-fid.totalEarned))}`;
   const tierLabelEl=document.getElementById('fidMiniTierLabel');
-  if(tierLabelEl) tierLabelEl.textContent=isGoldMini?'Gold ✦':'Standard';
+  if(tierLabelEl) tierLabelEl.textContent=isGoldMini?Lang.t('tierGold'):Lang.t('tierStandard');
   renderRecentRides(rides.slice(0,5));
-  renderReviews(uid);
+  renderInsights(uid, rides);
   renderChart(rides,'week');
 }
 
@@ -241,11 +241,11 @@ function showCancelConfirm(booking) {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h3>Cancel this ride?</h3>
+        <h3>${Lang.t('cancelRideQ')}</h3>
         <p>Ride to <strong>${esc(booking?.to||'destination')}</strong> will be removed. This cannot be undone.</p>
         <div class="so-actions">
-          <button class="so-cancel" id="ccKeep">Keep ride</button>
-          <button class="so-confirm" id="ccDo" style="background:var(--accent)">Cancel ride</button>
+          <button class="so-cancel" id="ccKeep">${Lang.t('keepRide')}</button>
+          <button class="so-confirm" id="ccDo" style="background:var(--accent);color:#fff">${Lang.t('cancelRide')}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -423,70 +423,51 @@ function openEditRide(booking, uid) {
   });
 }
 
-function renderReviews(uid) {
-  const el = document.getElementById('reviewsList');
+function renderInsights(uid, rides) {
+  const el = document.getElementById('insightsCard');
   if (!el) return;
-  const rides = RideData.getRides(uid).filter(r => r.status === 'completed');
+  const completed = (rides || RideData.getRides(uid)).filter(r => r.status === 'completed');
 
-  // Generate deterministic per-ride reviews the user gave to drivers
-  const DRIVER_NAMES = ['Luca B.','Marco V.','Giulia T.','Andrea C.','Sofia R.','Matteo F.','Elena M.','Roberto P.'];
-  const COMMENTS = [
-    'Excellent driver, very professional and on time.',
-    'Smooth ride, the car was spotless. Great experience.',
-    'Very punctual, knew the best routes to avoid traffic.',
-    'Friendly and professional. Would definitely book again.',
-    'Great ride overall, only slightly late on pickup.',
-    'Very comfortable trip. Driver was courteous throughout.',
-    'Perfect service. The car was immaculate.',
-    'Quick and efficient. Highly recommended.',
-  ];
-
-  if (!rides.length) {
-    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">No reviews given yet.</div>`;
+  if (!completed.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:12px 0;text-align:center">${Lang.t('noInsights')}</div>`;
     return;
   }
 
-  const shown = rides.slice(0, 3).map((r, i) => {
-    // Deterministic but varied rating: mostly 5, occasional 4
-    const rating = (i % 5 === 2) ? 4 : 5;
-    const driverIdx = (r.id.charCodeAt(r.id.length - 1) + i) % DRIVER_NAMES.length;
-    const commentIdx = (r.id.charCodeAt(r.id.length - 1) * 3 + i) % COMMENTS.length;
-    return {
-      driver: DRIVER_NAMES[driverIdx],
-      rating,
-      text: COMMENTS[commentIdx],
-      route: r.to,
-      date: r.date,
-    };
-  });
+  // Top destination (most frequent `to`)
+  const destCount = {};
+  completed.forEach(r => { destCount[r.to] = (destCount[r.to]||0)+1; });
+  const topDest = Object.entries(destCount).sort((a,b)=>b[1]-a[1])[0][0];
 
-  const avgRating = (shown.reduce((s, r) => s + r.rating, 0) / shown.length).toFixed(1);
-  // Update the pill in the card header
-  const pill = document.querySelector('#nextRideCard')?.closest('.dash-row')
-    ?.querySelector('.card-sm .pill');
-  if (pill) pill.textContent = avgRating + ' ★';
+  // Average fare
+  const avgFare = completed.reduce((s,r)=>s+r.fare,0)/completed.length;
 
-  el.innerHTML = shown.map(r => {
-    const stars = Array.from({length:5},(_,i) =>
-      `<span class="review-star${i < r.rating ? '' : ' empty'}">★</span>`
-    ).join('');
-    const initials = r.driver.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    return `<div class="review-item">
-      <div class="review-avatar" style="
-        width:38px;height:38px;border-radius:50%;flex-shrink:0;
-        background:linear-gradient(135deg,var(--brand),var(--brand-glow));
-        display:flex;align-items:center;justify-content:center;
-        font-size:12px;font-weight:700;color:#fff;letter-spacing:.04em">${initials}</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">
-          <span style="font-size:13px;font-weight:600">${esc(r.driver)}</span>
-          <div class="review-stars" style="font-size:11px">${stars}</div>
-        </div>
-        <div class="review-text" style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:5px">${esc(r.text)}</div>
-        <div class="review-meta" style="font-size:11px;color:var(--muted)">Ride to ${esc(r.route)} · ${esc(fmtDate(r.date, true))}</div>
-      </div>
+  // Total distance (estimated from fare: ~€0.9/km)
+  const totalKm = Math.round(completed.reduce((s,r)=>s+r.fare,0)/0.9);
+
+  // Rides this month
+  const ms = new Date(); ms.setDate(1); ms.setHours(0,0,0,0);
+  const monthRides = completed.filter(r=>new Date(r.date)>=ms).length;
+
+  const stat = (label, value, sub='') => `
+    <div class="ins-stat">
+      <div class="ins-val">${value}</div>
+      <div class="ins-label">${label}</div>
+      ${sub?`<div class="ins-sub">${sub}</div>`:''}
     </div>`;
-  }).join('');
+
+  el.innerHTML = `
+    <div class="ins-top-dest">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <div>
+        <div class="ins-dest-label">${Lang.t('topDest')}</div>
+        <div class="ins-dest-val">${esc(topDest)}</div>
+      </div>
+    </div>
+    <div class="ins-grid">
+      ${stat(Lang.t('avgFare'), '€'+avgFare.toFixed(2))}
+      ${stat(Lang.t('totalDist'), totalKm+' km')}
+      ${stat(Lang.t('monthRides'), monthRides)}
+    </div>`;
 }
 
 function renderRecentRides(rides) {
@@ -700,24 +681,24 @@ function renderFidelity(uid){
   // Hero card
   document.getElementById('fidHeroPts').textContent=fid.pts.toLocaleString();
   document.getElementById('fidHeroBar').style.width=pct+'%';
-  document.getElementById('fhTierBadge').textContent=isGold?'✦ Gold Tier':'✦ Standard Tier';
+  document.getElementById('fhTierBadge').textContent=isGold?`✦ ${Lang.t('tierGold')} Tier`:`✦ ${Lang.t('tierStandard')} Tier`;
   document.getElementById('fidHeroNext').textContent=isGold
-    ?`Gold unlocked ✦`
-    :`${Math.max(0,GOLD_THRESHOLD-fid.totalEarned).toLocaleString()} pts to Gold`;
+    ?Lang.t('goldUnlocked')
+    :Lang.t('ptsToGold').replace('{n}',Math.max(0,GOLD_THRESHOLD-fid.totalEarned).toLocaleString());
 
   // Physical card preview
   const fcpPts=document.getElementById('fcpPts');
   const fcpTier=document.getElementById('fcpTier');
   if(fcpPts) fcpPts.textContent=fid.pts.toLocaleString()+' pts';
-  if(fcpTier) fcpTier.textContent=isGold?'GOLD':'STANDARD';
+  if(fcpTier) fcpTier.textContent=isGold?Lang.t('tierGold').toUpperCase():Lang.t('tierStandard').toUpperCase();
 
   // Stats
   document.getElementById('fsAvailable').textContent=fid.pts.toLocaleString();
   document.getElementById('fsTotal').textContent=fid.totalEarned.toLocaleString();
   document.getElementById('fsRedeemed').textContent=fid.redeemed.toLocaleString();
-  document.getElementById('fsTier').textContent=isGold?'Gold ✦':'Standard';
+  document.getElementById('fsTier').textContent=isGold?Lang.t('tierGold'):Lang.t('tierStandard');
   const infoTier=document.getElementById('infoTier');
-  if(infoTier) infoTier.textContent=isGold?'Gold ✦':'Standard';
+  if(infoTier) infoTier.textContent=isGold?Lang.t('tierGold'):Lang.t('tierStandard');
 
   // Tier cards
   const t2=document.getElementById('tier2Card');
@@ -809,7 +790,7 @@ function renderWallet(uid) {
   const listEl = document.getElementById('walletTxList');
   if (listEl) {
     if (!allTxs.length) {
-      listEl.innerHTML = '<div class="wallet-empty">No transactions yet</div>';
+      listEl.innerHTML = `<div class="wallet-empty">${Lang.t('noTransactions')}</div>`;
     } else {
       listEl.innerHTML = allTxs.map(tx => `
         <div class="wallet-tx">
@@ -872,7 +853,7 @@ async function addToWallet(uid, amount) {
   // Commit to wallet
   const bal = RideData.getWallet(uid) + amount;
   const txs = RideData.getWalletTxs(uid);
-  txs.unshift({ type:'credit', label:'Funds added', date:new Date().toISOString(), amount });
+  txs.unshift({ type:'credit', label:Lang.t('fundsAdded'), date:new Date().toISOString(), amount });
   RideData.saveWallet(uid, bal, txs);
 
   // Save rate-limit history
@@ -1244,7 +1225,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Theme/lang sync from settings tab
   window.addEventListener('storage',e=>{
     if(e.key==='ride_reduce_motion'){Motion.apply();}
-    if(e.key==='ride_lang'){Lang.apply();}
+    if(e.key==='ride_lang'){
+      Lang.apply();
+      renderDashboard(user,uid);
+      // Re-render active non-dashboard panel if open
+      const activePanel=document.querySelector('.panel.active');
+      if(activePanel&&activePanel.id==='panel-fidelity') renderFidelity(uid);
+      if(activePanel&&activePanel.id==='panel-payments') renderWallet(uid);
+    }
   });
 
   // Render

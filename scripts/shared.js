@@ -280,6 +280,7 @@ const LANGS = {
     saveCard:"Save card",
     editInSettings:"Edit in Settings",
     fidelityTier:"Current tier",
+    fidAvailLabel:"Available points", fidLifeLabel:"Lifetime earned", fidRedeemedLabel:"Redeemed",
     memberSince:"Member since",
     paymentMethods2:"Payment Methods",
     personalInfo2:"Personal Info",
@@ -425,6 +426,28 @@ const LANGS = {
     scdStat3Label:"hand-selected fleet",
     scdBadgeSub:"Performance fleet",
     ctaBook:"Book now",
+    // Dashboard — fidelity mini & fidelity panel
+    rideFidelity:"Ride Fidelity",
+    viewFidelity:"View Fidelity →",
+    ptsToGold:"{n} pts to Gold",
+    goldUnlocked:"Gold unlocked ✦",
+    tierStandard:"Standard",
+    tierGold:"Gold ✦",
+    // Dashboard — wallet
+    rideWallet:"Ride Wallet",
+    addFunds:"Add funds",
+    noTransactions:"No transactions yet",
+    fundsAdded:"Funds added",
+    // Dashboard — insights card
+    rideInsights:"Ride Insights",
+    topDest:"Top destination",
+    avgFare:"Avg fare",
+    totalDist:"Total distance",
+    monthRides:"Rides this month",
+    noInsights:"Complete rides to see insights.",
+    // Confirmations
+    cancelRideQ:"Cancel this ride?",
+    keepRide:"Keep ride",
   },
 
   it: {
@@ -462,6 +485,7 @@ const LANGS = {
     saveCard:"Salva carta",
     editInSettings:"Modifica in Impostazioni",
     fidelityTier:"Livello attuale",
+    fidAvailLabel:"Punti disponibili", fidLifeLabel:"Totale guadagnati", fidRedeemedLabel:"Riscattati",
     memberSince:"Membro dal",
     paymentMethods2:"Metodi di pagamento",
     personalInfo2:"Informazioni",
@@ -604,6 +628,24 @@ const LANGS = {
     scdStat3Label:"flotta selezionata a mano",
     scdBadgeSub:"Flotta performance",
     ctaBook:"Prenota ora",
+    rideFidelity:"Fedeltà Ride",
+    viewFidelity:"Vedi Fedeltà →",
+    ptsToGold:"{n} punti al Gold",
+    goldUnlocked:"Gold sbloccato ✦",
+    tierStandard:"Standard",
+    tierGold:"Gold ✦",
+    rideWallet:"Portafoglio Ride",
+    addFunds:"Aggiungi fondi",
+    noTransactions:"Nessuna transazione",
+    fundsAdded:"Fondi aggiunti",
+    rideInsights:"Statistiche",
+    topDest:"Destinazione top",
+    avgFare:"Tariffa media",
+    totalDist:"Distanza totale",
+    monthRides:"Viaggi questo mese",
+    noInsights:"Completa dei viaggi per vedere le statistiche.",
+    cancelRideQ:"Annullare il viaggio?",
+    keepRide:"Mantieni viaggio",
   },
 
   fr: {
@@ -641,6 +683,7 @@ const LANGS = {
     saveCard:"Enregistrer",
     editInSettings:"Modifier dans Paramètres",
     fidelityTier:"Niveau actuel",
+    fidAvailLabel:"Points disponibles", fidLifeLabel:"Total gagné", fidRedeemedLabel:"Échangés",
     memberSince:"Membre depuis",
     paymentMethods2:"Moyens de paiement",
     personalInfo2:"Informations",
@@ -783,6 +826,15 @@ const LANGS = {
     scdStat3Label:"flotte sélectionnée à la main",
     scdBadgeSub:"Flotte performance",
     ctaBook:"Réserver",
+    rideFidelity:"Fidélité Ride", viewFidelity:"Voir Fidélité →",
+    ptsToGold:"{n} pts vers Gold", goldUnlocked:"Gold débloqué ✦",
+    tierStandard:"Standard", tierGold:"Gold ✦",
+    rideWallet:"Portefeuille Ride", addFunds:"Ajouter des fonds",
+    noTransactions:"Aucune transaction", fundsAdded:"Fonds ajoutés",
+    rideInsights:"Statistiques", topDest:"Destination principale",
+    avgFare:"Tarif moyen", totalDist:"Distance totale",
+    monthRides:"Trajets ce mois", noInsights:"Effectuez des trajets pour voir vos statistiques.",
+    cancelRideQ:"Annuler ce trajet ?", keepRide:"Garder le trajet",
   },
 
   es: {
@@ -820,6 +872,7 @@ const LANGS = {
     saveCard:"Guardar",
     editInSettings:"Editar en Configuración",
     fidelityTier:"Nivel actual",
+    fidAvailLabel:"Puntos disponibles", fidLifeLabel:"Total ganado", fidRedeemedLabel:"Canjeados",
     memberSince:"Miembro desde",
     paymentMethods2:"Métodos de pago",
     personalInfo2:"Información",
@@ -962,6 +1015,15 @@ const LANGS = {
     scdStat3Label:"flota seleccionada a mano",
     scdBadgeSub:"Flota de alto rendimiento",
     ctaBook:"Reservar",
+    rideFidelity:"Fidelidad Ride", viewFidelity:"Ver Fidelidad →",
+    ptsToGold:"{n} pts para Gold", goldUnlocked:"Gold desbloqueado ✦",
+    tierStandard:"Estándar", tierGold:"Gold ✦",
+    rideWallet:"Cartera Ride", addFunds:"Añadir fondos",
+    noTransactions:"Sin transacciones", fundsAdded:"Fondos añadidos",
+    rideInsights:"Estadísticas", topDest:"Destino principal",
+    avgFare:"Tarifa media", totalDist:"Distancia total",
+    monthRides:"Viajes este mes", noInsights:"Completa viajes para ver las estadísticas.",
+    cancelRideQ:"¿Cancelar este viaje?", keepRide:"Mantener viaje",
   },
 
   zh: {
@@ -998,6 +1060,7 @@ const LANGS = {
     saveCard:"保存",
     editInSettings:"在设置中编辑",
     fidelityTier:"当前等级",
+    fidAvailLabel:"可用积分", fidLifeLabel:"累计获得", fidRedeemedLabel:"已兑换",
     memberSince:"会员自",
     paymentMethods2:"支付方式",
     personalInfo2:"个人信息",
@@ -1140,6 +1203,15 @@ const LANGS = {
     scdStat3Label:"精心挑选车队",
     scdBadgeSub:"性能车队",
     ctaBook:"立即预订",
+    rideFidelity:"乘车忠诚度", viewFidelity:"查看忠诚度 →",
+    ptsToGold:"{n} 积分升Gold", goldUnlocked:"Gold 已解锁 ✦",
+    tierStandard:"标准", tierGold:"Gold ✦",
+    rideWallet:"乘车钱包", addFunds:"充值",
+    noTransactions:"暂无交易记录", fundsAdded:"充值成功",
+    rideInsights:"行程统计", topDest:"最常去目的地",
+    avgFare:"平均费用", totalDist:"总里程",
+    monthRides:"本月行程", noInsights:"完成行程后查看统计数据。",
+    cancelRideQ:"取消此行程？", keepRide:"保留行程",
   }
 };
 
@@ -1310,6 +1382,17 @@ const Theme = {
       if (d) d.style.display = (t === "light") ? "none"  : "block";
       if (l) l.style.display = (t === "light") ? "block" : "none";
     });
+
+    // Swap Spline background URL for light/dark if data-url-light is set
+    const splineEl = document.getElementById("splineViewer");
+    if (splineEl) {
+      const urlLight = splineEl.dataset.urlLight;
+      const urlDark  = splineEl.dataset.urlDark;
+      const targetUrl = (t === "light" && urlLight) ? urlLight : (urlDark || splineEl.getAttribute("url"));
+      if (targetUrl && splineEl.getAttribute("url") !== targetUrl) {
+        splineEl.setAttribute("url", targetUrl);
+      }
+    }
   },
 
   toggle() { this.set(this.get() === "dark" ? "light" : "dark"); this.apply(); }

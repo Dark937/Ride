@@ -420,32 +420,28 @@ function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
   async function fetchSuggestions(query) {
-    // Bias search toward user's current location if known
-    let viewboxParam = '';
+    // Photon (komoot) — Elasticsearch-backed, much better partial/fuzzy matching
+    let locationBias = '';
     if (state.pickup?.lat && state.pickup?.lng) {
-      const d = 1.5; // ~1.5 degree bounding box around pickup
-      const { lat, lng } = state.pickup;
-      viewboxParam = `&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=0`;
+      locationBias = `&lat=${state.pickup.lat}&lon=${state.pickup.lng}`;
     }
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}`
-      + `&format=jsonv2&limit=7&addressdetails=1&namedetails=1&dedupe=1`
-      + `&featuretype=settlement,natural,highway,amenity,building`
-      + viewboxParam;
-    const res = await fetch(url, { headers: { "Accept-Language": "it,en;q=0.8" } });
-    return res.json();
+    const lang = (navigator.language || 'it').split('-')[0];
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=${lang}${locationBias}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.features || [];
   }
 
   function formatResult(r) {
-    // Use namedetails.name if available, then first part of display_name
-    const name = r.namedetails?.name || r.display_name.split(", ")[0];
-    const a = r.address || {};
-    // Build a human-readable sub-label from structured address parts
-    const city    = a.city || a.town || a.village || a.municipality || a.county || "";
-    const region  = a.state || a.region || "";
-    const country = a.country_code ? a.country_code.toUpperCase() : (a.country || "");
-    const subParts = [city, region !== city ? region : "", country].filter(Boolean);
-    const sub = subParts.slice(0, 3).join(", ");
-    return { name, sub: sub || r.display_name.split(", ").slice(1, 3).join(", ") };
+    const p = r.properties || {};
+    const name = p.name || p.street || p.city || '';
+    const city    = p.city || p.town || p.village || '';
+    const state   = p.state || '';
+    const country = p.country || '';
+    const subParts = [city, state !== city ? state : '', country].filter(Boolean);
+    const sub = subParts.slice(0, 3).join(', ');
+    const [lng, lat] = r.geometry?.coordinates || [0, 0];
+    return { name, sub, lat, lng };
   }
 
   function setupInput(inputEl, acContainer, onSelect) {
@@ -465,7 +461,7 @@ function wireAutocomplete() {
 
           acContainer.classList.add("open");
           results.forEach(r => {
-            const { name: main, sub } = formatResult(r);
+            const { name: main, sub, lat, lng } = formatResult(r);
 
             const item = document.createElement("div");
             item.className = "bk-ac-item";
@@ -477,7 +473,7 @@ function wireAutocomplete() {
               inputEl.value = main;
               acContainer.classList.remove("open");
               acContainer.innerHTML = "";
-              onSelect({ main, sub: r.display_name, lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
+              onSelect({ main, sub, lat, lng });
             });
             acContainer.appendChild(item);
           });

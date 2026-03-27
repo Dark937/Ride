@@ -469,13 +469,13 @@ html,body{
 }
 .nr-book-btn:hover{opacity:.88}
 .nr-book-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
-.nr-route{display:flex;flex-direction:column;gap:3px;align-items:center}
-.nr-point{display:flex;align-items:center;gap:8px;font-size:13px;justify-content:center}
+.nr-route{display:flex;flex-direction:column;gap:3px}
+.nr-point{display:flex;align-items:center;gap:8px;font-size:13px}
 .nr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .nr-dot.from{background:var(--brand)}
 .nr-dot.to{background:var(--accent)}
 .nr-connector{width:1px;height:9px;background:var(--border-md);margin:2px 0 2px 3.5px}
-.nr-meta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.nr-meta{display:flex;gap:10px;flex-wrap:wrap}
 .nr-meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
 .nr-meta-item svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
 .nr-actions{display:flex;gap:8px}
@@ -1324,30 +1324,23 @@ select option{background:var(--card-bg);color:var(--text)}
 .coupon-cost{font-size:12px;font-weight:700;color:var(--brand);flex-shrink:0}
 .coupon-used{color:var(--faint);font-size:11px;margin-top:6px;text-align:center}
 
-/* ── REVIEWS CARD ── */
-.reviews-card{display:flex;flex-direction:column;gap:12px}
-.review-item{
-  display:flex;gap:10px;padding:12px;
+/* ── INSIGHTS CARD ── */
+.ins-top-dest{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 13px;background:var(--brand-dim);border-radius:10px;
+  border:1px solid var(--border-md);margin-bottom:12px;
+}
+.ins-top-dest svg{width:18px;height:18px;flex-shrink:0;stroke:var(--brand);opacity:.85}
+.ins-dest-label{font-size:11px;color:var(--muted);margin-bottom:2px}
+.ins-dest-val{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ins-stat{
   background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:10px;text-align:center;
 }
-.review-stars{display:flex;gap:2px;margin-bottom:4px}
-.review-star{font-size:11px;color:var(--yellow)}
-.review-star.empty{color:var(--faint)}
-.review-text{font-size:12.5px;color:var(--text-2);line-height:1.5;margin-bottom:4px}
-.review-meta{font-size:11px;color:var(--muted)}
-.review-avatar{
-  width:30px;height:30px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,var(--brand),var(--accent));
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;color:#fff;
-}
-.review-avg{
-  display:flex;align-items:center;gap:8px;
-  padding:10px 12px;background:var(--brand-dim);border-radius:10px;
-  border:1px solid var(--border-md);
-}
-.review-avg-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--brand)}
-.review-avg-label{font-size:12px;color:var(--muted)}
+.ins-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--brand);margin-bottom:2px}
+.ins-label{font-size:10.5px;color:var(--muted);line-height:1.3}
+.ins-sub{font-size:10px;color:var(--faint);margin-top:1px}
 
 
 /* ── DASHBOARD MOBILE NAV ── */
