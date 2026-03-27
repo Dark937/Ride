@@ -570,6 +570,7 @@ button {
   pointer-events: none;
   opacity: 0.92;
   overflow: hidden;
+  will-change: opacity;
   /* fallback gradient shown while Spline loads or if blocked */
   background:
     radial-gradient(ellipse 70% 55% at 72% 48%, rgba(80,50,200,0.30), transparent 65%),
@@ -1097,6 +1098,8 @@ spline-viewer {
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+  will-change: transform;
+  transform: translateZ(0); /* promote to own compositing layer */
 }
 
 .feature-card:hover,
@@ -1947,6 +1950,8 @@ spline-viewer {
 .section-driver {
   position: relative;
   overflow: clip;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 700px;
 }
 
 /* ---- Layout ---- */
@@ -2794,35 +2799,34 @@ spline-viewer {
    ──────────────────────────────────────────────────────────────────────── */
 .vehicle-card,
 .scd-media {
-  --x: -9999;
-  --y: -9999;
+  --mx: -200px;
+  --my: -200px;
   --hue: 228;
 }
 
-/* Inner shimmer — fills the card, clipped by overflow:hidden on the parent */
+/* Spotlight inner shimmer — element-relative coordinates, no fixed attachment.
+   Works correctly even when cards have CSS transforms (tilt effect). */
 .spotlight-glow {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
-    hsl(var(--hue) 100% 68% / 0.11) 0%,
-    transparent 60%
+    110px 110px at var(--mx, -200px) var(--my, -200px),
+    hsl(var(--hue) 100% 68% / 0.16) 0%,
+    transparent 100%
   );
-  background-attachment: fixed;
   pointer-events: none;
   z-index: 3;
   opacity: 0;
-  transition: opacity .35s ease;
+  transition: opacity 0.25s ease;
 }
 
-/* Activate glow only while pointer is over any spotlight-capable card */
 .vehicle-card.spotlight-active .spotlight-glow,
 .scd-media.spotlight-active .spotlight-glow {
   opacity: 1;
 }
 
-/* Border accent — thin hue-tinted outline that brightens near the cursor */
+/* Border accent */
 .vehicle-card.spotlight-active,
 .scd-media.spotlight-active {
   box-shadow:
@@ -2832,14 +2836,12 @@ spline-viewer {
     0 0 36px hsl(var(--hue) 90% 60% / 0.08);
 }
 
-/* Light-mode adjustments */
 [data-theme="light"] .spotlight-glow {
   background: radial-gradient(
-    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
-    hsl(var(--hue) 100% 50% / 0.09) 0%,
-    transparent 60%
+    110px 110px at var(--mx, -200px) var(--my, -200px),
+    hsl(var(--hue) 100% 50% / 0.12) 0%,
+    transparent 100%
   );
-  background-attachment: fixed;
 }
 
 [data-theme="light"] .vehicle-card.spotlight-active,
@@ -2848,5 +2850,4 @@ spline-viewer {
     inset 0 1.5px 1px rgba(255,255,255,0.5),
     0 0 0 1px hsl(var(--hue) 80% 50% / 0.22),
     0 20px 48px rgba(0,0,0,0.14);
-}
 }

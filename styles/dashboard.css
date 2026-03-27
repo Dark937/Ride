@@ -194,15 +194,17 @@ html,body{
 .tb-section-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
 .tb-right{display:flex;align-items:center;gap:8px;justify-content:flex-end}
 
-/* Home link in topbar */
-.tb-home-link{
-  display:flex;align-items:center;justify-content:center;
-  width:30px;height:30px;border-radius:9px;
-  color:var(--muted);transition:color .14s,background .14s;
-  flex-shrink:0;
+/* Back link in topbar */
+.tb-back{
+  display:flex;align-items:center;gap:5px;
+  font-size:13px;font-weight:500;color:var(--muted);
+  transition:color .15s;
 }
-.tb-home-link:hover{color:var(--text);background:var(--surface-2)}
-.tb-home-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tb-back:hover{color:var(--text)}
+.tb-back svg{
+  width:14px;height:14px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
+}
 
 .tb-icon-btn{
   width:34px;height:34px;border-radius:6px;

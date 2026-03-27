@@ -386,11 +386,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const scrollY = window.scrollY;
       const progress = Math.min(scrollY / heroH, 1);
 
-      if (splineBg) {
-        // Background stays fixed while page scrolls
-        splineBg.style.transform = `translateY(0px)`;
-      }
-
       if (contentInner) {
         const t = Math.min(Math.max((progress - 0.28) / 0.42, 0), 1);
         const scale = 1 - t * 0.08;

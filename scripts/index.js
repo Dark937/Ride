@@ -44,9 +44,13 @@ async function initTopbarDropdown() {
         span.textContent = t.bookNow || "Book now";
       }
     }
-    // "View Plans" → scroll to features when logged in
+    // "Sign in" → "My dashboard" when already logged in
     const secondaryCta = document.querySelector(".actions .btn-secondary");
-    if (secondaryCta) secondaryCta.href = "#features-parallax";
+    if (secondaryCta) {
+      secondaryCta.href = "dashboard.html";
+      const secSpan = secondaryCta.querySelector("span");
+      if (secSpan) { secSpan.textContent = "My dashboard"; secSpan.removeAttribute("data-i18n-key"); }
+    }
 
     const circle = profileBtn.querySelector(".circle");
     if (circle) {
@@ -185,9 +189,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 /* ── SPOTLIGHT CARD EFFECT ──────────────────────────────────────────── */
 (function initSpotlight() {
-  // Inject a glow span into every vehicle card and the supercar-dna media card
+  // Cache card elements — refresh on resize (avoid querySelectorAll every frame)
+  let cards = [];
+
+  function refreshCards() {
+    cards = Array.from(document.querySelectorAll('.vehicle-card, .scd-media'));
+  }
+
   function injectGlows() {
-    document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
+    refreshCards();
+    cards.forEach(card => {
       if (!card.querySelector('.spotlight-glow')) {
         const span = document.createElement('span');
         span.className = 'spotlight-glow';
@@ -197,38 +208,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Share one pointermove listener to update all cards at once
+  // Element-relative coordinates: cursor position within each card.
+  // This is more reliable than background-attachment:fixed because it works
+  // even when cards have CSS transforms (tilt effect) applied.
   let lastRaf = null;
   document.addEventListener('pointermove', function(e) {
-    if (lastRaf) return; // throttle to one rAF per frame
+    if (lastRaf) return;
     lastRaf = requestAnimationFrame(function() {
       lastRaf = null;
-      const x   = e.clientX;
-      const y   = e.clientY;
-      // hue stays within brand range: 218–268 (blue-indigo → violet)
-      const hue = (218 + (x / window.innerWidth) * 50).toFixed(1);
+      const cx  = e.clientX;
+      const cy  = e.clientY;
+      const hue = (218 + (cx / window.innerWidth) * 50).toFixed(1);
 
-      document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
-        card.style.setProperty('--x', x);
-        card.style.setProperty('--y', y);
-        card.style.setProperty('--hue', hue);
-
-        // Check if cursor is over this card
+      cards.forEach(card => {
         const rect = card.getBoundingClientRect();
-        const over = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        const over = cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
+
+        // Per-card relative coords so the spotlight tracks the cursor within the card
+        card.style.setProperty('--mx', (cx - rect.left).toFixed(1) + 'px');
+        card.style.setProperty('--my', (cy - rect.top).toFixed(1)  + 'px');
+        card.style.setProperty('--hue', hue);
         card.classList.toggle('spotlight-active', over);
       });
     });
   });
 
-  // Remove active class when pointer leaves the viewport
   document.addEventListener('pointerleave', function() {
-    document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
-      card.classList.remove('spotlight-active');
-    });
+    cards.forEach(card => card.classList.remove('spotlight-active'));
   });
 
-  // Run after DOM is ready
+  window.addEventListener('resize', refreshCards, { passive: true });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', injectGlows);
   } else {
