@@ -2470,4 +2470,68 @@ spline-viewer {
 .tb-cta            { border-radius: 12px; }
 .tb-dropdown       { border-radius: 18px; }
 .tb-dd-item        { border-radius: 10px; }
+
+/* ── SPOTLIGHT CARD EFFECT ───────────────────────────────────────────────
+   Tracks the global pointer position (set via JS as --x / --y / --hue)
+   and renders a radial gradient that "follows" the cursor through the card.
+   Uses background-attachment:fixed so the light source is viewport-relative —
+   moving the mouse over the grid feels like a single flashlight sweeping across.
+   ──────────────────────────────────────────────────────────────────────── */
+.vehicle-card,
+.scd-media {
+  --x: -9999;
+  --y: -9999;
+  --hue: 228;
+}
+
+/* Inner shimmer — fills the card, clipped by overflow:hidden on the parent */
+.spotlight-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
+    hsl(var(--hue) 100% 68% / 0.11) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+/* Activate glow only while pointer is over any spotlight-capable card */
+.vehicle-card.spotlight-active .spotlight-glow,
+.scd-media.spotlight-active .spotlight-glow {
+  opacity: 1;
+}
+
+/* Border accent — thin hue-tinted outline that brightens near the cursor */
+.vehicle-card.spotlight-active,
+.scd-media.spotlight-active {
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,0.14),
+    0 0 0 1px hsl(var(--hue) 90% 65% / 0.28),
+    0 28px 64px rgba(0,0,0,0.44),
+    0 0 36px hsl(var(--hue) 90% 60% / 0.08);
+}
+
+/* Light-mode adjustments */
+[data-theme="light"] .spotlight-glow {
+  background: radial-gradient(
+    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
+    hsl(var(--hue) 100% 50% / 0.09) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+[data-theme="light"] .vehicle-card.spotlight-active,
+[data-theme="light"] .scd-media.spotlight-active {
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,0.5),
+    0 0 0 1px hsl(var(--hue) 80% 50% / 0.22),
+    0 20px 48px rgba(0,0,0,0.14);
+}
 }

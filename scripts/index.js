@@ -183,3 +183,55 @@ document.addEventListener("DOMContentLoaded", async () => {
   Theme.apply();              // re-apply theme after user prefs loaded
   applyLandingTranslations();
 });
+/* ── SPOTLIGHT CARD EFFECT ──────────────────────────────────────────── */
+(function initSpotlight() {
+  // Inject a glow span into every vehicle card and the supercar-dna media card
+  function injectGlows() {
+    document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
+      if (!card.querySelector('.spotlight-glow')) {
+        const span = document.createElement('span');
+        span.className = 'spotlight-glow';
+        span.setAttribute('aria-hidden', 'true');
+        card.appendChild(span);
+      }
+    });
+  }
+
+  // Share one pointermove listener to update all cards at once
+  let lastRaf = null;
+  document.addEventListener('pointermove', function(e) {
+    if (lastRaf) return; // throttle to one rAF per frame
+    lastRaf = requestAnimationFrame(function() {
+      lastRaf = null;
+      const x   = e.clientX;
+      const y   = e.clientY;
+      // hue stays within brand range: 218–268 (blue-indigo → violet)
+      const hue = (218 + (x / window.innerWidth) * 50).toFixed(1);
+
+      document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
+        card.style.setProperty('--x', x);
+        card.style.setProperty('--y', y);
+        card.style.setProperty('--hue', hue);
+
+        // Check if cursor is over this card
+        const rect = card.getBoundingClientRect();
+        const over = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        card.classList.toggle('spotlight-active', over);
+      });
+    });
+  });
+
+  // Remove active class when pointer leaves the viewport
+  document.addEventListener('pointerleave', function() {
+    document.querySelectorAll('.vehicle-card, .scd-media').forEach(card => {
+      card.classList.remove('spotlight-active');
+    });
+  });
+
+  // Run after DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectGlows);
+  } else {
+    injectGlows();
+  }
+})();
