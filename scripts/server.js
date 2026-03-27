@@ -20,7 +20,7 @@ function applySecurityHeaders(req, res, next) {
   // CSP: whitelist inline scripts by hash (no unsafe-inline needed),
   // allow Google Fonts, unpkg CDN (spline viewer), Google Maps JS API, and WASM execution.
   const inlineScriptHashes = [
-    "'sha256-Cnvf4An+Z1PYTrc86hNsT128/nDRkkQHDoq7KJ781GM='", // index.html
+    "'sha256-tx4La0ktT1Q0U69zVI8fZo7/7BtX0RiHH6jsqgKcN/E='", // index.html
     "'sha256-5qOFzbSteATv9poShdvmMth/arfJmZdBhlcuffpYD1c='", // dashboard.html
     "'sha256-WnvhjbPqxyliCkx0EZdyUKN6m5L360DNy6peJb86JHU='", // settings.html
     "'sha256-ZlyzTylzriMqewO9P8iTDN96VchltcvA7jE6Xk/vb4Y='", // login.html + register.html
