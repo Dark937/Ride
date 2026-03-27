@@ -473,6 +473,7 @@ html,body{
 .nr-dot.from{background:var(--brand)}
 .nr-dot.to{background:var(--accent)}
 .nr-connector{width:1px;height:9px;background:var(--border-md);margin:2px 0 2px 3.5px}
+.nr-ride{display:flex;flex-direction:column;gap:12px}
 .nr-meta{display:flex;flex-direction:column;gap:5px}
 .nr-meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
 .nr-meta-item svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
@@ -1377,9 +1378,10 @@ select option{background:var(--card-bg);color:var(--text)}
     padding:8px 12px;
     border-bottom:1px solid var(--border);
     background:var(--bg);
-    position:sticky;
+    position:fixed;
     top:var(--topbar-h);
-    z-index:50;
+    left:0;right:0;
+    z-index:100;
     flex-shrink:0;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
@@ -1424,6 +1426,8 @@ select option{background:var(--card-bg);color:var(--text)}
   .fid-tiers{grid-template-columns:1fr}
   .pay-grid{grid-template-columns:1fr}
   .account-grid{grid-template-columns:1fr}
+  /* Offset for fixed topbar + fixed mobile nav */
+  .panel{padding-top:50px}
   .panel-inner{padding:14px}
   .welcome-strip{flex-direction:column;align-items:flex-start;padding:16px}
   .ws-right{width:100%;justify-content:space-between}

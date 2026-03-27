@@ -2071,7 +2071,8 @@ spline-viewer {
 
 @media (max-width: 600px) {
   .topbar {
-    padding: 0 18px;
+    padding: 10px 16px;
+    min-height: 60px;
   }
 
   .content {
