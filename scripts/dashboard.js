@@ -600,13 +600,71 @@ function renderChart(rides,range){
    ════════════════════════════════════════════════════════ */
 
 const PARTNER_COUPONS = [
-  {id:'c1', badge:'partner',  badgeLabel:'Partner',   icon:'🍽️', name:'20% off at Eataly',      desc:'Valid on your next purchase over €30', cost:150},
-  {id:'c2', badge:'free',     badgeLabel:'Free ride', icon:'🚗', name:'Free ride up to €15',     desc:'Redeem for any city ride',             cost:200},
-  {id:'c3', badge:'discount', badgeLabel:'Discount',  icon:'🏷️', name:'€10 off next ride',       desc:'Applied automatically at checkout',    cost:100},
-  {id:'c4', badge:'partner',  badgeLabel:'Partner',   icon:'☕', name:'Free coffee at Lavazza',  desc:'One free espresso at any Lavazza café', cost:50},
-  {id:'c5', badge:'partner',  badgeLabel:'Partner',   icon:'🚂', name:'15% off at Trenitalia',   desc:'On regional trains, valid 30 days',    cost:300},
-  {id:'c6', badge:'discount', badgeLabel:'Discount',  icon:'💳', name:'€5 wallet credit',        desc:'Added to your Ride wallet instantly',   cost:60},
+  {id:'c1', badge:'partner',  badgeLabel:'Partner',   icon:'🍽️', name:'20% off at Eataly',      desc:'Valid on your next purchase over €30', cost:150, discount:null},
+  {id:'c2', badge:'free',     badgeLabel:'Free ride', icon:'🚗', name:'Free ride up to €15',     desc:'Redeem for any city ride',             cost:200, discount:{type:'free',   value:15}},
+  {id:'c3', badge:'discount', badgeLabel:'Discount',  icon:'🏷️', name:'€10 off next ride',       desc:'Applied automatically at checkout',    cost:100, discount:{type:'fixed',  value:10}},
+  {id:'c4', badge:'partner',  badgeLabel:'Partner',   icon:'☕', name:'Free coffee at Lavazza',  desc:'One free espresso at any Lavazza café', cost:50,  discount:null},
+  {id:'c5', badge:'partner',  badgeLabel:'Partner',   icon:'🚂', name:'15% off at Trenitalia',   desc:'On regional trains, valid 30 days',    cost:300, discount:null},
+  {id:'c6', badge:'discount', badgeLabel:'Discount',  icon:'💳', name:'€5 wallet credit',        desc:'Added to your Ride wallet instantly',   cost:60,  discount:{type:'wallet', value:5}},
 ];
+
+function generateCouponCode() {
+  const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let s = 'RIDE-';
+  for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)];
+  return s;
+}
+
+function showCouponSuccess(name, code) {
+  document.getElementById('couponSuccessOverlay')?.remove();
+  const el = document.createElement('div');
+  el.id = 'couponSuccessOverlay';
+  el.className = 'upcoming-overlay';
+  el.style.zIndex = '1200';
+  el.innerHTML = `<div class="upcoming-modal" style="max-width:340px;text-align:center;padding:28px 24px">
+    <div style="font-size:38px;margin-bottom:14px">🎫</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:6px">${esc(name)}</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:18px">Your coupon code:</div>
+    <div style="font-family:monospace;font-size:22px;font-weight:800;letter-spacing:.14em;color:var(--brand);
+      background:var(--brand-dim);border:1px solid var(--border-md);border-radius:10px;padding:14px 20px;
+      margin-bottom:14px">${esc(code)}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:22px">Use this code at checkout when booking a ride.<br>Valid for 30 days.</div>
+    <button class="fh-btn" id="csOk" style="width:100%;background:var(--brand);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer">Got it</button>
+  </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+  const close = () => { el.classList.remove('open'); setTimeout(() => el.remove(), 300); };
+  document.getElementById('csOk').addEventListener('click', close);
+  el.addEventListener('click', e => { if (e.target === el) close(); });
+}
+
+function doRedeem(cp, uid, pts) {
+  if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return false; }
+
+  // Deduct points
+  const fid = RideData.getFid(uid);
+  fid.pts -= cp.cost;
+  fid.redeemed = (fid.redeemed || 0) + cp.cost;
+  localStorage.setItem('ride_fidelity_' + uid, JSON.stringify(fid));
+
+  const code = generateCouponCode();
+  const expiry = new Date(); expiry.setDate(expiry.getDate() + 30);
+  const coupons = JSON.parse(localStorage.getItem('ride_coupons_' + uid) || '[]');
+  coupons.push({ code, id: cp.id, name: cp.name, discount: cp.discount, desc: cp.desc,
+    used: false, expiresAt: expiry.toISOString(), redeemedAt: new Date().toISOString() });
+  localStorage.setItem('ride_coupons_' + uid, JSON.stringify(coupons));
+
+  // Wallet credit handled immediately
+  if (cp.discount?.type === 'wallet') {
+    const bal = RideData.getWallet(uid) + cp.discount.value;
+    const txs = RideData.getWalletTxs(uid);
+    txs.unshift({ type:'credit', label:'Fidelity reward: ' + cp.name, date: new Date().toISOString(), amount: cp.discount.value });
+    RideData.saveWallet(uid, bal, txs);
+  }
+
+  showCouponSuccess(cp.name, code);
+  return true;
+}
 
 function renderPartnerCoupons(pts) {
   const el = document.getElementById('partnerCouponList');
@@ -631,9 +689,10 @@ function renderPartnerCoupons(pts) {
     item.addEventListener('click', async () => {
       const cp = PARTNER_COUPONS.find(x => x.id === item.dataset.id);
       if (!cp) return;
-      if (pts < cp.cost) { toast('Not enough points to redeem this coupon.'); return; }
+      if (pts < cp.cost) { toast('Not enough points.'); return; }
+      const uid2 = localStorage.getItem('current_user_id'); if (!uid2) return;
       const ok = await showRedeemConfirm(cp.name, cp.cost);
-      if (ok) toast(`✓ Coupon redeemed: ${cp.name}`);
+      if (ok && doRedeem(cp, uid2, pts)) renderFidelity(uid2);
     });
   });
 }
@@ -662,10 +721,11 @@ function openCouponModal(title, coupons, pts) {
       const cp = coupons.find(x => x.id === item.dataset.id);
       if (!cp) return;
       if (pts < cp.cost) { toast('Not enough points.'); return; }
+      const uid2 = localStorage.getItem('current_user_id'); if (!uid2) return;
       const ok = await showRedeemConfirm(cp.name, cp.cost);
       if (ok) {
         document.getElementById('couponOverlay').classList.remove('open');
-        toast(`✓ Coupon redeemed: ${cp.name}`);
+        if (doRedeem(cp, uid2, pts)) renderFidelity(uid2);
       }
     });
   });
@@ -739,7 +799,7 @@ function renderFidelity(uid){
         if(!cp) return;
         if(fid.pts<cp.cost){toast('Not enough points to redeem this coupon.');return;}
         const ok = await showRedeemConfirm(cp.name, cp.cost);
-        if(ok) toast(`✓ Coupon redeemed: ${cp.name}`);
+        if(ok && doRedeem(cp, uid, fid.pts)) renderFidelity(uid);
       });
     });
     document.getElementById('couponsAvail').textContent=PARTNER_COUPONS.length+' available';
