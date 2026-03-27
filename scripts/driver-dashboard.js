@@ -258,26 +258,31 @@ function renderAccount(user) {
 document.addEventListener('DOMContentLoaded', async () => {
   Theme.apply(); Lang.apply();
 
-  const user = await Session.get();
-  if (!user) {
-    window.location.href = 'login.html?redirect=driver-dashboard.html';
-    return;
-  }
-
-  // Verify user is actually a rider
+  // Auth: prefer JWT → server profile; fallback to local SQLite session
+  let user = null;
+  let accountType = 'user';
   const token = getToken();
+
   if (token) {
     try {
       const profRes = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
       if (profRes.ok) {
         const profData = await profRes.json();
-        const accountType = profData.user?.accountType || 'user';
-        if (accountType !== 'rider') {
-          window.location.href = 'dashboard.html';
-          return;
-        }
+        user = profData.user;
+        accountType = profData.user?.accountType || 'user';
       }
     } catch (_) {}
+  }
+  if (!user) {
+    user = await Session.get();
+  }
+  if (!user) {
+    window.location.href = 'login.html?redirect=driver-dashboard.html';
+    return;
+  }
+  if (accountType !== 'rider') {
+    window.location.href = 'dashboard.html';
+    return;
   }
 
   const uid = user.id;

@@ -6,25 +6,31 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 document.addEventListener('DOMContentLoaded', async () => {
   Theme.apply(); Lang.apply();
 
-  const user = await Session.get();
-
-  // Not logged in — redirect to login
-  if (!user) {
-    window.location.href = 'login.html?redirect=become-rider.html';
-    return;
-  }
-
-  // Fetch fresh profile from server to get accountType
+  // Auth: prefer JWT → server profile; fallback to local SQLite session
+  let user = null;
   let accountType = 'user';
   const token = getToken();
+
   if (token) {
     try {
       const profRes = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
       if (profRes.ok) {
         const profData = await profRes.json();
+        user = profData.user;
         accountType = profData.user?.accountType || 'user';
       }
     } catch (_) {}
+  }
+
+  // Fallback: try local SQLite session
+  if (!user) {
+    user = await Session.get();
+  }
+
+  // Still not logged in — redirect to login
+  if (!user) {
+    window.location.href = 'login.html?redirect=become-rider.html';
+    return;
   }
 
   const form     = document.getElementById('brForm');
