@@ -1800,13 +1800,15 @@ spline-viewer {
   overflow: clip;
 }
 
+/* ---- Layout ---- */
 .driver-layout {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr 1fr;
   gap: 80px;
   align-items: center;
 }
 
+/* ---- Copy (left) ---- */
 .driver-actions {
   display: flex;
   gap: 14px;
@@ -1814,41 +1816,201 @@ spline-viewer {
   margin-top: 36px;
 }
 
-.driver-stats {
-  display: flex;
-  flex-direction: column;
+/* ---- Stats row (under description) ---- */
+.driver-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0;
-}
-
-.driver-stat {
-  padding: 28px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.driver-stat:first-child {
+  margin-top: 36px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-stat-mini {
+  padding: 20px 0 20px 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding-right: 20px;
+}
+.driver-stat-mini:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+.driver-stat-mini:not(:first-child) {
+  padding-left: 20px;
 }
 
 .stat-value {
   display: block;
-  font-size: clamp(28px, 3.5vw, 46px);
+  font-size: clamp(22px, 2.4vw, 36px);
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #fff;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .stat-label {
   display: block;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--muted-2);
   line-height: 1.5;
+}
+
+/* ---- Mockup visual (right) ---- */
+.driver-mockup-wrap {
+  position: relative;
+  height: 520px;
+  /* intentionally overflow the column to give depth */
+}
+
+/* ambient glow behind the cards */
+.driver-mockup-glow {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 94, 255, 0.22) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* background blurred card */
+.driver-mockup-bg {
+  position: absolute;
+  width: 72%;
+  height: 78%;
+  top: 12%;
+  left: -4%;
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 1;
+  filter: blur(1.5px);
+  transition: transform 1.2s cubic-bezier(.22, 1, .36, 1);
+  transform: translateY(0);
+}
+
+.driver-mockup-wrap.is-visible .driver-mockup-bg {
+  transform: translateY(-28px);
+}
+
+.driver-mockup-bg-img {
+  width: 100%;
+  height: 100%;
+  background-image: url('https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=720&q=75&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+.driver-mockup-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(61, 94, 255, 0.35) 0%,
+    rgba(90, 38, 200, 0.25) 60%,
+    transparent 100%
+  );
+}
+
+/* foreground glass card */
+.driver-mockup-card {
+  position: absolute;
+  width: 80%;
+  height: 86%;
+  top: 4%;
+  right: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(61, 94, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 1.2s cubic-bezier(.22, 1, .36, 1) 0.08s;
+  transform: translateY(0);
+}
+
+.driver-mockup-wrap.is-visible .driver-mockup-card {
+  transform: translateY(28px);
+}
+
+.driver-mockup-card-img {
+  width: 100%;
+  height: 100%;
+  background-image: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=720&q=80&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+/* subtle inner shine on the card edge */
+.driver-mockup-card-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* bottom radial separator */
+.driver-bottom-line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  bottom: 0;
+  left: 0;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 100%);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .driver-layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+  }
+  .driver-mockup-wrap {
+    height: 420px;
+  }
 }
 
 @media (max-width: 900px) {
   .driver-layout {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 56px;
+  }
+  .driver-mockup-wrap {
+    height: 380px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .driver-stats-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .driver-stat-mini {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 0;
+  }
+  .driver-stat-mini:last-child {
+    border-bottom: none;
+  }
+  .driver-stat-mini:not(:first-child) {
+    padding-left: 0;
+  }
+  .driver-mockup-wrap {
+    height: 300px;
   }
 }
 
@@ -2409,9 +2571,13 @@ spline-viewer {
 [data-theme="light"] .section-parallax-features { background: var(--bg-2, #e8eaf2); }
 
 /* Driver section */
-[data-theme="light"] .driver-stat  { border-color: rgba(0,0,30,.10); }
-[data-theme="light"] .stat-value   { color: var(--text); }
-[data-theme="light"] .stat-label   { color: var(--muted); }
+[data-theme="light"] .driver-stats-row    { border-top-color: rgba(0,0,30,.10); }
+[data-theme="light"] .driver-stat-mini    { border-color: rgba(0,0,30,.10); }
+[data-theme="light"] .stat-value          { color: var(--text); }
+[data-theme="light"] .stat-label          { color: var(--muted); }
+[data-theme="light"] .driver-mockup-card  { border-color: rgba(0,0,30,.10); box-shadow: 0 8px 40px rgba(0,0,0,.12), 0 0 0 1px rgba(61,94,255,.10); }
+[data-theme="light"] .driver-mockup-glow  { opacity: 0.6; }
+[data-theme="light"] .driver-bottom-line  { background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.12) 0%, transparent 100%); }
 
 /* Footer complete fix */
 [data-theme="light"] .site-footer {
@@ -2470,4 +2636,68 @@ spline-viewer {
 .tb-cta            { border-radius: 12px; }
 .tb-dropdown       { border-radius: 18px; }
 .tb-dd-item        { border-radius: 10px; }
+
+/* ── SPOTLIGHT CARD EFFECT ───────────────────────────────────────────────
+   Tracks the global pointer position (set via JS as --x / --y / --hue)
+   and renders a radial gradient that "follows" the cursor through the card.
+   Uses background-attachment:fixed so the light source is viewport-relative —
+   moving the mouse over the grid feels like a single flashlight sweeping across.
+   ──────────────────────────────────────────────────────────────────────── */
+.vehicle-card,
+.scd-media {
+  --x: -9999;
+  --y: -9999;
+  --hue: 228;
+}
+
+/* Inner shimmer — fills the card, clipped by overflow:hidden on the parent */
+.spotlight-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
+    hsl(var(--hue) 100% 68% / 0.11) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+/* Activate glow only while pointer is over any spotlight-capable card */
+.vehicle-card.spotlight-active .spotlight-glow,
+.scd-media.spotlight-active .spotlight-glow {
+  opacity: 1;
+}
+
+/* Border accent — thin hue-tinted outline that brightens near the cursor */
+.vehicle-card.spotlight-active,
+.scd-media.spotlight-active {
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,0.14),
+    0 0 0 1px hsl(var(--hue) 90% 65% / 0.28),
+    0 28px 64px rgba(0,0,0,0.44),
+    0 0 36px hsl(var(--hue) 90% 60% / 0.08);
+}
+
+/* Light-mode adjustments */
+[data-theme="light"] .spotlight-glow {
+  background: radial-gradient(
+    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
+    hsl(var(--hue) 100% 50% / 0.09) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+[data-theme="light"] .vehicle-card.spotlight-active,
+[data-theme="light"] .scd-media.spotlight-active {
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,0.5),
+    0 0 0 1px hsl(var(--hue) 80% 50% / 0.22),
+    0 20px 48px rgba(0,0,0,0.14);
+}
 }

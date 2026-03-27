@@ -612,7 +612,7 @@ html, body {
 .bk-btn-ghost:hover { border-color: var(--border-md); background: var(--surface-2); }
 
 .bk-btn-row {
-  display: flex; gap: 8px; margin-top: auto;
+  display: flex; gap: 8px; margin-top: 20px;
 }
 .bk-btn-row .bk-btn-primary { flex: 2; }
 
