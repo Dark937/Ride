@@ -1383,19 +1383,17 @@ const Theme = {
       if (l) l.style.display = (t === "light") ? "block" : "none";
     });
 
-    // Swap Spline background URL for light/dark if data-url-light is set
-    const splineEl = document.getElementById("splineViewer");
-    if (splineEl) {
-      const urlLight = splineEl.dataset.urlLight;
-      const urlDark  = splineEl.dataset.urlDark;
-      const targetUrl = (t === "light" && urlLight) ? urlLight : (urlDark || splineEl.getAttribute("url"));
-      if (targetUrl && splineEl.getAttribute("url") !== targetUrl) {
-        splineEl.setAttribute("url", targetUrl);
-      }
-    }
   },
 
-  toggle() { this.set(this.get() === "dark" ? "light" : "dark"); this.apply(); }
+  toggle() { this.set(this.get() === "dark" ? "light" : "dark"); this.apply(); },
+
+  /** Call once per page to fix bfcache restores and cross-tab theme sync */
+  watch() {
+    // Re-apply when browser restores page from back/forward cache
+    window.addEventListener("pageshow", (e) => { if (e.persisted) this.apply(); });
+    // Re-apply when theme is changed in another tab or page
+    window.addEventListener("storage", (e) => { if (e.key === "ride_theme") this.apply(); });
+  }
 };
 
 /* ── REDUCE MOTION ────────────────────────────────────────────────── */

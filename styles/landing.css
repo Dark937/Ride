@@ -28,6 +28,141 @@
   --muted-2: rgba(10,10,24,0.52);
 }
 
+/* ── SKELETON LOADER ─────────────────────────────────────────────── */
+
+@keyframes skel-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes skel-content-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+#site-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg, #000);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    opacity 0.55s cubic-bezier(.4,0,.2,1) 0.05s,
+    filter  0.55s cubic-bezier(.4,0,.2,1) 0.05s;
+}
+
+#site-skeleton.skel-done {
+  opacity: 0;
+  filter: blur(6px) saturate(0);
+  pointer-events: none;
+}
+
+.skel-block {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.11) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 2s ease-in-out infinite;
+}
+
+[data-theme="light"] .skel-block {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,30,0.06) 25%,
+    rgba(0,0,30,0.14) 50%,
+    rgba(0,0,30,0.06) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Nav row */
+.skel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 62px;
+  padding: 0 clamp(16px, 4vw, 40px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .skel-nav { border-bottom-color: rgba(0,0,30,0.07); }
+
+.skel-logo     { width: 68px;  height: 28px; }
+.skel-nav-center { display: flex; align-items: center; gap: 28px; }
+.skel-navlink  { width: 50px;  height: 12px; }
+.skel-nav-end  { display: flex; align-items: center; gap: 10px; }
+.skel-icon-btn { width: 34px;  height: 34px; border-radius: 6px; }
+
+/* Stagger */
+.skel-navlink:nth-child(1) { animation-delay: 0.05s; }
+.skel-navlink:nth-child(2) { animation-delay: 0.10s; }
+.skel-navlink:nth-child(3) { animation-delay: 0.15s; }
+.skel-navlink:nth-child(4) { animation-delay: 0.20s; }
+
+/* Hero area */
+.skel-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(32px,8vh,80px) 24px;
+}
+
+.skel-hero-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 680px;
+}
+
+.skel-pill    { width: 112px; height: 26px; border-radius: 999px;               animation-delay: 0.08s; }
+.skel-title-a { width: 100%;  height: clamp(36px,6vw,60px); border-radius: 12px; animation-delay: 0.13s; }
+.skel-title-b { width: 70%;   height: clamp(36px,6vw,60px); border-radius: 12px; animation-delay: 0.18s; }
+.skel-desc    { width: 52%;   height: 15px; margin-top: 4px;                     animation-delay: 0.22s; }
+
+.skel-hero-btns { display: flex; gap: 12px; margin-top: 10px; }
+.skel-btn       { width: 140px; height: 44px; border-radius: 10px; animation-delay: 0.27s; }
+.skel-btn-2     { animation-delay: 0.32s; }
+
+/* Section hint lines */
+.skel-sections {
+  padding: 0 clamp(16px,4vw,40px) 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.skel-section-bar {
+  height: 1px;
+  background: rgba(255,255,255,0.04);
+}
+
+[data-theme="light"] .skel-section-bar { background: rgba(0,0,30,0.05); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .skel-nav-center { display: none; }
+  .skel-title-b    { width: 88%; }
+  .skel-desc       { width: 78%; }
+}
+
+/* Content reveal after skeleton fades out */
+body.skel-revealed .hero .content-inner {
+  animation: skel-content-in 0.55s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* ── END SKELETON ────────────────────────────────────────────────── */
+
 html {
   overflow-x: hidden;
 }
@@ -435,6 +570,7 @@ button {
   pointer-events: none;
   opacity: 0.92;
   overflow: hidden;
+  will-change: opacity;
   /* fallback gradient shown while Spline loads or if blocked */
   background:
     radial-gradient(ellipse 70% 55% at 72% 48%, rgba(80,50,200,0.30), transparent 65%),
@@ -452,6 +588,20 @@ spline-viewer {
     saturate(0.90)
     brightness(0.80);
   overflow: hidden;
+  transition: opacity 0.45s ease;
+}
+
+/* In light mode hide the dark Spline scene and show a subtle CSS gradient instead */
+[data-theme="light"] spline-viewer {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-theme="light"] .spline-bg {
+  background:
+    radial-gradient(ellipse 65% 50% at 70% 45%, rgba(61,94,255,0.08), transparent 65%),
+    radial-gradient(ellipse 45% 38% at 28% 58%, rgba(100,50,255,0.05), transparent 55%);
+  transition: background 0.45s ease;
 }
 
 .bottom-fade {
@@ -948,6 +1098,8 @@ spline-viewer {
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+  will-change: transform;
+  transform: translateZ(0); /* promote to own compositing layer */
 }
 
 .feature-card:hover,
@@ -1798,6 +1950,8 @@ spline-viewer {
 .section-driver {
   position: relative;
   overflow: clip;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 700px;
 }
 
 /* ---- Layout ---- */
@@ -2645,35 +2799,34 @@ spline-viewer {
    ──────────────────────────────────────────────────────────────────────── */
 .vehicle-card,
 .scd-media {
-  --x: -9999;
-  --y: -9999;
+  --mx: -200px;
+  --my: -200px;
   --hue: 228;
 }
 
-/* Inner shimmer — fills the card, clipped by overflow:hidden on the parent */
+/* Spotlight inner shimmer — element-relative coordinates, no fixed attachment.
+   Works correctly even when cards have CSS transforms (tilt effect). */
 .spotlight-glow {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
-    hsl(var(--hue) 100% 68% / 0.11) 0%,
-    transparent 60%
+    110px 110px at var(--mx, -200px) var(--my, -200px),
+    hsl(var(--hue) 100% 68% / 0.16) 0%,
+    transparent 100%
   );
-  background-attachment: fixed;
   pointer-events: none;
   z-index: 3;
   opacity: 0;
-  transition: opacity .35s ease;
+  transition: opacity 0.25s ease;
 }
 
-/* Activate glow only while pointer is over any spotlight-capable card */
 .vehicle-card.spotlight-active .spotlight-glow,
 .scd-media.spotlight-active .spotlight-glow {
   opacity: 1;
 }
 
-/* Border accent — thin hue-tinted outline that brightens near the cursor */
+/* Border accent */
 .vehicle-card.spotlight-active,
 .scd-media.spotlight-active {
   box-shadow:
@@ -2683,14 +2836,12 @@ spline-viewer {
     0 0 36px hsl(var(--hue) 90% 60% / 0.08);
 }
 
-/* Light-mode adjustments */
 [data-theme="light"] .spotlight-glow {
   background: radial-gradient(
-    260px 260px at calc(var(--x) * 1px) calc(var(--y) * 1px),
-    hsl(var(--hue) 100% 50% / 0.09) 0%,
-    transparent 60%
+    110px 110px at var(--mx, -200px) var(--my, -200px),
+    hsl(var(--hue) 100% 50% / 0.12) 0%,
+    transparent 100%
   );
-  background-attachment: fixed;
 }
 
 [data-theme="light"] .vehicle-card.spotlight-active,
@@ -2699,5 +2850,4 @@ spline-viewer {
     inset 0 1.5px 1px rgba(255,255,255,0.5),
     0 0 0 1px hsl(var(--hue) 80% 50% / 0.22),
     0 20px 48px rgba(0,0,0,0.14);
-}
 }
