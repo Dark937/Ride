@@ -310,6 +310,39 @@ async function initSecurity() {
     const lbl=document.getElementById("strLbl"); if(lbl) lbl.textContent="";
   });
 
+  // Email 2FA toggle
+  const twoFaToggle = document.getElementById("twoFaToggle");
+  if (twoFaToggle) {
+    // Load current state from server
+    const token = getToken();
+    if (token) {
+      fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.user?.twoFaEnabled != null) twoFaToggle.checked = !!data.user.twoFaEnabled; })
+        .catch(() => {});
+    }
+    twoFaToggle.addEventListener("change", async () => {
+      const enabled = twoFaToggle.checked;
+      if (!token) { twoFaToggle.checked = !enabled; showToast("Please sign in to change this setting."); return; }
+      try {
+        const resp = await fetch('/api/auth/2fa/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ enabled }),
+        });
+        if (resp.ok) {
+          showToast(enabled ? "Two-factor authentication enabled." : "Two-factor authentication disabled.");
+        } else {
+          twoFaToggle.checked = !enabled;
+          showToast("Failed to update 2FA setting.");
+        }
+      } catch (_) {
+        twoFaToggle.checked = !enabled;
+        showToast("Connection error.");
+      }
+    });
+  }
+
   renderSessions();
   function renderSessions() {
     const container = document.getElementById("sessionsContainer");

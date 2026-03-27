@@ -208,6 +208,34 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// ── Email helper ─────────────────────────────────────────────────────────────
+const nodemailer = require('nodemailer');
+function createMailTransporter() {
+  return nodemailer.createTransport({
+    host:   process.env.SMTP_HOST || 'smtp.gmail.com',
+    port:   Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
+async function sendMail(to, subject, html) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return; // SMTP not configured
+  try {
+    const transporter = createMailTransporter();
+    await transporter.sendMail({
+      from: `"Ride" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[sendMail]', err.message);
+  }
+}
+
 // FIX V-09: add field-level validation and length limits to the schema
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const userSchema = new mongoose.Schema({
@@ -230,6 +258,13 @@ const userSchema = new mongoose.Schema({
   theme:       { type: String, enum: ['dark', 'light'], default: null },
   lang:        { type: String, maxlength: 8, default: null },
   reduceMotion:{ type: String, enum: ['true', 'false'], default: null },
+  // Password reset
+  passwordResetToken:  { type: String, default: null },
+  passwordResetExpiry: { type: Date,   default: null },
+  // Email 2FA
+  twoFaEnabled: { type: Boolean, default: false },
+  twoFaCode:    { type: String,  default: null },
+  twoFaExpiry:  { type: Date,    default: null },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -277,9 +312,9 @@ const driverApplicationSchema = new mongoose.Schema({
   phone:        { type: String, required: true, maxlength: 32 },
   city:         { type: String, required: true, maxlength: 100 },
   experience:   { type: Number, required: true, min: 0, max: 60 },
-  vehicleMake:  { type: String, required: true, maxlength: 64 },
-  vehicleModel: { type: String, required: true, maxlength: 64 },
-  vehicleYear:  { type: Number, required: true, min: 1990, max: 2030 },
+  vehicleMake:  { type: String, maxlength: 64, default: null },
+  vehicleModel: { type: String, maxlength: 64, default: null },
+  vehicleYear:  { type: Number, min: 1990, max: 2030, default: null },
   licenseNumber:{ type: String, required: true, maxlength: 32 },
   statement:    { type: String, required: true, maxlength: 1000 },
   decision:     { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
@@ -343,6 +378,13 @@ app.post('/api/register', authLimiter, async (req, res) => {
 
     await user.save();
 
+    // Send welcome email
+    await sendMail(
+      user.email,
+      'Welcome to Ride!',
+      `<h2>Hi ${user.firstName},</h2><p>Welcome to Ride! Your account has been created successfully.</p><p>You can now sign in and start booking rides.</p><p style="color:#888;font-size:12px">If you didn't create this account, please ignore this email.</p>`,
+    );
+
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
@@ -397,6 +439,21 @@ app.post('/api/login', authLimiter, async (req, res) => {
 
     if (!user || !isValidPassword) {
       return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    // Email 2FA check
+    if (user.twoFaEnabled) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      await User.findByIdAndUpdate(user._id, { twoFaCode: code, twoFaExpiry: expiry });
+      await sendMail(
+        user.email,
+        'Your Ride sign-in code',
+        `<h2>Your sign-in code</h2><p>Use the code below to complete your sign in. It expires in 10 minutes.</p><h1 style="letter-spacing:8px;font-size:36px">${code}</h1><p style="color:#888;font-size:12px">If you didn't request this, please change your password immediately.</p>`,
+      );
+      // Issue a short-lived temp token (no full auth yet)
+      const tempToken = jwt.sign({ userId: user._id, twoFaPending: true }, JWT_SECRET, { expiresIn: '10m', algorithm: 'HS256' });
+      return res.json({ twoFaRequired: true, tempToken });
     }
 
     const token = jwt.sign(
@@ -650,10 +707,10 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
       return res.status(429).json({ error: 'You have already submitted 3 applications today. Please wait 24 hours.' });
     }
 
-    const { firstName, lastName, phone, city, experience, vehicleMake, vehicleModel, vehicleYear, licenseNumber, statement } = req.body;
+    const { firstName, lastName, phone, city, experience, licenseNumber, statement } = req.body;
 
     // Basic validation
-    if (!firstName || !lastName || !phone || !city || experience == null || !vehicleMake || !vehicleModel || !vehicleYear || !licenseNumber || !statement) {
+    if (!firstName || !lastName || !phone || !city || experience == null || !licenseNumber || !statement) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
     if (typeof statement !== 'string' || statement.length < 20) {
@@ -664,7 +721,6 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
     const app2 = await new DriverApplication({
       userId: uid, firstName, lastName, email: user.email,
       phone, city, experience: Number(experience),
-      vehicleMake, vehicleModel, vehicleYear: Number(vehicleYear),
       licenseNumber, statement, decision: 'pending',
     }).save();
 
@@ -686,7 +742,7 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
             max_tokens: 256,
             messages: [{
               role: 'user',
-              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nVehicle: ${vehicleMake} ${vehicleModel} (${vehicleYear})\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, vehicle from 2015 or newer, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
+              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
             }],
           }),
         });
@@ -710,32 +766,144 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
       await User.findByIdAndUpdate(uid, { accountType: 'rider' });
     }
 
-    // Send email notification (requires SMTP config in .env)
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && decision !== 'pending') {
-      try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT || 587),
-          secure: process.env.SMTP_SECURE === 'true',
-          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        });
-        const isApproved = decision === 'approved';
-        await transporter.sendMail({
-          from: `"Ride" <${process.env.SMTP_USER}>`,
-          to: user.email,
-          subject: isApproved ? 'Welcome to the Ride team! 🎉' : 'Your Ride driver application',
-          html: isApproved
-            ? `<h2>Congratulations, ${firstName}!</h2><p>Your application to become a Ride driver has been <strong>approved</strong>. Your account has been upgraded to a rider account. Welcome to the team!</p><p>Reason: ${aiReason}</p>`
-            : `<h2>Hi ${firstName},</h2><p>Thank you for applying to become a Ride driver. Unfortunately, your application has been <strong>rejected</strong> at this time.</p><p>Reason: ${aiReason}</p><p>You may apply again after reviewing the requirements.</p>`,
-        });
-      } catch (_) { /* email failure is non-critical */ }
+    // Send email notification using shared sendMail helper
+    if (decision !== 'pending') {
+      const isApproved = decision === 'approved';
+      await sendMail(
+        user.email,
+        isApproved ? 'Welcome to the Ride team!' : 'Your Ride driver application',
+        isApproved
+          ? `<h2>Congratulations, ${firstName}!</h2><p>Your application to become a Ride driver has been <strong>approved</strong>. Your account has been upgraded to a rider account. Welcome to the team!</p><p>Reason: ${aiReason}</p>`
+          : `<h2>Hi ${firstName},</h2><p>Thank you for applying to become a Ride driver. Unfortunately, your application has been <strong>rejected</strong> at this time.</p><p>Reason: ${aiReason}</p><p>You may apply again after reviewing the requirements.</p>`,
+      );
     }
 
     res.json({ ok: true, decision, reason: aiReason });
   } catch (err) {
     console.error('[apply-rider]', err);
     res.status(500).json({ error: 'Failed to process application.' });
+  }
+});
+
+// ── Password reset ────────────────────────────────────────────────────────────
+const crypto = require('crypto');
+
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+      return res.status(400).json({ error: 'Invalid email address.' });
+    }
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    // Always return success to prevent user enumeration
+    if (user) {
+      const token  = crypto.randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await User.findByIdAndUpdate(user._id, { passwordResetToken: token, passwordResetExpiry: expiry });
+      const baseUrl = process.env.SITE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const resetLink = `${baseUrl}/reset-password.html?token=${token}`;
+      await sendMail(
+        user.email,
+        'Reset your Ride password',
+        `<h2>Password reset</h2><p>Hi ${user.firstName},</p><p>Click the link below to reset your password. The link expires in 1 hour.</p><p><a href="${resetLink}" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:8px">Reset password</a></p><p style="color:#888;font-size:12px">If you didn't request this, you can safely ignore this email.</p>`,
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[forgot-password]', err);
+    res.status(500).json({ error: 'Failed to process request.' });
+  }
+});
+
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (typeof token !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Invalid request.' });
+    }
+    if (password.length < 8 || password.length > 128) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: new Date() },
+    });
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
+    const hashed = await bcrypt.hash(password, 12);
+    await User.findByIdAndUpdate(user._id, {
+      password: hashed,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[reset-password]', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+});
+
+// ── Email 2FA ─────────────────────────────────────────────────────────────────
+app.post('/api/auth/2fa/toggle', authenticateToken, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
+    await User.findByIdAndUpdate(req.user.userId, { twoFaEnabled: enabled, twoFaCode: null, twoFaExpiry: null });
+    res.json({ ok: true, twoFaEnabled: enabled });
+  } catch (err) {
+    console.error('[2fa toggle]', err);
+    res.status(500).json({ error: 'Failed to update 2FA setting.' });
+  }
+});
+
+app.post('/api/auth/2fa/verify', authLimiter, async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (typeof tempToken !== 'string' || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid request.' });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, JWT_SECRET, { algorithms: ['HS256'] });
+    } catch (_) {
+      return res.status(401).json({ error: 'Invalid or expired session.' });
+    }
+    if (!decoded.twoFaPending) return res.status(401).json({ error: 'Invalid token.' });
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.twoFaCode || !user.twoFaExpiry) {
+      return res.status(401).json({ error: 'No pending 2FA code.' });
+    }
+    if (new Date() > user.twoFaExpiry) {
+      return res.status(401).json({ error: 'Code has expired. Please sign in again.' });
+    }
+    if (user.twoFaCode !== code.trim()) {
+      return res.status(401).json({ error: 'Incorrect code.' });
+    }
+    // Clear 2FA code and issue full token
+    await User.findByIdAndUpdate(user._id, { twoFaCode: null, twoFaExpiry: null });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d', algorithm: 'HS256' });
+    res.json({
+      user: {
+        id: user._id,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error('[2fa verify]', err);
+    res.status(500).json({ error: 'Verification failed.' });
   }
 });
 
@@ -753,7 +921,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'book-ride.html', 'become-rider':'become-rider.html'
+  booking:'book-ride.html', 'become-rider':'become-rider.html',
+  'reset-password':'reset-password.html',
 };
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {
