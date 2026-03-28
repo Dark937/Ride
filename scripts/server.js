@@ -1,26 +1,24 @@
 require('dotenv').config();
 
-const express = require('express');
-const path = require('path');
+const express  = require('express');
+const path     = require('path');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-// FIX V-01: added security middleware
-/* ── INLINE SECURITY (no extra deps) ──────────────────────────────── */
+const cors     = require('cors');
+const bcrypt   = require('bcryptjs');
+const jwt      = require('jsonwebtoken');
+const crypto   = require('crypto');
 
-// Helmet equivalent: set all critical security headers manually
+// Header di sicurezza HTTP (senza dipendenze esterne)
 function applySecurityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options',    'nosniff');
   res.setHeader('X-Frame-Options',           'DENY');
-  res.setHeader('X-XSS-Protection',          '0'); // disabled in favour of CSP
+  res.setHeader('X-XSS-Protection',          '0');
   res.setHeader('Referrer-Policy',           'strict-origin-when-cross-origin');
-  // Allow geolocation from same origin (needed for "My Position" in booking)
+  // Geolocalizzazione consentita solo dalla stessa origine (serve per "La mia posizione" nel booking)
   res.setHeader('Permissions-Policy',        'geolocation=(self), camera=(), microphone=()');
-  // CSP: whitelist inline scripts by hash (no unsafe-inline needed),
-  // allow Google Fonts, unpkg CDN (spline viewer), Google Maps JS API, and WASM execution.
+  // CSP: hash degli script inline invece di unsafe-inline
   const inlineScriptHashes = [
-    "'sha256-Cnvf4An+Z1PYTrc86hNsT128/nDRkkQHDoq7KJ781GM='", // index.html
+    "'sha256-tx4La0ktT1Q0U69zVI8fZo7/7BtX0RiHH6jsqgKcN/E='", // index.html
     "'sha256-5qOFzbSteATv9poShdvmMth/arfJmZdBhlcuffpYD1c='", // dashboard.html
     "'sha256-WnvhjbPqxyliCkx0EZdyUKN6m5L360DNy6peJb86JHU='", // settings.html
     "'sha256-ZlyzTylzriMqewO9P8iTDN96VchltcvA7jE6Xk/vb4Y='", // login.html + register.html
@@ -28,32 +26,24 @@ function applySecurityHeaders(req, res, next) {
   ].join(' ');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    // Client JS + unpkg CDN (Leaflet, Spline) + WASM
     `script-src 'self' https://unpkg.com ${inlineScriptHashes} 'wasm-unsafe-eval'`,
-    // Google Fonts + unpkg (Leaflet CSS) + self styles + inline styles
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com",
-    // Google Fonts
     "font-src 'self' https://fonts.gstatic.com data:",
-    // Images: self + data URIs + blob + CartoDB tiles + OSM tiles + Spline + Unsplash
-    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://prod.spline.design https://cdn.spline.design https://images.unsplash.com",
-    // API calls: self + Nominatim + OSRM + unpkg + Spline scene/CDN
-    "connect-src 'self' https://nominatim.openstreetmap.org https://photon.komoot.io https://router.project-osrm.org https://unpkg.com https://prod.spline.design https://cdn.spline.design https://api.anthropic.com",
-    // WASM workers + Spline workers
+    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://prod.spline.design https://cdn.spline.design https://app.spline.design https://images.unsplash.com",
+    "connect-src 'self' https://nominatim.openstreetmap.org https://photon.komoot.io https://router.project-osrm.org https://unpkg.com https://prod.spline.design https://cdn.spline.design https://app.spline.design https://api.anthropic.com",
     "worker-src 'self' blob: https://unpkg.com",
-    // No iframes
     "frame-ancestors 'none'",
-    // No plugins
     "object-src 'none'",
     "base-uri 'self'",
   ].join('; '));
-  // HSTS only over HTTPS
+  // HSTS solo su HTTPS
   if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
   next();
 }
 
-// express-rate-limit equivalent: simple in-memory IP rate limiter
+// Rate limiter in memoria per IP (senza dipendenze esterne)
 function makeRateLimiter(max, windowMs, message) {
   const store = new Map();
   setInterval(() => {
@@ -70,14 +60,12 @@ function makeRateLimiter(max, windowMs, message) {
       return next();
     }
     rec.count++;
-    if (rec.count > max) {
-      return res.status(429).json({ error: message });
-    }
+    if (rec.count > max) return res.status(429).json({ error: message });
     next();
   };
 }
 
-// express-mongo-sanitize equivalent: strip keys starting with $ or containing .
+// Rimozione chiavi MongoDB pericolose dal body ($ e .)
 function sanitizeBody(obj) {
   if (typeof obj !== 'object' || obj === null) return obj;
   for (const key of Object.keys(obj)) {
@@ -95,37 +83,39 @@ function mongoSanitizeMiddleware(req, res, next) {
   next();
 }
 
-const app = express();
+const app  = express();
 const port = process.env.PORT || 3000;
 
-// FIX V-02: fail fast if JWT_SECRET not set in production; no fallback
+// JWT_SECRET obbligatorio in produzione
 if (!process.env.JWT_SECRET) {
   if (process.env.NODE_ENV === 'production') {
-    console.error('FATAL: JWT_SECRET environment variable is not set.');
+    console.error('FATAL: JWT_SECRET non impostato.');
     process.exit(1);
   }
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-insecure-secret-change-me';
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server running on ${port}`);
-});
+app.listen(port, '0.0.0.0', () => console.log(`Server avviato sulla porta ${port}`));
 
-// Security headers (inline, no dep)
 app.use(applySecurityHeaders);
 
-// CORS: build allowed-origins list from env + auto-detect Render URL
+// Redirect HTTP → HTTPS in produzione
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] === 'http') {
+    return res.redirect(301, 'https://' + req.headers.host + req.url);
+  }
+  next();
+});
+
+// Origini consentite per CORS
 const allowedOrigins = (() => {
   const list = [];
-  // Explicit list from env (comma-separated)
   if (process.env.ALLOWED_ORIGINS) {
     process.env.ALLOWED_ORIGINS.split(',').forEach(o => list.push(o.trim()));
   }
-  // Render auto-injects RENDER_EXTERNAL_URL with the primary service URL
   if (process.env.RENDER_EXTERNAL_URL) {
     list.push(process.env.RENDER_EXTERNAL_URL.replace(/\/$/, ''));
   }
-  // Always allow localhost for local development
   list.push('http://localhost:3000');
   list.push('http://localhost:8080');
   list.push('http://127.0.0.1:3000');
@@ -134,81 +124,105 @@ const allowedOrigins = (() => {
 
 app.use(cors({
   origin: (origin, cb) => {
-    // No Origin header = same-origin request (browser page load, curl, Postman)
-    // Always allow — these cannot be cross-site forged
+    // Nessun header Origin = richiesta same-origin (pagina browser, curl, Postman)
     if (!origin) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
-    // In production log the blocked origin to help diagnose misconfiguration
     if (process.env.NODE_ENV === 'production') {
-      console.warn('[CORS] blocked origin:', origin, '| add to ALLOWED_ORIGINS env var');
+      console.warn('[CORS] origine bloccata:', origin);
     }
-    cb(new Error('CORS: origin not allowed'));
+    cb(new Error('CORS: origine non consentita'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: false,
   optionsSuccessStatus: 200
 }));
 
-// FIX V-05: limit JSON body size to prevent payload attacks
-app.use(express.json({ limit: '16kb' }));
+// Limite dimensione body JSON (512kb per consentire foto profilo in base64)
+app.use(express.json({ limit: '512kb' }));
 
-// CSRF-equivalent: verify Origin/Referer on all state-mutating POST requests.
-// Since the API uses stateless JWT (no session cookies), CSRF risk is low, but
-// this adds an extra layer: reject requests whose Origin/Referer doesn't match
-// an allowed origin. Browsers always send Origin on cross-origin POST; if it's
-// absent we allow it (same-origin request or server-to-server tool).
+// Protezione CSRF via Origin/Referer sulle richieste mutanti
 app.use((req, res, next) => {
   if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) return next();
   const origin  = req.headers['origin'];
   const referer = req.headers['referer'];
   const source  = origin || (referer ? new URL(referer).origin : null);
-  if (!source) return next(); // same-origin or curl/Postman — allow
+  if (!source) return next();
   if (allowedOrigins.some(o => source === o || source.startsWith(o))) return next();
-  return res.status(403).json({ error: 'Forbidden: cross-origin request rejected.' });
+  return res.status(403).json({ error: 'Richiesta cross-origin non consentita.' });
 });
 
-// NoSQL injection sanitization (inline, no dep)
+// Sanitizzazione NoSQL
 app.use(mongoSanitizeMiddleware);
 
-// Static files: serve from project root (one level above scripts/)
-// Block direct access to server.js, .env, and node_modules
+// File statici: blocca l'accesso ai file sensibili prima di servire la directory
 const ROOT = path.resolve(__dirname, '..');
-app.use(express.static(ROOT, {
-  // Never serve sensitive files
-  setHeaders(res, filePath) {
-    const rel = path.relative(ROOT, filePath).replace(/\\/g, '/');
-    const blocked = [
-      /^scripts[\/\\]server\.js$/,    // only the server file itself
-      /^\.env/,                           // env files of any name
-      /^node_modules[\/\\]/,            // dependencies
-      /^package(-lock)?\.json$/,          // package manifests
-      /^\.git[\/\\]/,                  // git internals
-    ];
-    if (blocked.some(re => re.test(rel))) {
-      res.statusCode = 403;
-    }
-  }
-}));
+const BLOCKED_PATHS = [
+  /^scripts[/\\]server\.js$/,
+  /^\.env/,
+  /^node_modules[/\\]/,
+  /^package(-lock)?\.json$/,
+  /^\.git[/\\]/,
+];
+app.use((req, res, next) => {
+  const rel = decodeURIComponent(req.path).replace(/^\//, '').replace(/\\/g, '/');
+  if (BLOCKED_PATHS.some(re => re.test(rel))) return res.status(404).end();
+  next();
+});
+app.use(express.static(ROOT));
 
-// FIX V-08: rate limiters — brute-force protection on auth endpoints
+// Rate limiter: autenticazione (brute-force)
 const authLimiter = makeRateLimiter(
-  10,                                          // 10 attempts per IP
-  15 * 60 * 1000,                              // per 15-minute window
-  'Too many attempts. Please try again later.' // message
+  10,
+  15 * 60 * 1000,
+  'Troppi tentativi. Riprova tra qualche minuto.'
 );
-// Rate limiter for booking creation (prevent spam)
+// Rate limiter: creazione prenotazioni
 const bookingLimiter = makeRateLimiter(
-  20,                                          // 20 bookings per IP
-  60 * 60 * 1000,                              // per hour
-  'Too many booking requests. Please wait before trying again.'
+  20,
+  60 * 60 * 1000,
+  'Troppe richieste di prenotazione. Aspetta qualche minuto.'
+);
+// Rate limiter: aggiornamento profilo
+const profileLimiter = makeRateLimiter(
+  30,
+  60 * 60 * 1000,
+  'Troppe modifiche al profilo. Riprova tra un\'ora.'
 );
 
-// MongoDB connection
+// Connessione MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('Connesso a MongoDB'))
+  .catch(err => console.error('Errore connessione MongoDB:', err));
 
-// FIX V-09: add field-level validation and length limits to the schema
+// Helper email
+const nodemailer = require('nodemailer');
+function createMailTransporter() {
+  return nodemailer.createTransport({
+    host:   process.env.SMTP_HOST || 'smtp.gmail.com',
+    port:   Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
+async function sendMail(to, subject, html) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return;
+  try {
+    const transporter = createMailTransporter();
+    await transporter.sendMail({
+      from: `"Ride" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[sendMail]', err.message);
+  }
+}
+
+// Schema utente con validazione a livello di campo
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, trim: true, maxlength: 64 },
@@ -221,16 +235,26 @@ const userSchema = new mongoose.Schema({
   password:  { type: String, required: true },
   initials:  { type: String, maxlength: 4 },
   createdAt: { type: Date, default: Date.now },
-  phone:     { type: String, maxlength: 32, default: null },
-  city:      { type: String, maxlength: 100, default: null },
-  country:   { type: String, maxlength: 100, default: null },
-  birthday:  { type: Date, default: null },
+  phone:       { type: String, maxlength: 32, default: null },
+  city:        { type: String, maxlength: 100, default: null },
+  country:     { type: String, maxlength: 100, default: null },
+  birthday:    { type: Date, default: null },
   accountType: { type: String, enum: ['user', 'rider'], default: 'user' },
+  photo:       { type: String, maxlength: 350000, default: null }, // base64 data URL, max ~256KB (circa)
+  theme:       { type: String, enum: ['dark', 'light'], default: null },
+  lang:        { type: String, maxlength: 8, default: null },
+  reduceMotion:{ type: String, enum: ['true', 'false'], default: null },
+  // Reset password
+  passwordResetToken:  { type: String, default: null },
+  passwordResetExpiry: { type: Date,   default: null },
+  twoFaEnabled: { type: Boolean, default: false },
+  twoFaCode:    { type: String,  default: null },
+  twoFaExpiry:  { type: Date,    default: null },
 });
 
 const User = mongoose.model('User', userSchema);
 
-// ── Booking schema ──────────────────────────────────────────────────────────
+// Schema prenotazione
 const bookingSchema = new mongoose.Schema({
   userId:      { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
   from:        { type: String, required: true, maxlength: 500 },
@@ -255,7 +279,7 @@ const bookingSchema = new mongoose.Schema({
 });
 const Booking = mongoose.model('Booking', bookingSchema);
 
-// ── Fidelity schema ─────────────────────────────────────────────────────────
+// Schema fedeltà
 const fidelitySchema = new mongoose.Schema({
   userId:      { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
   pts:         { type: Number, default: 0, min: 0 },
@@ -264,7 +288,7 @@ const fidelitySchema = new mongoose.Schema({
 });
 const Fidelity = mongoose.model('Fidelity', fidelitySchema);
 
-// ── Driver Application schema ────────────────────────────────────────────────
+// Schema candidatura autista
 const driverApplicationSchema = new mongoose.Schema({
   userId:       { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
   firstName:    { type: String, required: true, maxlength: 64 },
@@ -273,9 +297,9 @@ const driverApplicationSchema = new mongoose.Schema({
   phone:        { type: String, required: true, maxlength: 32 },
   city:         { type: String, required: true, maxlength: 100 },
   experience:   { type: Number, required: true, min: 0, max: 60 },
-  vehicleMake:  { type: String, required: true, maxlength: 64 },
-  vehicleModel: { type: String, required: true, maxlength: 64 },
-  vehicleYear:  { type: Number, required: true, min: 1990, max: 2030 },
+  vehicleMake:  { type: String, maxlength: 64, default: null },
+  vehicleModel: { type: String, maxlength: 64, default: null },
+  vehicleYear:  { type: Number, min: 1990, max: 2030, default: null },
   licenseNumber:{ type: String, required: true, maxlength: 32 },
   statement:    { type: String, required: true, maxlength: 1000 },
   decision:     { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
@@ -284,8 +308,7 @@ const driverApplicationSchema = new mongoose.Schema({
 });
 const DriverApplication = mongoose.model('DriverApplication', driverApplicationSchema);
 
-// ── Input validation helper ──────────────────────────────────────────────────
-// FIX V-10: centralised validation; rejects non-string types (NoSQL object injection)
+// Validazione input registrazione
 function validateRegisterInput({ firstName, lastName, email, password }) {
   if (typeof firstName !== 'string' || typeof lastName !== 'string' ||
       typeof email    !== 'string' || typeof password !== 'string') {
@@ -300,6 +323,7 @@ function validateRegisterInput({ firstName, lastName, email, password }) {
   return null;
 }
 
+// Validazione input login
 function validateLoginInput({ email, password }) {
   if (typeof email !== 'string' || typeof password !== 'string') {
     return 'All fields must be strings.';
@@ -309,24 +333,20 @@ function validateLoginInput({ email, password }) {
   return null;
 }
 
-// Routes
-// FIX V-08 applied: authLimiter on both auth endpoints
+// Registrazione
 app.post('/api/register', authLimiter, async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // FIX V-10: validate before touching the DB
     const validationError = validateRegisterInput({ firstName, lastName, email, password });
     if (validationError) return res.status(400).json({ error: validationError });
 
-    // FIX V-09: normalise email consistently (lowercase + trim)
     const normalizedEmail = email.trim().toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered.' });
     }
 
-    // FIX V-11: bcrypt cost factor 12 (10 is below current recommendation)
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = new User({
@@ -339,45 +359,53 @@ app.post('/api/register', authLimiter, async (req, res) => {
 
     await user.save();
 
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      // FIX V-12: specify algorithm explicitly to prevent alg:none attack
-      { expiresIn: '7d', algorithm: 'HS256' }
+    // Email di benvenuto
+    await sendMail(
+      user.email,
+      'Welcome to Ride!',
+      `<h2>Hi ${user.firstName},</h2><p>Welcome to Ride! Your account has been created successfully.</p><p>You can now sign in and start booking rides.</p><p style="color:#888;font-size:12px">If you didn't create this account, please ignore this email.</p>`,
     );
+
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d', algorithm: 'HS256' });
 
     res.status(201).json({
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName:  user.lastName,
-        email:     user.email,
-        initials:  user.initials,
-        createdAt: user.createdAt,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
       },
       token,
     });
   } catch (error) {
-    // FIX V-13: never leak internal error details to the client
     console.error('[register]', error);
     res.status(500).json({ error: 'Registration failed.' });
   }
 });
 
+// Login
 app.post('/api/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // FIX V-10: validate before touching the DB
     const validationError = validateLoginInput({ email, password });
     if (validationError) return res.status(400).json({ error: 'Invalid email or password.' });
 
-    // FIX V-09: normalise email before lookup
     const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
 
-    // FIX V-14: constant-time comparison even when user doesn't exist
-    // (prevents user enumeration via timing side-channel)
+    // Hash fittizio per confronto in tempo costante (evita timing side-channel)
     const dummyHash = '$2a$12$invalidhashfortimingprotectiononly00000000000000000000';
     const hashToCompare = user ? user.password : dummyHash;
     const isValidPassword = await bcrypt.compare(password, hashToCompare);
@@ -386,21 +414,40 @@ app.post('/api/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      // FIX V-12: explicit algorithm
-      { expiresIn: '7d', algorithm: 'HS256' }
-    );
+    // 2FA: genera e invia codice temporaneo
+    if (user.twoFaEnabled) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minuti
+      await User.findByIdAndUpdate(user._id, { twoFaCode: code, twoFaExpiry: expiry });
+      await sendMail(
+        user.email,
+        'Your Ride sign-in code',
+        `<h2>Your sign-in code</h2><p>Use the code below to complete your sign in. It expires in 10 minutes.</p><h1 style="letter-spacing:8px;font-size:36px">${code}</h1><p style="color:#888;font-size:12px">If you didn't request this, please change your password immediately.</p>`,
+      );
+      // Token temporaneo a breve scadenza (10 min, senza accesso completo)
+      const tempToken = jwt.sign({ userId: user._id, twoFaPending: true }, JWT_SECRET, { expiresIn: '10m', algorithm: 'HS256' });
+      return res.json({ twoFaRequired: true, tempToken });
+    }
+
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d', algorithm: 'HS256' });
 
     res.json({
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName:  user.lastName,
-        email:     user.email,
-        initials:  user.initials,
-        createdAt: user.createdAt,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
       },
       token,
     });
@@ -410,26 +457,19 @@ app.post('/api/login', authLimiter, async (req, res) => {
   }
 });
 
-// Middleware to verify JWT
+// Verifica JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required.' });
-  }
-
-  // FIX V-12: enforce algorithm whitelist in verify too
+  if (!token) return res.status(401).json({ error: 'Access token required.' });
   jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid token.' });
-    }
+    if (err) return res.status(403).json({ error: 'Invalid token.' });
     req.user = user;
     next();
   });
 };
 
-// Protected route
+// Profilo utente
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
@@ -443,7 +483,69 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// ── Booking endpoints ────────────────────────────────────────────────────────
+// Aggiornamento profilo
+app.patch('/api/profile', authenticateToken, profileLimiter, async (req, res) => {
+  try {
+    const ALLOWED = ['firstName','lastName','phone','city','country','birthday',
+                     'photo','theme','lang','reduceMotion','initials'];
+    const update = {};
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+
+    // Validazione campi stringa
+    if (update.firstName !== undefined) {
+      if (typeof update.firstName !== 'string' || !update.firstName.trim())
+        return res.status(400).json({ error: 'Invalid first name.' });
+      update.firstName = update.firstName.trim().slice(0, 64);
+    }
+    if (update.lastName !== undefined) {
+      if (typeof update.lastName !== 'string' || !update.lastName.trim())
+        return res.status(400).json({ error: 'Invalid last name.' });
+      update.lastName = update.lastName.trim().slice(0, 64);
+    }
+    if (update.theme && !['dark','light'].includes(update.theme))
+      return res.status(400).json({ error: 'Invalid theme.' });
+    if (update.reduceMotion && !['true','false'].includes(update.reduceMotion))
+      return res.status(400).json({ error: 'Invalid reduceMotion value.' });
+    if (update.lang && (typeof update.lang !== 'string' || update.lang.length > 8))
+      return res.status(400).json({ error: 'Invalid lang.' });
+
+    // Validazione foto
+    if (update.photo !== undefined && update.photo !== null) {
+      if (typeof update.photo !== 'string')
+        return res.status(400).json({ error: 'Invalid photo.' });
+      if (update.photo.length > 350000)
+        return res.status(400).json({ error: 'Photo too large (max ~256 KB).' });
+      if (!/^data:image\/(jpeg|png|webp|gif);base64,/.test(update.photo))
+        return res.status(400).json({ error: 'Invalid photo format.' });
+    }
+
+    // Ricalcola le iniziali se il nome è cambiato
+    if (update.firstName || update.lastName) {
+      const cur = await User.findById(req.user.userId).select('firstName lastName');
+      if (cur) {
+        const f = update.firstName || cur.firstName;
+        const l = update.lastName  || cur.lastName;
+        update.initials = ((f[0]||'') + (l[0]||'')).toUpperCase();
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: update },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    res.json({ user });
+  } catch (err) {
+    console.error('[profile PATCH]', err);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+});
+
+// Prenotazioni
 app.get('/api/bookings', authenticateToken, async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.user.userId }).sort({ datetime: -1 }).limit(200);
@@ -463,7 +565,7 @@ app.post('/api/bookings', authenticateToken, bookingLimiter, async (req, res) =>
     const dur = parseInt(durationMin) || 30;
     const newEnd = new Date(newStart.getTime() + dur * 60000);
 
-    // Conflict check: overlapping upcoming bookings
+    // Controllo conflitti con prenotazioni esistenti
     const existing = await Booking.find({ userId: req.user.userId, status: 'upcoming' });
     const conflict = existing.find(b => {
       const bS = new Date(b.datetime).getTime();
@@ -546,47 +648,43 @@ app.post('/api/bookings/:id/complete', authenticateToken, async (req, res) => {
   } catch (err) { console.error('[bookings complete]', err); res.status(500).json({ error: 'Failed to complete booking.' }); }
 });
 
-// ── Rider Application ────────────────────────────────────────────────────────
-const applyRiderLimiter = makeRateLimiter(3, 24*60*60*1000, 'You can only submit 3 applications per day.');
+// Candidatura autista
+const applyRiderLimiter = makeRateLimiter(3, 24*60*60*1000, 'Puoi inviare al massimo 3 candidature al giorno.');
 
 app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, res) => {
   try {
     const uid = req.user.userId;
-    // Check if user is already a rider
     const user = await User.findById(uid).lean();
     if (!user) return res.status(404).json({ error: 'User not found.' });
     if ((user.accountType || 'user') === 'rider') {
-      return res.status(400).json({ error: 'Your account is already a rider account.' });
+      return res.status(400).json({ error: 'Il tuo account è già un account autista.' });
     }
 
-    // Check 24h submission limit per user (DB-based)
+    // Limite 3 candidature per 24 ore (controllo lato DB)
     const yesterday = new Date(Date.now() - 24*60*60*1000);
     const recentApps = await DriverApplication.countDocuments({ userId: uid, createdAt: { $gte: yesterday } });
     if (recentApps >= 3) {
-      return res.status(429).json({ error: 'You have already submitted 3 applications today. Please wait 24 hours.' });
+      return res.status(429).json({ error: 'Hai già inviato 3 candidature oggi. Riprova tra 24 ore.' });
     }
 
-    const { firstName, lastName, phone, city, experience, vehicleMake, vehicleModel, vehicleYear, licenseNumber, statement } = req.body;
+    const { firstName, lastName, phone, city, experience, licenseNumber, statement } = req.body;
 
-    // Basic validation
-    if (!firstName || !lastName || !phone || !city || experience == null || !vehicleMake || !vehicleModel || !vehicleYear || !licenseNumber || !statement) {
-      return res.status(400).json({ error: 'All fields are required.' });
+    if (!firstName || !lastName || !phone || !city || experience == null || !licenseNumber || !statement) {
+      return res.status(400).json({ error: 'Tutti i campi sono obbligatori.' });
     }
     if (typeof statement !== 'string' || statement.length < 20) {
-      return res.status(400).json({ error: 'Personal statement must be at least 20 characters.' });
+      return res.status(400).json({ error: 'La descrizione personale deve essere di almeno 20 caratteri.' });
     }
 
-    // Save application first
     const app2 = await new DriverApplication({
       userId: uid, firstName, lastName, email: user.email,
       phone, city, experience: Number(experience),
-      vehicleMake, vehicleModel, vehicleYear: Number(vehicleYear),
       licenseNumber, statement, decision: 'pending',
     }).save();
 
-    // Analyze with Claude AI (requires ANTHROPIC_API_KEY in .env)
+    // Analisi AI della candidatura (richiede ANTHROPIC_API_KEY nel .env)
     let decision = 'pending';
-    let aiReason = 'Manual review required.';
+    let aiReason = 'Revisione manuale richiesta.';
 
     if (process.env.ANTHROPIC_API_KEY) {
       try {
@@ -602,7 +700,7 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
             max_tokens: 256,
             messages: [{
               role: 'user',
-              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nVehicle: ${vehicleMake} ${vehicleModel} (${vehicleYear})\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, vehicle from 2015 or newer, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
+              content: `You are reviewing a driver application for a luxury ride-hailing service. Analyze the application and decide if it should be approved or rejected.\n\nApplicant: ${firstName} ${lastName}\nCity: ${city}\nDriving experience: ${experience} years\nLicense number: ${licenseNumber}\nPersonal statement: ${statement}\n\nApproval criteria: at least 2 years driving experience, complete information, professional tone in statement.\n\nRespond with ONLY valid JSON (no markdown): {"decision":"approved","reason":"brief reason"} or {"decision":"rejected","reason":"brief reason"}`,
             }],
           }),
         });
@@ -615,37 +713,24 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
             aiReason = (parsed.reason || '').slice(0, 500);
           }
         }
-      } catch (_) { /* AI unavailable — keep pending */ }
+      } catch (_) { /* AI non disponibile — mantieni stato pending */ }
     }
 
-    // Update application with decision
     await DriverApplication.findByIdAndUpdate(app2._id, { decision, aiReason });
 
-    // If approved, update user account type
     if (decision === 'approved') {
       await User.findByIdAndUpdate(uid, { accountType: 'rider' });
     }
 
-    // Send email notification (requires SMTP config in .env)
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && decision !== 'pending') {
-      try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT || 587),
-          secure: process.env.SMTP_SECURE === 'true',
-          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        });
-        const isApproved = decision === 'approved';
-        await transporter.sendMail({
-          from: `"Ride" <${process.env.SMTP_USER}>`,
-          to: user.email,
-          subject: isApproved ? 'Welcome to the Ride team! 🎉' : 'Your Ride driver application',
-          html: isApproved
-            ? `<h2>Congratulations, ${firstName}!</h2><p>Your application to become a Ride driver has been <strong>approved</strong>. Your account has been upgraded to a rider account. Welcome to the team!</p><p>Reason: ${aiReason}</p>`
-            : `<h2>Hi ${firstName},</h2><p>Thank you for applying to become a Ride driver. Unfortunately, your application has been <strong>rejected</strong> at this time.</p><p>Reason: ${aiReason}</p><p>You may apply again after reviewing the requirements.</p>`,
-        });
-      } catch (_) { /* email failure is non-critical */ }
+    if (decision !== 'pending') {
+      const isApproved = decision === 'approved';
+      await sendMail(
+        user.email,
+        isApproved ? 'Welcome to the Ride team!' : 'Your Ride driver application',
+        isApproved
+          ? `<h2>Congratulations, ${firstName}!</h2><p>Your application to become a Ride driver has been <strong>approved</strong>. Your account has been upgraded to a rider account. Welcome to the team!</p><p>Reason: ${aiReason}</p>`
+          : `<h2>Hi ${firstName},</h2><p>Thank you for applying to become a Ride driver. Unfortunately, your application has been <strong>rejected</strong> at this time.</p><p>Reason: ${aiReason}</p><p>You may apply again after reviewing the requirements.</p>`,
+      );
     }
 
     res.json({ ok: true, decision, reason: aiReason });
@@ -655,7 +740,129 @@ app.post('/api/apply-rider', authenticateToken, applyRiderLimiter, async (req, r
   }
 });
 
-// ── Fidelity endpoints ───────────────────────────────────────────────────────
+// Reset password
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+      return res.status(400).json({ error: 'Invalid email address.' });
+    }
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    // Risposta sempre positiva per evitare user enumeration
+    if (user) {
+      const token  = crypto.randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 ora
+      await User.findByIdAndUpdate(user._id, { passwordResetToken: token, passwordResetExpiry: expiry });
+      const baseUrl = process.env.SITE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const resetLink = `${baseUrl}/reset-password.html?token=${token}`;
+      await sendMail(
+        user.email,
+        'Reset your Ride password',
+        `<h2>Password reset</h2><p>Hi ${user.firstName},</p><p>Click the link below to reset your password. The link expires in 1 hour.</p><p><a href="${resetLink}" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:8px">Reset password</a></p><p style="color:#888;font-size:12px">If you didn't request this, you can safely ignore this email.</p>`,
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[forgot-password]', err);
+    res.status(500).json({ error: 'Failed to process request.' });
+  }
+});
+
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (typeof token !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Invalid request.' });
+    }
+    if (password.length < 8 || password.length > 128) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: new Date() },
+    });
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
+    const hashed = await bcrypt.hash(password, 12);
+    await User.findByIdAndUpdate(user._id, {
+      password: hashed,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[reset-password]', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+});
+
+// 2FA via email
+app.post('/api/auth/2fa/toggle', authenticateToken, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
+    await User.findByIdAndUpdate(req.user.userId, { twoFaEnabled: enabled, twoFaCode: null, twoFaExpiry: null });
+    res.json({ ok: true, twoFaEnabled: enabled });
+  } catch (err) {
+    console.error('[2fa toggle]', err);
+    res.status(500).json({ error: 'Failed to update 2FA setting.' });
+  }
+});
+
+app.post('/api/auth/2fa/verify', authLimiter, async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (typeof tempToken !== 'string' || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid request.' });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, JWT_SECRET, { algorithms: ['HS256'] });
+    } catch (_) {
+      return res.status(401).json({ error: 'Invalid or expired session.' });
+    }
+    if (!decoded.twoFaPending) return res.status(401).json({ error: 'Invalid token.' });
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.twoFaCode || !user.twoFaExpiry) {
+      return res.status(401).json({ error: 'No pending 2FA code.' });
+    }
+    if (new Date() > user.twoFaExpiry) {
+      return res.status(401).json({ error: 'Code has expired. Please sign in again.' });
+    }
+        // Confronto in tempo costante per prevenire timing attack
+    const expected = Buffer.from(user.twoFaCode);
+    const received = Buffer.from(code.trim().padEnd(user.twoFaCode.length, '\0').slice(0, user.twoFaCode.length));
+    const match = expected.length === received.length && crypto.timingSafeEqual(expected, received);
+    if (!match) return res.status(401).json({ error: 'Incorrect code.' });
+
+    await User.findByIdAndUpdate(user._id, { twoFaCode: null, twoFaExpiry: null });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d', algorithm: 'HS256' });
+    res.json({
+      user: {
+        id: user._id,
+        firstName:   user.firstName,
+        lastName:    user.lastName,
+        email:       user.email,
+        initials:    user.initials,
+        createdAt:   user.createdAt,
+        phone:       user.phone,
+        city:        user.city,
+        country:     user.country,
+        birthday:    user.birthday,
+        accountType: user.accountType,
+        photo:       user.photo,
+        theme:       user.theme,
+        lang:        user.lang,
+        reduceMotion:user.reduceMotion,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error('[2fa verify]', err);
+    res.status(500).json({ error: 'Verification failed.' });
+  }
+});
+
+// Fidelity
 app.get('/api/fidelity', authenticateToken, async (req, res) => {
   try {
     let fid = await Fidelity.findOne({ userId: req.user.userId });
@@ -663,20 +870,19 @@ app.get('/api/fidelity', authenticateToken, async (req, res) => {
   } catch (err) { console.error('[fidelity GET]', err); res.status(500).json({ error: 'Failed to load fidelity.' }); }
 });
 
-// FIX V-07: serve HTML pages from explicit paths within 'public'
-// (express.static already handles this; these routes remain for clean URLs)
+// Route pagine HTML per URL puliti
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'book-ride.html', 'become-rider':'become-rider.html'
+  booking:'book-ride.html', 'become-rider':'become-rider.html',
+  'reset-password':'reset-password.html',
 };
 Object.entries(PAGES).forEach(([route, file]) => {
   app.get('/' + route, (_req, res) => {
     res.sendFile(path.join(ROOT_DIR, file));
   });
 });
-// Serve index.html for the root path explicitly
 app.get('/', (_req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
 
 if (process.env.NODE_ENV === 'production') {

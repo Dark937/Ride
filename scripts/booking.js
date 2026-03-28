@@ -402,16 +402,18 @@ const state = {
   durationMin: 0,
   fareEur: 0,
   user: null,
+  goldTier: false,   // true when totalEarned >= 2000 → 10% off
+  couponUsed: null,  // { code, discount: {type,value}, name, ... }
 };
 
 /* ── DISTANCE & FARE CALCULATOR ─────────────────────────────────────── */
 function calcTrip(pickup, dropoff, vehicle) {
   if (!pickup || !dropoff) return { km: 0, min: 0, fare: 0 };
-  // Use real data from state if set by updateRouteStats; fall back to straight-line estimate
   const km  = state.distKm     || 7;
   const min = state.durationMin || Math.round(km * 2.5 + 4);
   const v   = vehicle || VEHICLES[0];
-  const fare = v.baseFare + km * v.ratePerKm;
+  let fare = v.baseFare + km * v.ratePerKm;
+  if (state.goldTier) fare = fare * 0.9; // Gold: 10% off all rides
   return { km: parseFloat(km.toFixed(1)), min, fare: parseFloat(fare.toFixed(2)) };
 }
 
@@ -420,25 +422,35 @@ function wireAutocomplete() {
   const PIN_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
 
   async function fetchSuggestions(query) {
+    if (query.length < 3) return [];
     // Photon (komoot) — Elasticsearch-backed, much better partial/fuzzy matching
+    // Only use supported lang codes; fall back to 'en'
+    const SUPPORTED_LANGS = ['en', 'de', 'fr'];
+    const rawLang = (navigator.language || 'en').split('-')[0];
+    const lang = SUPPORTED_LANGS.includes(rawLang) ? rawLang : 'en';
     let locationBias = '';
     if (state.pickup?.lat && state.pickup?.lng) {
       locationBias = `&lat=${state.pickup.lat}&lon=${state.pickup.lng}`;
     }
-    const lang = (navigator.language || 'it').split('-')[0];
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=${lang}${locationBias}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.features || [];
+    try {
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=${lang}${locationBias}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.features || [];
+    } catch (_) {
+      return [];
+    }
   }
 
   function formatResult(r) {
     const p = r.properties || {};
-    const name = p.name || p.street || p.city || '';
     const city    = p.city || p.town || p.village || '';
-    const state   = p.state || '';
+    const street  = p.street ? (p.housenumber ? p.street + ' ' + p.housenumber : p.street) : '';
+    const name    = p.name || street || city || p.state || p.country || '—';
+    const st      = p.state || '';
     const country = p.country || '';
-    const subParts = [city, state !== city ? state : '', country].filter(Boolean);
+    const subParts = [city !== name ? city : '', st !== city ? st : '', country].filter(Boolean);
     const sub = subParts.slice(0, 3).join(', ');
     const [lng, lat] = r.geometry?.coordinates || [0, 0];
     return { name, sub, lat, lng };
@@ -469,7 +481,8 @@ function wireAutocomplete() {
               + `<span><div class="bk-ac-main">${esc(main)}</div>`
               + `<div class="bk-ac-sub">${esc(sub)}</div></span>`;
 
-            item.addEventListener("click", () => {
+            item.addEventListener("mousedown", (e) => {
+              e.preventDefault(); // keep input focused, prevent blur closing dropdown
               inputEl.value = main;
               acContainer.classList.remove("open");
               acContainer.innerHTML = "";
@@ -875,6 +888,84 @@ function initTimeToggle() {
   [dayEl, hourEl, minEl].forEach(el => el.addEventListener("change", syncState));
 }
 
+/* ── PAYMENT OVERLAY (on-the-spot card payment) ──────────────────────── */
+function showBookingPayment(cardAmt, walletUsed) {
+  return new Promise(resolve => {
+    const ov  = document.getElementById('bkPayOverlay');
+    const sp  = document.getElementById('bkPaySpinner');
+    const ok  = document.getElementById('bkPaySuccess');
+    const ttl = document.getElementById('bkPayTitle');
+    const amt = document.getElementById('bkPayAmount');
+    const st  = document.getElementById('bkPayStatus');
+
+    sp.style.display = ''; ok.style.display = 'none';
+    ttl.textContent = 'Processing payment';
+    amt.textContent = '€' + cardAmt.toFixed(2);
+    st.textContent  = walletUsed > 0
+      ? `€${walletUsed.toFixed(2)} from wallet + €${cardAmt.toFixed(2)} card`
+      : 'Connecting to payment provider…';
+    ov.classList.add('open');
+
+    const steps = [
+      { delay: 800, msg: 'Authorising transaction…' },
+      { delay: 900, msg: 'Confirming with bank…' },
+      { delay: 700, msg: 'Finalising payment…' },
+    ];
+    let i = 0;
+    const run = () => {
+      if (i >= steps.length) {
+        sp.style.display = 'none'; ok.style.display = '';
+        ttl.textContent = 'Payment successful';
+        st.textContent  = 'Your ride is confirmed!';
+        setTimeout(() => { ov.classList.remove('open'); resolve(); }, 1200);
+        return;
+      }
+      setTimeout(() => { st.textContent = steps[i].msg; i++; run(); }, steps[i].delay);
+    };
+    setTimeout(run, 600);
+  });
+}
+
+/* ── PROMO CODE ──────────────────────────────────────────────────────── */
+function applyPromoCode() {
+  const uid    = localStorage.getItem('current_user_id');
+  const input  = document.getElementById('promoInput');
+  const msgEl  = document.getElementById('promoMsg');
+  if (!input || !msgEl) return;
+
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+
+  const showMsg = (txt, ok) => {
+    msgEl.textContent = txt;
+    msgEl.style.cssText = `display:block;font-size:12px;margin-top:6px;color:${ok ? 'var(--green)' : 'var(--accent)'}`;
+  };
+
+  if (!uid) { showMsg('Sign in to use promo codes.', false); return; }
+
+  const coupons = JSON.parse(localStorage.getItem('ride_coupons_' + uid) || '[]');
+  const coupon  = coupons.find(c => c.code === code && !c.used);
+
+  if (!coupon) { showMsg('Code not found or already used.', false); return; }
+  if (new Date(coupon.expiresAt) < new Date()) { showMsg('This code has expired.', false); return; }
+
+  state.couponUsed = coupon;
+
+  // Show friendly message; actual deduction happens in confirmBooking
+  if (!coupon.discount) {
+    showMsg(`✓ ${coupon.name} applied.`, true);
+  } else if (coupon.discount.type === 'wallet') {
+    showMsg(`✓ €${coupon.discount.value} wallet credit will be added.`, true);
+  } else if (coupon.discount.type === 'percent') {
+    showMsg(`✓ ${Math.round(coupon.discount.value * 100)}% discount applied.`, true);
+  } else {
+    showMsg(`✓ Up to €${coupon.discount.value} off applied.`, true);
+  }
+
+  // Refresh prices
+  if (state.pickup && state.dropoff) { renderVehicles(); updateRecap(); }
+}
+
 /* ── BOOKING CONFIRMATION ────────────────────────────────────────────── */
 async function confirmBooking() {
   if (!state.vehicle) { toast(t("selectVehicleFirst")); return; }
@@ -924,18 +1015,61 @@ async function confirmBooking() {
 
   const token = localStorage.getItem("ride_token");
 
-  // ── Wallet payment ────────────────────────────────────────────────
+  // ── Apply coupon discount to final fare ───────────────────────────
+  let couponDiscount = 0;
+  if (state.couponUsed?.discount) {
+    const d = state.couponUsed.discount;
+    if (d.type === 'fixed' || d.type === 'free')   couponDiscount = Math.min(d.value, trip.fare);
+    else if (d.type === 'percent')                  couponDiscount = trip.fare * d.value;
+    couponDiscount = parseFloat(couponDiscount.toFixed(2));
+  }
+  const finalFare = parseFloat(Math.max(0, trip.fare - couponDiscount).toFixed(2));
+  bookingData.fare = finalFare; // persist discounted fare
+
+  // ── Wallet payment / on-the-spot card payment ─────────────────────
   let paidByWallet = false;
+  let paidByCard   = false;
   if (uid) {
     const walletBal = parseFloat(localStorage.getItem("ride_wallet_" + uid) || "0");
-    if (walletBal >= trip.fare) {
-      const newBal = walletBal - trip.fare;
+    if (walletBal >= finalFare) {
+      const newBal = walletBal - finalFare;
       const walletTxs = JSON.parse(localStorage.getItem("ride_wallet_txs_" + uid) || "[]");
-      walletTxs.unshift({ type:"debit", label:"Ride to " + bookingData.to, date: new Date().toISOString(), amount: trip.fare });
+      walletTxs.unshift({ type:"debit", label:"Ride to " + bookingData.to, date: new Date().toISOString(), amount: finalFare });
       localStorage.setItem("ride_wallet_" + uid, String(newBal));
       localStorage.setItem("ride_wallet_txs_" + uid, JSON.stringify(walletTxs));
       paidByWallet = true;
+    } else {
+      // Not enough wallet — charge card for remainder
+      const walletUsed = Math.min(walletBal, finalFare);
+      const cardAmt    = finalFare - walletUsed;
+      await showBookingPayment(cardAmt, walletUsed);
+      if (walletUsed > 0) {
+        const walletTxs = JSON.parse(localStorage.getItem("ride_wallet_txs_" + uid) || "[]");
+        walletTxs.unshift({ type:"debit", label:"Ride to " + bookingData.to + " (partial)", date: new Date().toISOString(), amount: walletUsed });
+        localStorage.setItem("ride_wallet_" + uid, "0");
+        localStorage.setItem("ride_wallet_txs_" + uid, JSON.stringify(walletTxs));
+        paidByWallet = true;
+      }
+      paidByCard = true;
     }
+  }
+
+  // ── Mark coupon used + handle wallet-credit coupons ──────────────
+  if (uid && state.couponUsed) {
+    const cps = JSON.parse(localStorage.getItem('ride_coupons_' + uid) || '[]');
+    const idx = cps.findIndex(c => c.code === state.couponUsed.code);
+    if (idx >= 0) { cps[idx].used = true; cps[idx].usedAt = new Date().toISOString(); }
+    localStorage.setItem('ride_coupons_' + uid, JSON.stringify(cps));
+    // Wallet credit coupon: add credit now
+    if (state.couponUsed.discount?.type === 'wallet') {
+      const v = state.couponUsed.discount.value;
+      const bal = parseFloat(localStorage.getItem('ride_wallet_' + uid) || '0') + v;
+      const txs = JSON.parse(localStorage.getItem('ride_wallet_txs_' + uid) || '[]');
+      txs.unshift({ type:'credit', label:'Coupon: ' + state.couponUsed.name, date: new Date().toISOString(), amount: v });
+      localStorage.setItem('ride_wallet_' + uid, String(bal));
+      localStorage.setItem('ride_wallet_txs_' + uid, JSON.stringify(txs));
+    }
+    state.couponUsed = null;
   }
 
   if (uid && token) {
@@ -972,13 +1106,21 @@ async function confirmBooking() {
   // ── Confirmation modal ─────────────────────────────────────────────
   const details = document.getElementById("confirmDetails");
   document.getElementById("confirmMsg").textContent = t("confirmMsg");
+  const fareLabel = (() => {
+    let s = "€" + finalFare.toFixed(2);
+    if (couponDiscount > 0) s += ` <span style="color:var(--green);font-size:11px;margin-left:4px">−€${couponDiscount.toFixed(2)} coupon</span>`;
+    if (paidByWallet && !paidByCard) s += ' <span style="color:var(--brand);font-size:11px;margin-left:4px">✓ Wallet</span>';
+    else if (paidByCard) s += ' <span style="color:var(--muted);font-size:11px;margin-left:4px">✓ Card</span>';
+    if (state.goldTier) s += ' <span style="color:var(--yellow,#eab308);font-size:11px;margin-left:4px">✦ Gold −10%</span>';
+    return s;
+  })();
   details.innerHTML = [
     { k: "Vehicle", v: esc(veh.name) },
-    { k: "Fare",    v: "€" + esc(trip.fare.toFixed(2)) + (paidByWallet ? ' <span style="color:var(--green);font-size:11px;margin-left:6px">✓ Wallet</span>' : '') },
+    { k: "Fare",    v: fareLabel },
     { k: "Route",   v: esc(state.pickup.main) + " → " + esc(state.dropoff.main) },
     { k: "Driver",  v: esc(state.driver?.name || "—") },
     { k: "ETA",     v: esc(String(veh.eta)) + " min" },
-    { k: "Points",  v: "+" + esc(String(Math.round(trip.fare))) + " pts (awarded on arrival)" },
+    { k: "Points",  v: "+" + esc(String(Math.round(finalFare))) + " pts (awarded on arrival)" },
   ].map(i => `<div class="bk-conf-item"><span class="bk-conf-key">${i.k}</span><span class="bk-conf-val">${i.v}</span></div>`).join("");
   document.getElementById("confirmOverlay").classList.add("open");
 }
@@ -1012,6 +1154,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (user) {
     Lang.apply(); Theme.apply();
     if (user.reduceMotion != null) { Motion.set(user.reduceMotion === "true"); Motion.apply(); }
+    // Load gold tier status
+    const _uid = user.id || localStorage.getItem("current_user_id");
+    if (_uid) {
+      const _fid = JSON.parse(localStorage.getItem("ride_fidelity_" + _uid) || '{}');
+      state.goldTier = (_fid.totalEarned || 0) >= 2000;
+    }
   }
 
   // Greeting
@@ -1049,6 +1197,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("btnToDashboard").addEventListener("click", () => {
     window.location.href = "dashboard.html";
+  });
+
+  // Promo code
+  document.getElementById("promoApply")?.addEventListener("click", applyPromoCode);
+  document.getElementById("promoInput")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); applyPromoCode(); }
   });
 
   // Theme / lang sync from other tabs

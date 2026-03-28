@@ -1,3 +1,41 @@
+// Caricamento lazy dello sfondo Spline (non blocca il rendering iniziale)
+function caricaSpline() {
+  if (document.querySelector('script[src*="spline-viewer"]')) return;
+  const s = document.createElement('script');
+  s.type = 'module';
+  s.src  = 'https://unpkg.com/@splinetool/viewer/build/spline-viewer.js';
+  document.head.appendChild(s);
+}
+
+// Dismissione skeleton di caricamento
+(function () {
+  const MIN_MS = 900;
+  const skelEl = document.getElementById("site-skeleton");
+  if (!skelEl) { caricaSpline(); return; }
+
+  const t0 = performance.now();
+  let dismissed = false;
+
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    const wait = Math.max(0, MIN_MS - (performance.now() - t0));
+    setTimeout(() => {
+      skelEl.classList.add("skel-done");
+      document.body.classList.add("skel-revealed");
+      caricaSpline();
+      setTimeout(() => skelEl.remove(), 700);
+    }, wait);
+  }
+
+  if (document.readyState === "complete") dismiss();
+  else window.addEventListener("load", dismiss, { once: true });
+  setTimeout(dismiss, 6000);
+})();
+
+// Sincronizzazione tema: bfcache e cambio in altri tab
+if (typeof Theme !== "undefined") Theme.watch();
+
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("js-reveal");
 
@@ -263,9 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", onScrollEffects);
     onScrollEffects();
 
-    // ── MOBILE PARALLAX  (<=1024px) ─────────────────────────────────
-    // Single shared image lives inside the sticky .features-left block.
-    // As panels scroll into view the image swaps in place (like desktop).
+    // Parallax mobile (<=1024px): immagine condivisa all'interno del blocco sticky
     (function initMobileParallax() {
       if (!featurePanels.length || !parallaxSection) return;
       function isMob() { return window.innerWidth <= 1024; }
@@ -284,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (first) { img.src = first.dataset.img || ''; img.alt = first.dataset.alt || ''; }
         wrap.appendChild(img);
         mobileImgEl = img;
-        // Insert after .features-left-inner, inside the sticky .features-left
+        // Inserisce dopo .features-left-inner dentro il blocco sticky .features-left
         const leftInner = parallaxSection.querySelector('.features-left-inner');
         if (leftInner && leftInner.parentNode) {
           leftInner.parentNode.insertBefore(wrap, leftInner.nextSibling);
@@ -353,11 +389,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const scrollY = window.scrollY;
       const progress = Math.min(scrollY / heroH, 1);
 
-      if (splineBg) {
-        // Background stays fixed while page scrolls
-        splineBg.style.transform = `translateY(0px)`;
-      }
-
       if (contentInner) {
         const t = Math.min(Math.max((progress - 0.28) / 0.42, 0), 1);
         const scale = 1 - t * 0.08;
@@ -371,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", updateHeroScroll, { passive: true });
     updateHeroScroll();
 
-    // Topbar scroll state
+    // Stato topbar allo scroll
     const topbar = document.querySelector(".topbar");
     function updateTopbar() {
       topbar.classList.toggle("is-scrolled", window.scrollY > 60);
@@ -379,7 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", updateTopbar, { passive: true });
     updateTopbar();
 
-    // Cursor tilt
+    // Effetto tilt al cursore sulle card
     function addTiltEffect(selector) {
       document.querySelectorAll(selector).forEach(card => {
         let animFrame;
@@ -405,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addTiltEffect(".vehicle-card");
     addTiltEffect(".features-image-card");
 
-    // ── HAMBURGER MENU ──────────────────────────────────────────────────
+    // Menu hamburger
     const menuBtn    = document.querySelector(".menu-btn");
     const navClose   = document.getElementById("navClose");
     const navOverlay = document.getElementById("navOverlay");
@@ -463,7 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
       link.addEventListener("click", (e) => {
         const href = link.getAttribute('href');
 
-        // HOME link — scroll to top
+        // Link HOME — torna in cima
         if (link.classList.contains('nav-active') || href === '#' || href === 'index.html') {
           e.preventDefault();
           closeMenu();
@@ -475,7 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // Features link with scroll offset
+        // Link Features con offset topbar
         if (link.dataset.scrollOffset) {
           e.preventDefault();
           closeMenu();
@@ -492,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // In-page anchor links
+        // Link anchor in-page
         if (href && href.startsWith('#') && href.length > 1) {
           e.preventDefault();
           closeMenu();
@@ -513,14 +544,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Close on backdrop click
+    // Chiudi cliccando lo sfondo del menu
     if (navOverlay) {
       navOverlay.addEventListener("click", (e) => {
         if (e.target === navOverlay) closeMenu();
       });
     }
 
-    // Keyboard escape
+    // Chiudi con Escape
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && navOverlay && navOverlay.classList.contains("is-open")) closeMenu();
     });

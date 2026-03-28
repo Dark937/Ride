@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Still not logged in — redirect to login
   if (!user) {
-    window.location.href = 'login.html?redirect=become-rider.html';
+    window.location.href = 'login.html?redirect=become-driver.html';
     return;
   }
 

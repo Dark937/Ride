@@ -70,8 +70,9 @@
   <!-- Topbar -->
   <header class="topbar">
     <div class="tb-left">
-      <a href="index.html" class="tb-home-link" aria-label="Home">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <a href="index.html" class="tb-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Home</span>
       </a>
     </div>
     <div class="tb-center">
@@ -104,17 +105,9 @@
       </div>
     </div>
     <div class="st-dd-divider"></div>
-    <button class="st-dd-item" id="ddFidelityCard">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-      <span data-i18n="myFidelityCard">My Fidelity Card</span>
-    </button>
     <a href="settings.html" class="st-dd-item" id="ddSettings">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span data-i18n="settings">Settings</span>
-    </a>
-    <a href="become-rider.html" class="st-dd-item" id="ddBecomeRider">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/><polyline points="15 17 17 19 21 15"/></svg>
-      <span>Become a Rider</span>
     </a>
     <div class="st-dd-divider"></div>
     <button class="st-dd-item danger" id="ddSignOut">
@@ -128,7 +121,7 @@
   <nav id="dashMobileNav">
     <button class="dmn-item active" data-panel="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span data-i18n="dashTitle">Dashboard</span></button>
     <button class="dmn-item" data-panel="fidelity"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span data-i18n="myFidelityTitle">Fidelity</span></button>
-    <button class="dmn-item" data-panel="payments"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="paymentsTitle">Payments</span></button>
+    <button class="dmn-item" data-panel="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/></svg><span data-i18n="paymentsTitle">Wallet</span></button>
     <button class="dmn-item" data-panel="account"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="myAccountTitle">Account</span></button>
   </nav>
 
@@ -236,6 +229,28 @@
   <section class="panel" id="panel-fidelity">
     <div class="panel-inner">
 
+      <!-- Schermata di acquisto — visibile solo se l'utente non ha ancora la fidelity card -->
+      <div class="fid-locked-wall" id="fidLockedWall" style="display:none">
+        <div class="fid-lock-icon">🎟️</div>
+        <h2 class="fid-lock-title">Ride Fidelity Card</h2>
+        <p class="fid-lock-desc">Ottieni punti su ogni corsa, accedi a coupon esclusivi, sconti prioritari e premi partner — tutto con una tessera premium.</p>
+        <ul class="fid-lock-perks">
+          <li>✦ Punti su ogni corsa Ride</li>
+          <li>✦ Coupon e premi partner esclusivi</li>
+          <li>✦ Accesso prioritario nelle ore di punta</li>
+          <li>✦ Tier Gold con 10% di sconto dai 2.000 pts</li>
+        </ul>
+        <div class="fid-lock-price">
+          <span class="fid-lock-amount">€9.99</span>
+          <span class="fid-lock-period">/ anno</span>
+        </div>
+        <button class="fid-lock-btn" id="buyFidelityCardBtn">Acquista la Fidelity Card</button>
+        <p class="fid-lock-note">Addebitato sul tuo wallet Ride. Annullabile in qualsiasi momento.</p>
+      </div>
+
+      <!-- Contenuto normale — visibile solo se l'utente ha la fidelity card -->
+      <div id="fidContent" style="display:none">
+
       <!-- Hero card: points + tier + progress -->
       <div class="fid-hero">
         <div class="fh-top">
@@ -318,6 +333,8 @@
         <div class="card-hd"><span class="card-title" data-i18n="pointsHistory">Points History</span></div>
         <div class="fid-history" id="fidHistory"></div>
       </div>
+
+      </div><!-- /fidContent -->
     </div>
   </section>
 
@@ -417,6 +434,15 @@
           <div class="info-row"><span class="info-label" data-i18n="memberSince">Member since</span><span class="info-val" id="infoSince">—</span></div>
           <div class="info-row"><span class="info-label" data-i18n="fidelityTier">Fidelity tier</span><span class="info-val" id="infoTier" style="color:var(--yellow)">Standard</span></div>
         </div>
+      </div>
+
+      <!-- Storico premi riscattati -->
+      <div class="card" id="redeemedRewardsCard" style="margin-top:20px;display:none">
+        <div class="card-hd">
+          <span class="card-title">Redeemed Rewards</span>
+          <span class="pill brand" id="redeemedCount">0</span>
+        </div>
+        <div id="redeemedRewardsList" class="redeemed-list"></div>
       </div>
     </div>
   </section>

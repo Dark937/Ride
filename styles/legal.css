@@ -96,6 +96,11 @@ body {
   width: 16px; height: 16px; stroke: currentColor; fill: none;
   stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
 }
+.tb-logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .tb-logo img { height: 22px; display: block; }
 
 /* topbar right area */

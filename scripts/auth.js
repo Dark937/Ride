@@ -158,7 +158,15 @@ function initForgotPassword() {
 
     const btn = document.getElementById("fmSubmit");
     btn.classList.add("is-loading"); btn.disabled = true;
-    await new Promise((r) => setTimeout(r, 1200));
+
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: em.value.trim() }),
+      });
+    } catch (_) { /* server unavailable — still show success to avoid info leak */ }
+
     btn.classList.remove("is-loading"); btn.disabled = false;
 
     const strong = document.querySelector("#fmSuccessMsg strong");
@@ -188,6 +196,91 @@ function initAuthThemeBtn() {
   });
 }
 
+/* ── 2FA CODE MODAL ───────────────────────────────────────────────── */
+
+function build2FAModal() {
+  if (document.getElementById("twoFaModal")) return;
+  const el = document.createElement("div");
+  el.id        = "twoFaModal";
+  el.className = "fm-overlay";
+  el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `
+    <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="twoFaTitle">
+      <div class="fm-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 id="twoFaTitle">Two-factor verification</h2>
+      <p id="twoFaDesc">We sent a 6-digit code to your email. Enter it below.</p>
+      <div class="auth-field" style="margin-top:20px;">
+        <label for="twoFaCode">Verification code</label>
+        <div class="auth-field-row">
+          <input type="text" id="twoFaCodeInput" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        </div>
+        <span class="auth-field-error" role="alert"></span>
+      </div>
+      <button type="button" id="twoFaSubmit" class="auth-submit" style="margin-top:20px;">
+        <span class="btn-text">Verify</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+      <div class="auth-error-banner" id="twoFaError" role="alert">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p></p>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+function show2FAModal(tempToken, onSuccess) {
+  const overlay = build2FAModal() || document.getElementById("twoFaModal");
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.getElementById("twoFaCodeInput")?.focus(), 100);
+
+  const btn   = document.getElementById("twoFaSubmit");
+  const errEl = document.getElementById("twoFaError");
+
+  // Remove old listener by replacing button
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+
+  newBtn.addEventListener("click", async () => {
+    const code = document.getElementById("twoFaCodeInput").value.trim();
+    errEl.classList.remove("visible");
+    if (!code || code.length !== 6) {
+      errEl.querySelector("p").textContent = "Please enter the 6-digit code.";
+      errEl.classList.add("visible");
+      return;
+    }
+    newBtn.classList.add("is-loading"); newBtn.disabled = true;
+    try {
+      const resp = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, code }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        overlay.classList.remove("is-open");
+        document.body.style.overflow = "";
+        onSuccess(data);
+      } else {
+        errEl.querySelector("p").textContent = data.error || "Verification failed.";
+        errEl.classList.add("visible");
+        newBtn.classList.remove("is-loading"); newBtn.disabled = false;
+      }
+    } catch (_) {
+      errEl.querySelector("p").textContent = "Connection error. Please try again.";
+      errEl.classList.add("visible");
+      newBtn.classList.remove("is-loading"); newBtn.disabled = false;
+    }
+  });
+}
+
 /* ── LOGIN FORM ───────────────────────────────────────────────────── */
 
 function initLoginForm() {
@@ -205,6 +298,17 @@ function initLoginForm() {
 
   emailIn.addEventListener("input", () => { fieldOk(emailIn); hideBanner(); });
   passIn.addEventListener("input",  () => { fieldOk(passIn);  hideBanner(); });
+
+  const finishLogin = async (userData, token) => {
+    localStorage.setItem('ride_token', token);
+    await Session.save({ ...userData, id: userData.id.toString() });
+    setLoading(false);
+    Session.saveDevice();
+    const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
+    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-rider.html", "driver-dashboard.html", ""];
+    const redirect = ALLOWED_REDIRECTS.includes(rawRedirect) ? rawRedirect : "index.html";
+    window.location.href = redirect || "index.html";
+  };
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -226,9 +330,22 @@ function initLoginForm() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        localStorage.setItem('ride_token', data.token);
-        await Session.save({ ...data.user, id: data.user.id.toString() });
-        loggedIn = true;
+        // 2FA required — show code input modal
+        if (data.twoFaRequired) {
+          setLoading(false);
+          show2FAModal(data.tempToken, async (verified) => {
+            await finishLogin(verified.user, verified.token);
+          });
+          return;
+        }
+        await finishLogin(data.user, data.token);
+        return;
+      }
+      if (resp.status !== 0) {
+        const data = await resp.json().catch(() => ({}));
+        setLoading(false);
+        showBanner(data.error || "Login failed.");
+        return;
       }
     } catch (_) { /* server unavailable — fall back to local */ }
 
@@ -243,7 +360,7 @@ function initLoginForm() {
     Session.saveDevice();
     // FIX C-01: prevent open redirect — only allow same-origin relative paths
     const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
-    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", ""];
+    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-rider.html", "driver-dashboard.html", ""];
     const redirect = ALLOWED_REDIRECTS.includes(rawRedirect) ? rawRedirect : "index.html";
     window.location.href = redirect || "index.html";
   });

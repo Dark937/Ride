@@ -47,14 +47,16 @@
         <span class="circle"></span>
       </button>
       <div id="profileDropdown" role="menu">
-        <!-- Logged-in state -->
         <div data-user style="display:none">
           <div class="dd-user-info">
-            <span class="dd-name"></span>
-            <span class="dd-email"></span>
+            <div class="dd-avatar-circle" id="ddAvatarCircle">R</div>
+            <div class="dd-user-text">
+              <span class="dd-name"></span>
+              <span class="dd-email"></span>
+            </div>
           </div>
           <a href="dashboard.html" class="dd-item" role="menuitem">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             My Dashboard
           </a>
           <a href="dashboard.html#fidelity" class="dd-item" role="menuitem">
@@ -70,8 +72,13 @@
             Sign out
           </button>
         </div>
-        <!-- Guest state -->
         <div data-guest>
+          <div class="dd-user-info" style="border-bottom:none;margin-bottom:0;padding-bottom:8px">
+            <div class="dd-avatar-circle" style="background:rgba(255,255,255,0.10)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="dd-user-text"><span class="dd-name" style="font-weight:500;opacity:0.55">Not signed in</span></div>
+          </div>
           <a href="login.html" class="dd-item" role="menuitem">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             Sign in
