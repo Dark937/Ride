@@ -59,19 +59,41 @@ async function initTopbarDropdown() {
     dropdown.querySelectorAll("[data-guest]").forEach(el => el.style.display = "none");
     dropdown.querySelectorAll("[data-user]").forEach(el  => el.style.display = "");
 
-    // Carica punti fedeltà nel dropdown
-    const ddFidelityMini  = document.getElementById("ddFidelityMini");
-    const ddFidelityPtsVal = document.getElementById("ddFidelityPtsVal");
-    const ddFidelityBar   = document.getElementById("ddFidelityBar");
-    const rideToken = localStorage.getItem("ride_token");
-    if (rideToken && ddFidelityMini) {
+    // Avatar nel dropdown
+    const ddAvatarCircle = document.getElementById("ddAvatarCircle");
+    if (ddAvatarCircle) {
+      if (user.photo) {
+        ddAvatarCircle.innerHTML = `<img src="${user.photo}" alt="Avatar">`;
+      } else {
+        ddAvatarCircle.textContent = user.initials || "R";
+      }
+    }
+
+    // Punti fedeltà nel dropdown — solo se l'utente possiede la fidelity card
+    const ddFidelityMini     = document.getElementById("ddFidelityMini");
+    const ddFidelityPtsVal   = document.getElementById("ddFidelityPtsVal");
+    const ddFidelityPtsMax   = document.getElementById("ddFidelityPtsMax");
+    const ddFidelityBar      = document.getElementById("ddFidelityBar");
+    const ddFidelityTierBadge = document.getElementById("ddFidelityTierBadge");
+    const uid        = localStorage.getItem("current_user_id");
+    const hasCard    = uid && localStorage.getItem("ride_has_fidelity_card_" + uid) === "true";
+    const rideToken  = localStorage.getItem("ride_token");
+    if (hasCard && rideToken && ddFidelityMini) {
       fetch("/api/fidelity", { headers: { "Authorization": "Bearer " + rideToken } })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data) return;
           const pts = data.pts || 0;
-          if (ddFidelityPtsVal) ddFidelityPtsVal.textContent = pts.toLocaleString();
-          if (ddFidelityBar) ddFidelityBar.style.width = Math.min(100, (pts / 1000) * 100) + "%";
+          const totalEarned = data.totalEarned || 0;
+          const isGold = totalEarned >= 2000;
+          const nextThreshold = isGold ? totalEarned : 2000;
+          if (ddFidelityPtsVal)   ddFidelityPtsVal.textContent   = pts.toLocaleString();
+          if (ddFidelityPtsMax)   ddFidelityPtsMax.textContent   = "/ " + nextThreshold.toLocaleString() + " pts";
+          if (ddFidelityBar)      ddFidelityBar.style.width       = Math.min(100, (pts / nextThreshold) * 100) + "%";
+          if (ddFidelityTierBadge) {
+            ddFidelityTierBadge.textContent = isGold ? "Gold" : "Standard";
+            ddFidelityTierBadge.className   = "dd-fidelity-tier-badge" + (isGold ? " gold" : "");
+          }
           ddFidelityMini.style.display = "";
         })
         .catch(() => {});
