@@ -612,20 +612,37 @@ function initBilling() {
   }
 }
 /* ── NOTIFICATIONS PANEL ─────────────────────────────────────────── */
-function initNotifications() {
+async function initNotifications() {
   const PREFS_KEY = "ride_notif_prefs";
   const IDS = ["nPush","nSms","nRideReminders","nReceipts","nAccount","nPromo"];
 
-  // Load saved prefs
+  // Load from localStorage first, then server/DB
+  let prefs = {};
   try {
-    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
-    IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && saved[id] !== undefined) el.checked = saved[id];
-    });
+    prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
   } catch (_) {}
+  IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = prefs[id] !== undefined ? prefs[id] : true; // default on
+  });
 
-  // When push toggle is enabled, request browser permission
+  // Load server prefs if logged in (MongoDB override)
+  const token = getToken();
+  if (token) {
+    try {
+      const res = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.ok) {
+        const data = await res.json();
+        const userPrefs = data.user.notifPrefs || {};
+        IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && userPrefs[id] !== undefined) el.checked = userPrefs[id];
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Push permission
   const pushEl = document.getElementById("nPush");
   pushEl?.addEventListener("change", async () => {
     if (!pushEl.checked) return;
@@ -648,33 +665,95 @@ function initNotifications() {
       }
     }
     showToast("Push notifications enabled!");
-    // Send a test notification
     new Notification("Ride Notifications", {
       body: "You'll now receive ride reminders and updates.",
       icon: "assets/favicon.svg",
     });
   });
 
-  document.getElementById("saveNotifs")?.addEventListener("click", () => {
+  // Save to local + server/DB
+  document.getElementById("saveNotifs")?.addEventListener("click", async () => {
     const prefs = {};
     IDS.forEach(id => {
       const el = document.getElementById(id);
       if (el) prefs[id] = el.checked;
     });
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-    showToast("Notification preferences saved!");
+    
+    // Sync to MongoDB
+    if (token) {
+      try {
+        await patchProfile({ notifPrefs: prefs });
+        showToast("Preferences saved to account!");
+      } catch (_) {
+        showToast("Saved locally (server sync failed).");
+      }
+    } else {
+      showToast("Preferences saved locally!");
+    }
   });
 }
 
+
 /* ── PRIVACY PANEL ───────────────────────────────────────────────── */
-function initPrivacy() {
+async function initPrivacy() {
+  const PRIVACY_KEY = "ride_privacy_prefs";
+  const PRIVACY_IDS = ["privShare","privMarketing","privAnalytics","privLocation"];
+
+  // Load local first
+  let prefs = {};
+  try {
+    prefs = JSON.parse(localStorage.getItem(PRIVACY_KEY) || "{}");
+  } catch (_) {}
+  PRIVACY_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = prefs[id] !== undefined ? prefs[id] : true; // default on
+  });
+
+  // Load server/DB override
+  const token = getToken();
+  if (token) {
+    try {
+      const res = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.ok) {
+        const data = await res.json();
+        const userPrefs = data.user.privacyPrefs || {};
+        PRIVACY_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && userPrefs[id] !== undefined) el.checked = userPrefs[id];
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Save button
+  document.getElementById("savePrivacy")?.addEventListener("click", async () => {
+    const prefs = {};
+    PRIVACY_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) prefs[id] = el.checked;
+    });
+    localStorage.setItem(PRIVACY_KEY, JSON.stringify(prefs));
+    
+    // Sync MongoDB
+    if (token) {
+      try {
+        await patchProfile({ privacyPrefs: prefs });
+        showToast("Privacy settings saved to account!");
+      } catch (_) {
+        showToast("Saved locally (server sync failed).");
+      }
+    } else {
+      showToast("Privacy settings saved locally!");
+    }
+  });
+
+  // Data export
   document.getElementById("exportDataBtn")?.addEventListener("click", () => {
     showToast("Data export request sent — check your email in 48 h.");
   });
-  document.getElementById("savePrivacy")?.addEventListener("click", () => {
-    showToast("Privacy settings saved!");
-  });
 }
+
 
 /* ── PROFILE DROPDOWN (topbar) ───────────────────────────────────── */
 function initProfileDropdown(user) {

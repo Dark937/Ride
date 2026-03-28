@@ -486,8 +486,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 // Aggiornamento profilo
 app.patch('/api/profile', authenticateToken, profileLimiter, async (req, res) => {
   try {
-    const ALLOWED = ['firstName','lastName','phone','city','country','birthday',
-                     'photo','theme','lang','reduceMotion','initials'];
+const ALLOWED = ['firstName','lastName','phone','city','country','birthday',
+                     'photo','theme','lang','reduceMotion','initials','notifPrefs','privacyPrefs'];
     const update = {};
     for (const key of ALLOWED) {
       if (req.body[key] !== undefined) update[key] = req.body[key];
@@ -508,6 +508,12 @@ app.patch('/api/profile', authenticateToken, profileLimiter, async (req, res) =>
       return res.status(400).json({ error: 'Invalid theme.' });
     if (update.reduceMotion && !['true','false'].includes(update.reduceMotion))
       return res.status(400).json({ error: 'Invalid reduceMotion value.' });
+    // Validate prefs objects (JSON → boolean arrays)
+    ['notifPrefs','privacyPrefs'].forEach(key => {
+      if (update[key] && typeof update[key] !== 'object') {
+        return res.status(400).json({ error: `Invalid ${key}.` });
+      }
+    });
     if (update.lang && (typeof update.lang !== 'string' || update.lang.length > 8))
       return res.status(400).json({ error: 'Invalid lang.' });
 
