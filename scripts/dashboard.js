@@ -784,7 +784,7 @@ function renderFidelity(uid){
   }
   if(redeemBtn){
     const r2=redeemBtn.cloneNode(true);redeemBtn.replaceWith(r2);
-    r2.addEventListener('click',ev=>{ev.preventDefault();openCouponModal('Redeem Points',PARTNER_COUPONS,fid.pts);});
+    r2.addEventListener('click',ev=>{ev.preventDefault();const affordable=PARTNER_COUPONS.filter(c=>c.cost<=fid.pts);openCouponModal('Redeem Points',affordable.length?affordable:PARTNER_COUPONS,fid.pts);});
   }
   if(seeAllBtn){
     const s2=seeAllBtn.cloneNode(true);seeAllBtn.replaceWith(s2);
