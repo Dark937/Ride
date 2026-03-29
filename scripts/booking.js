@@ -143,7 +143,7 @@ function toast(msg) {
 const VEHICLES = [
   {
     id: "economy",
-    name: "Porsche 718",
+    name: "Porsche 718 Cayman",
     sub: "Precision handling. City-ready performance.",
     img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%233d5eff' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%233d5eff' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%233d5eff' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%233d5eff' fill-opacity='0.3'/></svg>",
     ratePerKm: 1.80,
@@ -171,7 +171,7 @@ const VEHICLES = [
   },
   {
     id: "premium",
-    name: "Rolls-Royce Ghost",
+    name: "Rolls-Royce Spectre",
     sub: "Unmatched refinement. Silence as a feature.",
     img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%23d4af37' fill-opacity='0.15'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%23d4af37' fill-opacity='0.22'/><circle cx='37' cy='58' r='10' fill='%23d4af37' fill-opacity='0.35'/><circle cx='103' cy='58' r='10' fill='%23d4af37' fill-opacity='0.35'/></svg>",
     ratePerKm: 4.50,
@@ -213,7 +213,7 @@ const VEHICLES = [
   },
   {
     id: "xl",
-    name: "Range Rover Autobiography",
+    name: "Range Rover Evoque",
     sub: "Group travel with no compromise on luxury.",
     img: "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 70' fill='none'><rect x='5' y='32' width='130' height='26' rx='8' fill='%23a78bfa' fill-opacity='0.12'/><path d='M22 32 Q32 14 52 10 L88 10 Q108 14 118 32Z' fill='%23a78bfa' fill-opacity='0.2'/><circle cx='37' cy='58' r='10' fill='%23a78bfa' fill-opacity='0.3'/><circle cx='103' cy='58' r='10' fill='%23a78bfa' fill-opacity='0.3'/></svg>",
     ratePerKm: 2.80,
