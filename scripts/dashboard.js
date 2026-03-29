@@ -701,34 +701,7 @@ function openCouponModal(title, coupons, pts) {
   document.getElementById('couponOverlay').classList.add('open');
 }
 const GOLD_THRESHOLD=2000;
-const FIDELITY_CARD_PRICE=9.99;
-
-function buyFidelityCard(uid){
-  const bal=RideData.getWallet(uid);
-  if(bal<FIDELITY_CARD_PRICE){
-    toast(`Saldo wallet insufficiente. Ricarica almeno €${FIDELITY_CARD_PRICE.toFixed(2)} per acquistare la card.`);
-    return;
-  }
-  const txs=RideData.getWalletTxs(uid);
-  txs.unshift({type:'debit',label:'Ride Fidelity Card — abbonamento annuale',date:new Date().toISOString(),amount:-FIDELITY_CARD_PRICE});
-  RideData.saveWallet(uid,bal-FIDELITY_CARD_PRICE,txs);
-  localStorage.setItem('ride_has_fidelity_card_'+uid,'true');
-  toast('Fidelity Card attivata! Benvenuto nel programma Ride.');
-  renderFidelity(uid);
-}
-
 function renderFidelity(uid){
-  const hasCard=localStorage.getItem('ride_has_fidelity_card_'+uid)==='true';
-  const lockedWall=document.getElementById('fidLockedWall');
-  const fidContent=document.getElementById('fidContent');
-  if(lockedWall) lockedWall.style.display=hasCard?'none':'flex';
-  if(fidContent) fidContent.style.display=hasCard?'':'none';
-
-  const buyBtn=document.getElementById('buyFidelityCardBtn');
-  if(buyBtn){ buyBtn.onclick=()=>buyFidelityCard(uid); }
-
-  if(!hasCard) return;
-
   const fid=RideData.getFid(uid);
   const rides=RideData.getRides(uid).filter(r=>r.status==='completed');
   const isGold=fid.totalEarned>=GOLD_THRESHOLD;
@@ -811,7 +784,7 @@ function renderFidelity(uid){
   }
   if(redeemBtn){
     const r2=redeemBtn.cloneNode(true);redeemBtn.replaceWith(r2);
-    r2.addEventListener('click',ev=>{ev.preventDefault();const affordable=PARTNER_COUPONS.filter(c=>c.cost<=fid.pts);openCouponModal('Redeem Points',affordable.length?affordable:PARTNER_COUPONS,fid.pts);});
+    r2.addEventListener('click',ev=>{ev.preventDefault();openCouponModal('Redeem Points',PARTNER_COUPONS,fid.pts);});
   }
   if(seeAllBtn){
     const s2=seeAllBtn.cloneNode(true);seeAllBtn.replaceWith(s2);
@@ -1130,39 +1103,6 @@ function renderAccount(user,uid){
   document.getElementById('infoCountry').textContent=user.country||'Not set';
   document.getElementById('infoSince').textContent=user.createdAt?fmtDate(user.createdAt):'—';
   document.getElementById('infoTier').textContent=fid.totalEarned>=GOLD_THRESHOLD?'Gold ✦':'Standard';
-
-  // Storico premi riscattati
-  const rewardCard=document.getElementById('redeemedRewardsCard');
-  const rewardList=document.getElementById('redeemedRewardsList');
-  const rewardCount=document.getElementById('redeemedCount');
-  const coupons=JSON.parse(localStorage.getItem('ride_coupons_'+uid)||'[]');
-  if(rewardCard && rewardList){
-    if(coupons.length){
-      rewardCard.style.display='';
-      if(rewardCount) rewardCount.textContent=coupons.length;
-      rewardList.innerHTML=coupons.slice().reverse().map(cp=>{
-        const hasCode=cp.code&&cp.code.startsWith('RIDE-');
-        const isUsed=!!cp.used;
-        const isRideDiscount=cp.discount&&(cp.discount.type==='fixed'||cp.discount.type==='free');
-        const expiry=cp.expiresAt?fmtDate(cp.expiresAt):'';
-        const redeemed=cp.redeemedAt?fmtDate(cp.redeemedAt):'';
-        return `<div class="redeemed-item">
-          <div class="redeemed-icon">${cp.icon||'🎫'}</div>
-          <div class="redeemed-body">
-            <div class="redeemed-name">${esc(cp.name)}</div>
-            <div class="redeemed-meta">
-              ${redeemed?`<span>${redeemed}</span>`:''}
-              ${expiry&&!isUsed?`<span>Expires ${expiry}</span>`:''}
-              ${isRideDiscount?`<span class="redeemed-used-badge ${isUsed?'used':'available'}">${isUsed?'Used':'Available'}</span>`:''}
-            </div>
-            ${hasCode?`<button class="redeemed-code-btn" onclick="this.nextSibling.classList.toggle('visible')">View code</button><div class="redeemed-code-reveal">${esc(cp.code)}</div>`:''}
-          </div>
-        </div>`;
-      }).join('');
-    } else {
-      rewardCard.style.display='none';
-    }
-  }
 }
 
 /* ════════════════════════════════════════════════════════
