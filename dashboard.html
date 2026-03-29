@@ -109,10 +109,6 @@
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span data-i18n="settings">Settings</span>
     </a>
-    <a href="become-rider.html" class="st-dd-item" id="ddBecomeRider">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/><polyline points="15 17 17 19 21 15"/></svg>
-      <span>Become a Rider</span>
-    </a>
     <div class="st-dd-divider"></div>
     <button class="st-dd-item danger" id="ddSignOut">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -233,6 +229,28 @@
   <section class="panel" id="panel-fidelity">
     <div class="panel-inner">
 
+      <!-- Schermata di acquisto — visibile solo se l'utente non ha ancora la fidelity card -->
+      <div class="fid-locked-wall" id="fidLockedWall" style="display:none">
+        <div class="fid-lock-icon">🎟️</div>
+        <h2 class="fid-lock-title">Ride Fidelity Card</h2>
+        <p class="fid-lock-desc">Ottieni punti su ogni corsa, accedi a coupon esclusivi, sconti prioritari e premi partner — tutto con una tessera premium.</p>
+        <ul class="fid-lock-perks">
+          <li>✦ Punti su ogni corsa Ride</li>
+          <li>✦ Coupon e premi partner esclusivi</li>
+          <li>✦ Accesso prioritario nelle ore di punta</li>
+          <li>✦ Tier Gold con 10% di sconto dai 2.000 pts</li>
+        </ul>
+        <div class="fid-lock-price">
+          <span class="fid-lock-amount">€9.99</span>
+          <span class="fid-lock-period">/ anno</span>
+        </div>
+        <button class="fid-lock-btn" id="buyFidelityCardBtn">Acquista la Fidelity Card</button>
+        <p class="fid-lock-note">Addebitato sul tuo wallet Ride. Annullabile in qualsiasi momento.</p>
+      </div>
+
+      <!-- Contenuto normale — visibile solo se l'utente ha la fidelity card -->
+      <div id="fidContent" style="display:none">
+
       <!-- Hero card: points + tier + progress -->
       <div class="fid-hero">
         <div class="fh-top">
@@ -315,6 +333,8 @@
         <div class="card-hd"><span class="card-title" data-i18n="pointsHistory">Points History</span></div>
         <div class="fid-history" id="fidHistory"></div>
       </div>
+
+      </div><!-- /fidContent -->
     </div>
   </section>
 
@@ -414,6 +434,15 @@
           <div class="info-row"><span class="info-label" data-i18n="memberSince">Member since</span><span class="info-val" id="infoSince">—</span></div>
           <div class="info-row"><span class="info-label" data-i18n="fidelityTier">Fidelity tier</span><span class="info-val" id="infoTier" style="color:var(--yellow)">Standard</span></div>
         </div>
+      </div>
+
+      <!-- Storico premi riscattati -->
+      <div class="card" id="redeemedRewardsCard" style="margin-top:20px;display:none">
+        <div class="card-hd">
+          <span class="card-title">Redeemed Rewards</span>
+          <span class="pill brand" id="redeemedCount">0</span>
+        </div>
+        <div id="redeemedRewardsList" class="redeemed-list"></div>
       </div>
     </div>
   </section>
