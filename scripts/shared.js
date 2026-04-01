@@ -140,6 +140,22 @@ const Session = {
   },
 
   async get() {
+    // Fast path: JWT token → /api/profile (skips 600KB WASM + IndexedDB on critical path)
+    const token = localStorage.getItem('ride_token');
+    if (token) {
+      try {
+        const r = await fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.user) {
+            if (d.user.lang)  Lang.set(d.user.lang);
+            if (d.user.theme) Theme.set(d.user.theme);
+            return d.user;
+          }
+        }
+      } catch (_) {}
+    }
+    // Fallback: local SQLite (no token or server unreachable)
     await dbReady;
     try {
       const uid = localStorage.getItem("current_user_id");
@@ -148,10 +164,8 @@ const Session = {
       const r = s.getAsObject([uid]); s.free();
       if (r && r.id) {
         const safe = {...r}; delete safe.password;
-        // Apply user's preferred lang/theme/motion from account
         if (safe.lang)  Lang.set(safe.lang);
         if (safe.theme) Theme.set(safe.theme);
-        // reduceMotion is applied explicitly in bootstrap, not here
         return safe;
       }
       return null;
@@ -387,9 +401,9 @@ const LANGS = {
     sessionDesc:"Devices currently signed in to your account.",
     passwordDesc:"Manage your password, two-factor authentication and active sessions.",
     // Landing page
-    heroTitle:"Move Faster. Ride Smarter.",
-    heroSubtitle:"Powered by AI",
-    heroDesc:"From quick city rides to daily commuting, Ride delivers a smooth and reliable experience powered by modern technology and intuitive design.",
+    heroTitle:"Born for Supercars. Built for the City.",
+    heroSubtitle:"Premium vehicles. Instant access.",
+    heroDesc:"Lamborghini, Ferrari, Rolls-Royce — on demand, door to door. Ride puts the most exclusive cars in the world at your fingertips, with no compromise on experience.",
     f1Title:"Your route is ready before traffic gets a vote.",
     f1Text:"Ride tracks live traffic, demand patterns, and predictive data to optimize every journey before delays become your problem.",
     f2Title:"Your trip leaves a lighter footprint.",
@@ -468,6 +482,19 @@ const LANGS = {
     // Confirmations
     cancelRideQ:"Cancel this ride?",
     keepRide:"Keep ride",
+    // Fidelity locked wall
+    fidCardName:"Fidelity Card", fidCardSub:"Premium Member",
+    fidLockTitle:"Ride Fidelity Card",
+    fidLockDesc:"Earn points on every ride, unlock exclusive coupons, priority discounts and partner rewards.",
+    fidPerk1:"Points on every Ride", fidPerk2:"Exclusive partner rewards",
+    fidPerk3:"Priority access during peak hours", fidPerk4:"Gold tier upgrades & bonuses",
+    fidLockPeriod:"/ month", fidLockBuy:"Get the Fidelity Card",
+    fidLockNote:"Billed monthly from your Ride wallet. Cancel anytime.",
+    // Fidelity payment modal
+    fidPayTitle:"Activate Fidelity Card", fidPaySub:"Monthly subscription · cancel anytime",
+    fidPayItem:"Ride Fidelity Card", fidPayDue:"Due today",
+    fidPayConfirm:"Pay €10.00 from Wallet",
+    fidPayNote:"Next billing will be charged automatically one month from today.",
   },
 
   it: {
@@ -666,6 +693,17 @@ const LANGS = {
     noInsights:"Completa dei viaggi per vedere le statistiche.",
     cancelRideQ:"Annullare il viaggio?",
     keepRide:"Mantieni viaggio",
+    fidCardName:"Carta Fedeltà", fidCardSub:"Membro Premium",
+    fidLockTitle:"Carta Fedeltà Ride",
+    fidLockDesc:"Guadagna punti ad ogni corsa, accedi a coupon esclusivi, sconti prioritari e premi partner.",
+    fidPerk1:"Punti ad ogni corsa", fidPerk2:"Premi partner esclusivi",
+    fidPerk3:"Prenotazione prioritaria nelle ore di punta", fidPerk4:"Upgrade Gold e bonus speciali",
+    fidLockPeriod:"/ mese", fidLockBuy:"Ottieni la Carta Fedeltà",
+    fidLockNote:"Addebitato mensilmente dal tuo wallet Ride. Annullabile in qualsiasi momento.",
+    fidPayTitle:"Attiva Carta Fedeltà", fidPaySub:"Abbonamento mensile · annullabile in qualsiasi momento",
+    fidPayItem:"Carta Fedeltà Ride", fidPayDue:"Da pagare oggi",
+    fidPayConfirm:"Paga €10.00 dal wallet",
+    fidPayNote:"Il prossimo addebito verrà effettuato automaticamente tra un mese.",
   },
 
   fr: {

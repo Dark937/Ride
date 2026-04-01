@@ -1691,36 +1691,72 @@ select option{background:var(--card-bg);color:var(--text)}
 }
 
 /* ── Fidelity card locked wall ── */
+/* #fidContent: flex container so panel-inner gap applies between fidelity sections */
+#fidContent {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .fid-locked-wall {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 48px 32px;
-  gap: 0;
-}
-.fid-lock-icon { font-size: 48px; margin-bottom: 20px; }
-.fid-lock-title {
-  font-size: 22px; font-weight: 800; color: var(--text);
-  margin-bottom: 12px; letter-spacing: -0.02em;
-}
-.fid-lock-desc {
-  font-size: 14px; color: var(--muted); max-width: 420px;
-  line-height: 1.6; margin-bottom: 20px;
-}
-.fid-lock-perks {
-  list-style: none; padding: 0;
-  display: grid; gap: 8px;
-  margin-bottom: 28px; width: 100%; max-width: 340px;
-}
-.fid-lock-perks li {
-  font-size: 13.5px; color: var(--text-2); text-align: left;
-  padding: 8px 14px;
-  background: var(--surface); border-radius: 10px;
+  padding: 40px 32px 36px;
+  gap: 16px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
   border: 1px solid var(--border);
 }
+
+/* Card art inside locked wall */
+.fid-lock-card-art {
+  position: relative; overflow: hidden;
+  width: 220px; height: 130px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #0f0730 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 40px rgba(80,0,200,.35), 0 2px 8px rgba(0,0,0,.3);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px 14px;
+  flex-shrink: 0;
+}
+.flca-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 55%);
+  border-radius: inherit;
+}
+.flca-top { display: flex; justify-content: space-between; align-items: center; }
+.flca-brand { font-size: 13px; font-weight: 900; letter-spacing: .18em; color: rgba(255,255,255,.9); }
+.flca-icon  { font-size: 16px; color: rgba(255,255,255,.7); }
+.flca-name  { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75); letter-spacing: .06em; }
+.flca-sub   { font-size: 10px; color: rgba(255,255,255,.5); letter-spacing: .08em; }
+
+.fid-lock-title {
+  font-size: 22px; font-weight: 800; color: var(--text);
+  letter-spacing: -0.02em; margin: 0;
+}
+.fid-lock-desc {
+  font-size: 14px; color: var(--muted); max-width: 380px;
+  line-height: 1.6; margin: 0;
+}
+.fid-lock-perks {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; gap: 8px;
+  width: 100%; max-width: 340px;
+}
+.fid-lock-perks li {
+  font-size: 13px; color: var(--text-2); text-align: left;
+  padding: 8px 12px;
+  background: var(--surface); border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.fid-lock-perks li svg { flex-shrink: 0; color: var(--brand); }
 .fid-lock-price {
-  margin-bottom: 20px;
+  margin: 0;
   display: flex; align-items: baseline; gap: 4px;
 }
 .fid-lock-amount {
@@ -1733,11 +1769,30 @@ select option{background:var(--card-bg);color:var(--text)}
   border: none; border-radius: 12px;
   padding: 14px 32px; font-size: 15px; font-weight: 700;
   cursor: pointer; transition: opacity .16s, transform .16s;
-  width: 100%; max-width: 300px;
+  width: 100%; max-width: 300px; margin: 0;
 }
 .fid-lock-btn:hover { opacity: .88; transform: translateY(-1px); }
-.fid-lock-note {
-  margin-top: 12px; font-size: 11.5px; color: var(--muted);
+.fid-lock-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.fid-lock-note { margin: 0; font-size: 11.5px; color: var(--muted); }
+
+/* Payment modal summary */
+.fid-pay-summary {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+  margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.fid-pay-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13.5px; color: var(--text);
+}
+.fid-pay-total {
+  padding-top: 10px; border-top: 1px solid var(--border);
+  font-weight: 700; font-size: 14px;
+}
+.fid-pay-wallet-bal {
+  font-size: 12px; color: var(--muted);
+  padding-top: 8px; border-top: 1px solid var(--border);
+  text-align: center;
 }
 
 /* ── Storico premi riscattati (My Account) ── */

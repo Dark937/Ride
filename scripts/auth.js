@@ -305,7 +305,7 @@ function initLoginForm() {
     setLoading(false);
     Session.saveDevice();
     const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
-    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-rider.html", "driver-dashboard.html", ""];
+    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-driver.html", "driver-dashboard.html", ""];
     const redirect = ALLOWED_REDIRECTS.includes(rawRedirect) ? rawRedirect : "index.html";
     window.location.href = redirect || "index.html";
   };
@@ -360,7 +360,7 @@ function initLoginForm() {
     Session.saveDevice();
     // FIX C-01: prevent open redirect — only allow same-origin relative paths
     const rawRedirect = new URLSearchParams(window.location.search).get("redirect") || "";
-    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-rider.html", "driver-dashboard.html", ""];
+    const ALLOWED_REDIRECTS = ["dashboard.html", "index.html", "settings.html", "become-driver.html", "driver-dashboard.html", ""];
     const redirect = ALLOWED_REDIRECTS.includes(rawRedirect) ? rawRedirect : "index.html";
     window.location.href = redirect || "index.html";
   });
