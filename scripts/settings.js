@@ -146,6 +146,22 @@ async function initAccount() {
   if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
   if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
+  // Apply saved settings to checkboxes
+  const toggles = {
+    loginNotifToggle: "loginNotif",
+    nPush: "nPush", nSms: "nSms", nRideReminders: "nReminders",
+    nReceipts: "nReceipts", nAccount: "nAccount", nPromo: "nPromo",
+    privShare: "pShare", privMarketing: "pMarketing",
+    privAnalytics: "pAnalytics", privLocation: "pLocation"
+  };
+  Object.entries(toggles).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && user[key] !== undefined) {
+      // Handle both boolean and string "true"/"false" from DB/Session
+      el.checked = (user[key] === true || user[key] === "1" || user[key] === 1 || user[key] === "true");
+    }
+  });
+
   await populateUserUI(user);
 
   const fields = {
@@ -340,6 +356,17 @@ async function initSecurity() {
         twoFaToggle.checked = !enabled;
         showToast("Connection error.");
       }
+    });
+  }
+
+  const loginNotifToggle = document.getElementById("loginNotifToggle");
+  if (loginNotifToggle) {
+    loginNotifToggle.addEventListener("change", async () => {
+      const enabled = loginNotifToggle.checked;
+      const u = await Session.get();
+      if (u) await Session.save({ ...u, loginNotif: enabled });
+      patchProfile({ loginNotif: enabled });
+      showToast(enabled ? "Login alerts enabled." : "Login alerts disabled.");
     });
   }
 
@@ -613,17 +640,7 @@ function initBilling() {
 }
 /* ── NOTIFICATIONS PANEL ─────────────────────────────────────────── */
 function initNotifications() {
-  const PREFS_KEY = "ride_notif_prefs";
   const IDS = ["nPush","nSms","nRideReminders","nReceipts","nAccount","nPromo"];
-
-  // Load saved prefs
-  try {
-    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
-    IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && saved[id] !== undefined) el.checked = saved[id];
-    });
-  } catch (_) {}
 
   // When push toggle is enabled, request browser permission
   const pushEl = document.getElementById("nPush");
@@ -655,13 +672,19 @@ function initNotifications() {
     });
   });
 
-  document.getElementById("saveNotifs")?.addEventListener("click", () => {
+  document.getElementById("saveNotifs")?.addEventListener("click", async () => {
     const prefs = {};
     IDS.forEach(id => {
       const el = document.getElementById(id);
       if (el) prefs[id] = el.checked;
     });
-    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    const backendData = {
+      nPush: prefs.nPush, nSms: prefs.nSms, nReminders: prefs.nRideReminders,
+      nReceipts: prefs.nReceipts, nAccount: prefs.nAccount, nPromo: prefs.nPromo
+    };
+    const u = await Session.get();
+    if (u) await Session.save({ ...u, ...backendData });
+    await patchProfile(backendData);
     showToast("Notification preferences saved!");
   });
 }
@@ -671,7 +694,20 @@ function initPrivacy() {
   document.getElementById("exportDataBtn")?.addEventListener("click", () => {
     showToast("Data export request sent — check your email in 48 h.");
   });
-  document.getElementById("savePrivacy")?.addEventListener("click", () => {
+  document.getElementById("savePrivacy")?.addEventListener("click", async () => {
+    const ids = ["privShare", "privMarketing", "privAnalytics", "privLocation"];
+    const prefs = {};
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) prefs[id] = el.checked;
+    });
+    const backendData = {
+      pShare: prefs.privShare, pMarketing: prefs.privMarketing,
+      pAnalytics: prefs.privAnalytics, pLocation: prefs.privLocation
+    };
+    const u = await Session.get();
+    if (u) await Session.save({ ...u, ...backendData });
+    await patchProfile(backendData);
     showToast("Privacy settings saved!");
   });
 }

@@ -21,10 +21,15 @@ const dbReady = (async () => {
         initials TEXT, createdAt TEXT,
         photo TEXT, phone TEXT,
         city TEXT, country TEXT, birthday TEXT,
-        lang TEXT, theme TEXT, reduceMotion TEXT
+        lang TEXT, theme TEXT, reduceMotion TEXT,
+        loginNotif TEXT, nPush TEXT, nSms TEXT, nReminders TEXT,
+        nReceipts TEXT, nAccount TEXT, nPromo TEXT,
+        pShare TEXT, pMarketing TEXT, pAnalytics TEXT, pLocation TEXT
       )
     `);
-    ["photo","phone","city","country","birthday","lang","theme","reduceMotion"].forEach(col => {
+    ["photo","phone","city","country","birthday","lang","theme","reduceMotion",
+     "loginNotif","nPush","nSms","nReminders","nReceipts","nAccount","nPromo",
+     "pShare","pMarketing","pAnalytics","pLocation"].forEach(col => {
       try { db.run("ALTER TABLE users ADD COLUMN " + col + " TEXT"); } catch(_){}
     });
     await _idbSave();
@@ -102,18 +107,33 @@ const Session = {
       lang:        user.lang        !== undefined ? user.lang        : (existing.lang        ?? null),
       theme:       user.theme       !== undefined ? user.theme       : (existing.theme       ?? null),
       reduceMotion:user.reduceMotion !== undefined ? user.reduceMotion: (existing.reduceMotion ?? null),
+      loginNotif:  user.loginNotif   !== undefined ? user.loginNotif  : (existing.loginNotif  ?? null),
+      nPush:       user.nPush        !== undefined ? user.nPush       : (existing.nPush       ?? null),
+      nSms:        user.nSms         !== undefined ? user.nSms        : (existing.nSms        ?? null),
+      nReminders:  user.nReminders   !== undefined ? user.nReminders  : (existing.nReminders  ?? null),
+      nReceipts:   user.nReceipts    !== undefined ? user.nReceipts   : (existing.nReceipts   ?? null),
+      nAccount:    user.nAccount     !== undefined ? user.nAccount    : (existing.nAccount    ?? null),
+      nPromo:      user.nPromo       !== undefined ? user.nPromo      : (existing.nPromo      ?? null),
+      pShare:      user.pShare       !== undefined ? user.pShare      : (existing.pShare      ?? null),
+      pMarketing:  user.pMarketing   !== undefined ? user.pMarketing  : (existing.pMarketing  ?? null),
+      pAnalytics:  user.pAnalytics   !== undefined ? user.pAnalytics  : (existing.pAnalytics  ?? null),
+      pLocation:   user.pLocation    !== undefined ? user.pLocation   : (existing.pLocation   ?? null),
     };
 
     const s = db.prepare(`
       INSERT OR REPLACE INTO users
-      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang,theme,reduceMotion)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      (id,firstName,lastName,email,password,initials,createdAt,photo,phone,city,country,birthday,lang,theme,reduceMotion,
+       loginNotif,nPush,nSms,nReminders,nReceipts,nAccount,nPromo,pShare,pMarketing,pAnalytics,pLocation)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `);
     s.run([merged.id, merged.firstName, merged.lastName, merged.email,
            merged.password, merged.initials, merged.createdAt,
            merged.photo, merged.phone, merged.city,
            merged.country, merged.birthday, merged.lang,
-           merged.theme ?? null, merged.reduceMotion ?? null]);
+           merged.theme ?? null, merged.reduceMotion ?? null,
+           merged.loginNotif, merged.nPush, merged.nSms, merged.nReminders,
+           merged.nReceipts, merged.nAccount, merged.nPromo,
+           merged.pShare, merged.pMarketing, merged.pAnalytics, merged.pLocation]);
     s.free();
     await _idbSave();
     localStorage.setItem("current_user_id", user.id);
@@ -360,8 +380,8 @@ const LANGS = {
     exportDataBtn:"Request data export",
     dangerDesc:"Permanently delete your account and all associated data.",
     twoFaTitle:"Two-factor authentication",
-    totpLabel:"Authenticator app (TOTP)",
-    totpDesc:"Require a time-based code when signing in from a new device.",
+    totpLabel:"Two-factor authentication (2FA)",
+    totpDesc:"Require a verification code when signing in from a new device.",
     loginAlertLabel:"Login activity alerts",
     loginAlertDesc:"Send an email when a new sign-in is detected.",
     sessionDesc:"Devices currently signed in to your account.",
@@ -562,8 +582,8 @@ const LANGS = {
     exportDataBtn:"Richiedi esportazione dati",
     dangerDesc:"Elimina definitivamente il tuo account e tutti i dati associati.",
     twoFaTitle:"Autenticazione a due fattori",
-    totpLabel:"App autenticazione (TOTP)",
-    totpDesc:"Richiedi un codice temporaneo al login da un nuovo dispositivo.",
+    totpLabel:"Autenticazione a due fattori (2FA)",
+    totpDesc:"Richiedi un codice di verifica al login da un nuovo dispositivo.",
     loginAlertLabel:"Avvisi attività di accesso",
     loginAlertDesc:"Invia un'email quando viene rilevato un nuovo accesso.",
     sessionDesc:"Dispositivi attualmente connessi al tuo account.",
@@ -760,8 +780,8 @@ const LANGS = {
     exportDataBtn:"Demander l'exportation des données",
     dangerDesc:"Supprimez définitivement votre compte et toutes les données associées.",
     twoFaTitle:"Authentification à deux facteurs",
-    totpLabel:"Application d'authentification (TOTP)",
-    totpDesc:"Exiger un code temporel lors de la connexion depuis un nouvel appareil.",
+    totpLabel:"Authentification à deux facteurs (2FA)",
+    totpDesc:"Exiger un code de vérification lors de la connexion depuis un nouvel appareil.",
     loginAlertLabel:"Alertes d'activité de connexion",
     loginAlertDesc:"Envoyer un email lorsqu'une nouvelle connexion est détectée.",
     sessionDesc:"Appareils actuellement connectés à votre compte.",
@@ -949,8 +969,8 @@ const LANGS = {
     exportDataBtn:"Solicitar exportación de datos",
     dangerDesc:"Elimina permanentemente tu cuenta y todos los datos asociados.",
     twoFaTitle:"Autenticación de dos factores",
-    totpLabel:"Aplicación de autenticación (TOTP)",
-    totpDesc:"Requerir un código temporal al iniciar sesión desde un nuevo dispositivo.",
+    totpLabel:"Autenticación de dos factores (2FA)",
+    totpDesc:"Requerir un código de verificación al iniciar sesión desde un nuevo dispositivo.",
     loginAlertLabel:"Alertas de actividad de inicio de sesión",
     loginAlertDesc:"Enviar un email cuando se detecte un nuevo inicio de sesión.",
     sessionDesc:"Dispositivos actualmente conectados a tu cuenta.",
@@ -1137,8 +1157,8 @@ const LANGS = {
     exportDataBtn:"申请数据导出",
     dangerDesc:"永久删除您的账户和所有相关数据。",
     twoFaTitle:"双重身份验证",
-    totpLabel:"身份验证器应用 (TOTP)",
-    totpDesc:"从新设备登录时需要时间码。",
+    totpLabel:"双重身份验证 (2FA)",
+    totpDesc:"从新设备登录时需要验证码。",
     loginAlertLabel:"登录活动警报",
     loginAlertDesc:"检测到新登录时发送电子邮件。",
     sessionDesc:"当前登录到您账户的设备。",
