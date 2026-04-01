@@ -1691,13 +1691,23 @@ select option{background:var(--card-bg);color:var(--text)}
 }
 
 /* ── Fidelity card locked wall ── */
+/* Contenuto fidelity (visibile solo con card) — rispecchia gap del panel-inner */
+#fidContent {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .fid-locked-wall {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 48px 32px;
+  padding: 48px 32px 40px;
   gap: 0;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
 }
 .fid-lock-icon { font-size: 48px; margin-bottom: 20px; }
 .fid-lock-title {
@@ -1785,3 +1795,62 @@ select option{background:var(--card-bg);color:var(--text)}
   word-break: break-all;
 }
 .redeemed-code-reveal.visible { display: block; }
+
+/* ── Fidelity locked wall — card art visual ── */
+.fid-lock-card-art {
+  position: relative; overflow: hidden;
+  width: 220px; height: 130px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #0f0730 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 40px rgba(80,0,200,.35), 0 2px 8px rgba(0,0,0,.3);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px 14px;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+.flca-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 55%);
+  border-radius: inherit;
+}
+.flca-top {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.flca-brand {
+  font-size: 13px; font-weight: 900; letter-spacing: .18em;
+  color: rgba(255,255,255,.9);
+}
+.flca-icon {
+  font-size: 16px; color: rgba(255,255,255,.7);
+}
+.flca-name {
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75);
+  letter-spacing: .06em;
+}
+.flca-sub {
+  font-size: 10px; color: rgba(255,255,255,.5);
+  letter-spacing: .08em;
+}
+
+/* ── Fidelity payment modal ── */
+.fid-pay-summary {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+  margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px;
+}
+.fid-pay-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13.5px; color: var(--text);
+}
+.fid-pay-total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-weight: 700; font-size: 14px;
+}
+.fid-pay-wallet-bal {
+  font-size: 12px; color: var(--muted);
+  padding-top: 8px; border-top: 1px solid var(--border);
+  text-align: center;
+}

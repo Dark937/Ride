@@ -701,20 +701,69 @@ function openCouponModal(title, coupons, pts) {
   document.getElementById('couponOverlay').classList.add('open');
 }
 const GOLD_THRESHOLD=2000;
-const FIDELITY_CARD_PRICE=9.99;
+const FIDELITY_CARD_PRICE=10;
 
-function buyFidelityCard(uid){
+function openFidelityPayModal(uid){
+  const overlay=document.getElementById('fidPayOverlay');
+  if(!overlay) return;
+  const bal=RideData.getWallet(uid);
+  const balEl=document.getElementById('fidPayWalletBal');
+  if(balEl) balEl.textContent=`Wallet balance: €${bal.toFixed(2)}`;
+  const confirmBtn=document.getElementById('fidPayConfirmBtn');
+  if(confirmBtn){
+    if(bal<FIDELITY_CARD_PRICE){
+      confirmBtn.disabled=true;
+      confirmBtn.style.opacity='.45';
+      confirmBtn.style.cursor='not-allowed';
+      if(balEl) balEl.textContent=`Wallet balance: €${bal.toFixed(2)} — insufficient funds`;
+    } else {
+      confirmBtn.disabled=false;
+      confirmBtn.style.opacity='';
+      confirmBtn.style.cursor='';
+    }
+    confirmBtn.onclick=()=>confirmFidelityPurchase(uid);
+  }
+  document.getElementById('fidPayClose').onclick=()=>{ overlay.style.display='none'; };
+  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.style.display='none'; };
+  overlay.style.display='flex';
+  requestAnimationFrame(()=>overlay.classList.add('open'));
+}
+
+function confirmFidelityPurchase(uid){
+  const overlay=document.getElementById('fidPayOverlay');
+  const bal=RideData.getWallet(uid);
+  if(bal<FIDELITY_CARD_PRICE){ toast('Insufficient wallet balance.'); return; }
+  const txs=RideData.getWalletTxs(uid);
+  const now=new Date().toISOString();
+  txs.unshift({type:'debit',label:'Ride Fidelity Card — monthly subscription',date:now,amount:-FIDELITY_CARD_PRICE});
+  RideData.saveWallet(uid,bal-FIDELITY_CARD_PRICE,txs);
+  localStorage.setItem('ride_has_fidelity_card_'+uid,'true');
+  localStorage.setItem('ride_fidelity_card_since_'+uid,now);
+  localStorage.setItem('ride_fidelity_card_last_billed_'+uid,now);
+  if(overlay){ overlay.classList.remove('open'); setTimeout(()=>{ overlay.style.display='none'; },280); }
+  toast('Fidelity Card activated! Welcome to the Ride programme.');
+  renderFidelity(uid);
+}
+
+function checkMonthlyFidelityBilling(uid){
+  if(localStorage.getItem('ride_has_fidelity_card_'+uid)!=='true') return;
+  const lastBilled=localStorage.getItem('ride_fidelity_card_last_billed_'+uid);
+  if(!lastBilled) return;
+  const last=new Date(lastBilled);
+  const next=new Date(last);
+  next.setMonth(next.getMonth()+1);
+  if(new Date()<next) return;
   const bal=RideData.getWallet(uid);
   if(bal<FIDELITY_CARD_PRICE){
-    toast(`Saldo wallet insufficiente. Ricarica almeno €${FIDELITY_CARD_PRICE.toFixed(2)} per acquistare la card.`);
+    // Saldo insufficiente: card sospesa
+    localStorage.removeItem('ride_has_fidelity_card_'+uid);
+    toast('Fidelity Card suspended — insufficient wallet balance for monthly renewal.');
     return;
   }
   const txs=RideData.getWalletTxs(uid);
-  txs.unshift({type:'debit',label:'Ride Fidelity Card — abbonamento annuale',date:new Date().toISOString(),amount:-FIDELITY_CARD_PRICE});
+  txs.unshift({type:'debit',label:'Ride Fidelity Card — monthly renewal',date:new Date().toISOString(),amount:-FIDELITY_CARD_PRICE});
   RideData.saveWallet(uid,bal-FIDELITY_CARD_PRICE,txs);
-  localStorage.setItem('ride_has_fidelity_card_'+uid,'true');
-  toast('Fidelity Card attivata! Benvenuto nel programma Ride.');
-  renderFidelity(uid);
+  localStorage.setItem('ride_fidelity_card_last_billed_'+uid,new Date().toISOString());
 }
 
 function renderFidelity(uid){
@@ -724,8 +773,10 @@ function renderFidelity(uid){
   if(lockedWall) lockedWall.style.display=hasCard?'none':'flex';
   if(fidContent) fidContent.style.display=hasCard?'':'none';
 
+  checkMonthlyFidelityBilling(uid);
+
   const buyBtn=document.getElementById('buyFidelityCardBtn');
-  if(buyBtn){ buyBtn.onclick=()=>buyFidelityCard(uid); }
+  if(buyBtn){ buyBtn.onclick=()=>openFidelityPayModal(uid); }
 
   if(!hasCard) return;
 

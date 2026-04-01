@@ -270,3 +270,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     injectGlows();
   }
 })();
+
+// ── Testimonials infinite scroll (duplicate cards for seamless loop) ──
+(function(){
+  function initTstTrack(trackId) {
+    var track = document.getElementById(trackId);
+    if (!track) return;
+    var cards = Array.from(track.children);
+    // duplicate for seamless loop
+    cards.forEach(function(c) {
+      track.appendChild(c.cloneNode(true));
+    });
+  }
+  function init() {
+    initTstTrack('tstTrack1');
+    initTstTrack('tstTrack2');
+    initTstTrack('tstTrack3');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

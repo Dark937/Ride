@@ -875,7 +875,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const PAGES = {
   login:'login.html', register:'register.html', settings:'settings.html',
   privacy:'privacy.html', tos:'tos.html', dashboard:'dashboard.html',
-  booking:'book-ride.html', 'become-rider':'become-rider.html',
+  booking:'book-ride.html', 'become-driver':'become-driver.html',
   'reset-password':'reset-password.html',
 };
 Object.entries(PAGES).forEach(([route, file]) => {

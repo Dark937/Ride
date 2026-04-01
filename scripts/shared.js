@@ -448,6 +448,25 @@ const LANGS = {
     // Confirmations
     cancelRideQ:"Cancel this ride?",
     keepRide:"Keep ride",
+    // Fidelity locked wall
+    fidCardName:"Fidelity Card",
+    fidCardSub:"Premium Member",
+    fidLockTitle:"Ride Fidelity Card",
+    fidLockDesc:"Unlock exclusive rewards, earn points on every ride, and enjoy premium perks with the Ride Fidelity Card.",
+    fidPerk1:"Points on every ride",
+    fidPerk2:"Exclusive partner rewards",
+    fidPerk3:"Priority booking during peak hours",
+    fidPerk4:"Gold tier upgrades & bonuses",
+    fidLockPeriod:"/ month",
+    fidLockBuy:"Get the Fidelity Card",
+    fidLockNote:"Billed monthly from your Ride wallet. Cancel anytime.",
+    // Fidelity payment modal
+    fidPayTitle:"Activate Fidelity Card",
+    fidPaySub:"Monthly subscription · cancel anytime",
+    fidPayItem:"Ride Fidelity Card",
+    fidPayDue:"Due today",
+    fidPayConfirm:"Pay €10.00 from Wallet",
+    fidPayNote:"Next billing will be charged automatically one month from today.",
   },
 
   it: {
@@ -646,6 +665,25 @@ const LANGS = {
     noInsights:"Completa dei viaggi per vedere le statistiche.",
     cancelRideQ:"Annullare il viaggio?",
     keepRide:"Mantieni viaggio",
+    // Fidelity locked wall
+    fidCardName:"Carta Fedeltà",
+    fidCardSub:"Membro Premium",
+    fidLockTitle:"Carta Fedeltà Ride",
+    fidLockDesc:"Sblocca premi esclusivi, accumula punti ad ogni viaggio e goditi i benefit premium con la Carta Fedeltà Ride.",
+    fidPerk1:"Punti ad ogni viaggio",
+    fidPerk2:"Premi esclusivi con i partner",
+    fidPerk3:"Prenotazione prioritaria nelle ore di punta",
+    fidPerk4:"Upgrade Gold e bonus speciali",
+    fidLockPeriod:"/ mese",
+    fidLockBuy:"Ottieni la Carta Fedeltà",
+    fidLockNote:"Fatturato mensilmente dal tuo portafoglio Ride. Annulla in qualsiasi momento.",
+    // Fidelity payment modal
+    fidPayTitle:"Attiva Carta Fedeltà",
+    fidPaySub:"Abbonamento mensile · annullabile in qualsiasi momento",
+    fidPayItem:"Carta Fedeltà Ride",
+    fidPayDue:"Da pagare oggi",
+    fidPayConfirm:"Paga €10.00 dal portafoglio",
+    fidPayNote:"Il prossimo addebito verrà effettuato automaticamente tra un mese.",
   },
 
   fr: {
@@ -835,6 +873,16 @@ const LANGS = {
     avgFare:"Tarif moyen", totalDist:"Distance totale",
     monthRides:"Trajets ce mois", noInsights:"Effectuez des trajets pour voir vos statistiques.",
     cancelRideQ:"Annuler ce trajet ?", keepRide:"Garder le trajet",
+    fidCardName:"Carte Fidélité", fidCardSub:"Membre Premium",
+    fidLockTitle:"Carte Fidélité Ride", fidLockDesc:"Débloquez des récompenses exclusives, gagnez des points à chaque trajet et profitez d'avantages premium.",
+    fidPerk1:"Points à chaque trajet", fidPerk2:"Récompenses partenaires exclusives",
+    fidPerk3:"Réservation prioritaire aux heures de pointe", fidPerk4:"Upgrades Gold et bonus",
+    fidLockPeriod:"/ mois", fidLockBuy:"Obtenir la Carte Fidélité",
+    fidLockNote:"Facturé mensuellement depuis votre portefeuille Ride. Annulable à tout moment.",
+    fidPayTitle:"Activer la Carte Fidélité", fidPaySub:"Abonnement mensuel · annulable à tout moment",
+    fidPayItem:"Carte Fidélité Ride", fidPayDue:"À payer aujourd'hui",
+    fidPayConfirm:"Payer €10.00 depuis le portefeuille",
+    fidPayNote:"Le prochain prélèvement sera effectué automatiquement dans un mois.",
   },
 
   es: {
@@ -1024,6 +1072,16 @@ const LANGS = {
     avgFare:"Tarifa media", totalDist:"Distancia total",
     monthRides:"Viajes este mes", noInsights:"Completa viajes para ver las estadísticas.",
     cancelRideQ:"¿Cancelar este viaje?", keepRide:"Mantener viaje",
+    fidCardName:"Tarjeta Fidelidad", fidCardSub:"Miembro Premium",
+    fidLockTitle:"Tarjeta Fidelidad Ride", fidLockDesc:"Desbloquea recompensas exclusivas, gana puntos en cada viaje y disfruta de beneficios premium.",
+    fidPerk1:"Puntos en cada viaje", fidPerk2:"Recompensas exclusivas de socios",
+    fidPerk3:"Reserva prioritaria en horas pico", fidPerk4:"Mejoras Gold y bonificaciones",
+    fidLockPeriod:"/ mes", fidLockBuy:"Obtener la Tarjeta Fidelidad",
+    fidLockNote:"Facturado mensualmente desde tu billetera Ride. Cancela en cualquier momento.",
+    fidPayTitle:"Activar Tarjeta Fidelidad", fidPaySub:"Suscripción mensual · cancela en cualquier momento",
+    fidPayItem:"Tarjeta Fidelidad Ride", fidPayDue:"A pagar hoy",
+    fidPayConfirm:"Pagar €10.00 desde la billetera",
+    fidPayNote:"El próximo cobro se realizará automáticamente en un mes.",
   },
 
   zh: {
@@ -1212,6 +1270,16 @@ const LANGS = {
     avgFare:"平均费用", totalDist:"总里程",
     monthRides:"本月行程", noInsights:"完成行程后查看统计数据。",
     cancelRideQ:"取消此行程？", keepRide:"保留行程",
+    fidCardName:"忠诚卡", fidCardSub:"高级会员",
+    fidLockTitle:"Ride 忠诚卡", fidLockDesc:"解锁专属奖励，每次行程累积积分，享受高级专属福利。",
+    fidPerk1:"每次行程获得积分", fidPerk2:"合作伙伴专属奖励",
+    fidPerk3:"高峰期优先预订", fidPerk4:"黄金等级升级和奖励",
+    fidLockPeriod:"/ 月", fidLockBuy:"获取忠诚卡",
+    fidLockNote:"每月从您的 Ride 钱包扣款。随时取消。",
+    fidPayTitle:"激活忠诚卡", fidPaySub:"月度订阅 · 随时可取消",
+    fidPayItem:"Ride 忠诚卡", fidPayDue:"今日应付",
+    fidPayConfirm:"从钱包支付 €10.00",
+    fidPayNote:"一个月后将自动扣取下一期费用。",
   }
 };
 
