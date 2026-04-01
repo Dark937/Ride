@@ -22,11 +22,8 @@ async function syncFromServer(uid) {
   const token = getToken();
   if (!token) return;
   try {
-    // Fetch bookings and fidelity in parallel
-    const [allBookings, fid] = await Promise.all([
-      apiRequest('GET', '/api/bookings'),
-      apiRequest('GET', '/api/fidelity'),
-    ]);
+    // Always fetch bookings first so we know if any need completing
+    const allBookings = await apiRequest('GET', '/api/bookings');
     if (!allBookings) return;
 
     const now = Date.now();
@@ -36,14 +33,20 @@ async function syncFromServer(uid) {
       new Date(b.datetime).getTime() + (b.durationMin || 30) * 60000 < now
     );
 
-    // Fire completion requests without waiting and without re-fetching
+    // If there are rides to complete, await them so MongoDB fidelity is updated
+    // before we fetch it; otherwise fetch fidelity in parallel with nothing to wait for
+    let fid;
     if (toComplete.length) {
-      Promise.all(toComplete.map(b =>
+      await Promise.all(toComplete.map(b =>
         apiRequest('POST', `/api/bookings/${b._id}/complete`)
       ));
+      // Fidelity has changed on the server — fetch fresh value
+      fid = await apiRequest('GET', '/api/fidelity');
+    } else {
+      fid = await apiRequest('GET', '/api/fidelity');
     }
 
-    // Update completed statuses locally instead of re-fetching
+    // Update completed statuses locally (no need to re-fetch the whole bookings list)
     const completedIds = new Set(toComplete.map(b => b._id));
     const refreshed = allBookings.map(b =>
       completedIds.has(b._id) ? { ...b, status: 'completed', completedAt: new Date().toISOString() } : b
