@@ -26,34 +26,36 @@ async function syncFromServer(uid) {
     if (!allBookings) return;
 
     const now = Date.now();
-    // Auto-complete upcoming rides whose end time has passed
     const toComplete = allBookings.filter(b =>
       b.status === 'upcoming' &&
       new Date(b.datetime).getTime() + (b.durationMin || 30) * 60000 < now
     );
-    await Promise.all(toComplete.map(b =>
-      apiRequest('POST', `/api/bookings/${b._id}/complete`)
-    ));
 
-    // Reload after completions
-    const refreshed = toComplete.length
-      ? (await apiRequest('GET', '/api/bookings'))
-      : allBookings;
-    if (!refreshed) return;
+    // Await completions so MongoDB fidelity is updated before we fetch it
+    if (toComplete.length) {
+      await Promise.all(toComplete.map(b =>
+        apiRequest('POST', `/api/bookings/${b._id}/complete`)
+      ));
+    }
 
-    const upcoming   = refreshed.filter(b => b.status === 'upcoming').map(b => ({
+    // Fetch fidelity; update completed statuses locally (no second bookings round-trip)
+    const fid = await apiRequest('GET', '/api/fidelity');
+    const completedIds = new Set(toComplete.map(b => b._id));
+    const refreshed = allBookings.map(b =>
+      completedIds.has(b._id) ? { ...b, status: 'completed', completedAt: new Date().toISOString() } : b
+    );
+
+    const upcoming  = refreshed.filter(b => b.status === 'upcoming').map(b => ({
       id: b._id, from: b.from, to: b.to, datetime: b.datetime,
       car: b.car, fare: b.fare, durationMin: b.durationMin, passengers: b.passengers, notes: b.notes,
     }));
-    const completed  = refreshed.filter(b => b.status !== 'upcoming').map(b => ({
+    const completed = refreshed.filter(b => b.status !== 'upcoming').map(b => ({
       id: b._id, from: b.from, to: b.to, date: b.completedAt || b.datetime,
       status: b.status, fare: b.fare, car: b.car, pts: b.pts || Math.round(b.fare),
     }));
 
     localStorage.setItem('ride_bookings_' + uid, JSON.stringify(upcoming));
     if (completed.length) localStorage.setItem('ride_rides_' + uid, JSON.stringify(completed));
-
-    const fid = await apiRequest('GET', '/api/fidelity');
     if (fid) localStorage.setItem('ride_fidelity_' + uid, JSON.stringify(fid));
   } catch (_) {}
 }
@@ -701,31 +703,75 @@ function openCouponModal(title, coupons, pts) {
   document.getElementById('couponOverlay').classList.add('open');
 }
 const GOLD_THRESHOLD=2000;
-const FIDELITY_CARD_PRICE=9.99;
+const FIDELITY_CARD_PRICE=10;
 
-function buyFidelityCard(uid){
+function openFidelityPayModal(uid){
+  const overlay=document.getElementById('fidPayOverlay');
+  if(!overlay) return;
   const bal=RideData.getWallet(uid);
-  if(bal<FIDELITY_CARD_PRICE){
-    toast(`Saldo wallet insufficiente. Ricarica almeno €${FIDELITY_CARD_PRICE.toFixed(2)} per acquistare la card.`);
-    return;
+  const balEl=document.getElementById('fidPayWalletBal');
+  const confirmBtn=document.getElementById('fidPayConfirmBtn');
+  if(balEl) balEl.textContent=`Wallet balance: €${bal.toFixed(2)}${bal<FIDELITY_CARD_PRICE?' — insufficient funds':''}`;
+  if(confirmBtn){
+    confirmBtn.disabled=bal<FIDELITY_CARD_PRICE;
+    confirmBtn.onclick=()=>confirmFidelityPurchase(uid);
   }
+  const closeBtn=document.getElementById('fidPayClose');
+  if(closeBtn) closeBtn.onclick=()=>closeFidelityPayModal();
+  overlay.onclick=(e)=>{ if(e.target===overlay) closeFidelityPayModal(); };
+  overlay.style.display='flex';
+  requestAnimationFrame(()=>overlay.classList.add('open'));
+}
+
+function closeFidelityPayModal(){
+  const overlay=document.getElementById('fidPayOverlay');
+  if(overlay){ overlay.classList.remove('open'); setTimeout(()=>{ overlay.style.display='none'; },260); }
+}
+
+function confirmFidelityPurchase(uid){
+  const bal=RideData.getWallet(uid);
+  if(bal<FIDELITY_CARD_PRICE){ toast('Insufficient wallet balance.'); return; }
+  const now=new Date().toISOString();
   const txs=RideData.getWalletTxs(uid);
-  txs.unshift({type:'debit',label:'Ride Fidelity Card — abbonamento annuale',date:new Date().toISOString(),amount:-FIDELITY_CARD_PRICE});
+  txs.unshift({type:'debit',label:'Ride Fidelity Card — monthly subscription',date:now,amount:-FIDELITY_CARD_PRICE});
   RideData.saveWallet(uid,bal-FIDELITY_CARD_PRICE,txs);
   localStorage.setItem('ride_has_fidelity_card_'+uid,'true');
-  toast('Fidelity Card attivata! Benvenuto nel programma Ride.');
+  localStorage.setItem('ride_fidelity_card_since_'+uid,now);
+  localStorage.setItem('ride_fidelity_card_last_billed_'+uid,now);
+  closeFidelityPayModal();
+  toast('Fidelity Card activated! Welcome to the Ride programme.');
   renderFidelity(uid);
 }
 
+function checkMonthlyFidelityBilling(uid){
+  if(localStorage.getItem('ride_has_fidelity_card_'+uid)!=='true') return;
+  const lastBilled=localStorage.getItem('ride_fidelity_card_last_billed_'+uid);
+  if(!lastBilled) return;
+  const next=new Date(lastBilled);
+  next.setMonth(next.getMonth()+1);
+  if(new Date()<next) return;
+  const bal=RideData.getWallet(uid);
+  if(bal<FIDELITY_CARD_PRICE){
+    localStorage.removeItem('ride_has_fidelity_card_'+uid);
+    toast('Fidelity Card suspended — insufficient wallet balance for monthly renewal.');
+    return;
+  }
+  const txs=RideData.getWalletTxs(uid);
+  txs.unshift({type:'debit',label:'Ride Fidelity Card — monthly renewal',date:new Date().toISOString(),amount:-FIDELITY_CARD_PRICE});
+  RideData.saveWallet(uid,bal-FIDELITY_CARD_PRICE,txs);
+  localStorage.setItem('ride_fidelity_card_last_billed_'+uid,new Date().toISOString());
+}
+
 function renderFidelity(uid){
+  checkMonthlyFidelityBilling(uid);
   const hasCard=localStorage.getItem('ride_has_fidelity_card_'+uid)==='true';
   const lockedWall=document.getElementById('fidLockedWall');
   const fidContent=document.getElementById('fidContent');
   if(lockedWall) lockedWall.style.display=hasCard?'none':'flex';
-  if(fidContent) fidContent.style.display=hasCard?'':'none';
+  if(fidContent) fidContent.style.display=hasCard?'flex':'none';
 
   const buyBtn=document.getElementById('buyFidelityCardBtn');
-  if(buyBtn){ buyBtn.onclick=()=>buyFidelityCard(uid); }
+  if(buyBtn){ buyBtn.onclick=()=>openFidelityPayModal(uid); }
 
   if(!hasCard) return;
 
@@ -1197,9 +1243,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
   if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
-  // Sync server data → localStorage (auto-completes past rides, awards points)
-  await syncFromServer(uid);
-
   RideData.seed(uid);
 
   const name=`${user.firstName||''} ${user.lastName||''}`.trim()||'Rider';
@@ -1350,13 +1393,22 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     }
   });
 
-  // Render
+  // Render from cache immediately — visible content without waiting for network
   renderDashboard(user,uid);
   renderNotifications(uid);
-  // Handle #fidelity hash navigation (from external links)
   if (window.location.hash === '#fidelity') {
     switchPanel('fidelity');
     renderFidelity(uid);
   }
-  Lang.apply(); // apply after render
+  Lang.apply();
+
+  // Sync server data in background, then refresh UI with fresh values
+  syncFromServer(uid).then(()=>{
+    renderDashboard(user,uid);
+    renderNotifications(uid);
+    const activePanel=document.querySelector('.panel.active');
+    if(activePanel&&activePanel.id==='panel-fidelity') renderFidelity(uid);
+    if(activePanel&&activePanel.id==='panel-payments') renderWallet(uid);
+    if(activePanel&&activePanel.id==='panel-account')  renderAccount(user,uid);
+  });
 });

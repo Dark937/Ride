@@ -270,3 +270,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     injectGlows();
   }
 })();
+
+// ── Testimonials: duplicate cards for seamless infinite-scroll loop ──
+(function(){
+  function dupTrack(id){
+    var t=document.getElementById(id);
+    if(!t) return;
+    Array.from(t.children).forEach(function(c){ t.appendChild(c.cloneNode(true)); });
+  }
+  function init(){ dupTrack('tstTrack1'); dupTrack('tstTrack2'); dupTrack('tstTrack3'); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();

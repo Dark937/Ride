@@ -231,21 +231,30 @@
 
       <!-- Schermata di acquisto — visibile solo se l'utente non ha ancora la fidelity card -->
       <div class="fid-locked-wall" id="fidLockedWall" style="display:none">
-        <div class="fid-lock-icon">🎟️</div>
-        <h2 class="fid-lock-title">Ride Fidelity Card</h2>
-        <p class="fid-lock-desc">Ottieni punti su ogni corsa, accedi a coupon esclusivi, sconti prioritari e premi partner — tutto con una tessera premium.</p>
+        <!-- Card art preview -->
+        <div class="fid-lock-card-art">
+          <div class="flca-shine"></div>
+          <div class="flca-top">
+            <span class="flca-brand">RIDE</span>
+            <span class="flca-icon">✦</span>
+          </div>
+          <div class="flca-name" data-i18n="fidCardName">Fidelity Card</div>
+          <div class="flca-sub" data-i18n="fidCardSub">Premium Member</div>
+        </div>
+        <h2 class="fid-lock-title" data-i18n="fidLockTitle">Ride Fidelity Card</h2>
+        <p class="fid-lock-desc" data-i18n="fidLockDesc">Earn points on every ride, unlock exclusive coupons, priority discounts and partner rewards — all with one premium card.</p>
         <ul class="fid-lock-perks">
-          <li>✦ Punti su ogni corsa Ride</li>
-          <li>✦ Coupon e premi partner esclusivi</li>
-          <li>✦ Accesso prioritario nelle ore di punta</li>
-          <li>✦ Tier Gold con 10% di sconto dai 2.000 pts</li>
+          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="fidPerk1">Points on every Ride</span></li>
+          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="fidPerk2">Exclusive partner rewards</span></li>
+          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="fidPerk3">Priority access during peak hours</span></li>
+          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="fidPerk4">Gold tier upgrades &amp; bonuses</span></li>
         </ul>
         <div class="fid-lock-price">
-          <span class="fid-lock-amount">€9.99</span>
-          <span class="fid-lock-period">/ anno</span>
+          <span class="fid-lock-amount">€10</span>
+          <span class="fid-lock-period" data-i18n="fidLockPeriod">/ month</span>
         </div>
-        <button class="fid-lock-btn" id="buyFidelityCardBtn">Acquista la Fidelity Card</button>
-        <p class="fid-lock-note">Addebitato sul tuo wallet Ride. Annullabile in qualsiasi momento.</p>
+        <button class="fid-lock-btn" id="buyFidelityCardBtn" data-i18n="fidLockBuy">Get the Fidelity Card</button>
+        <p class="fid-lock-note" data-i18n="fidLockNote">Billed monthly from your Ride wallet. Cancel anytime.</p>
       </div>
 
       <!-- Contenuto normale — visibile solo se l'utente ha la fidelity card -->
@@ -511,6 +520,27 @@
     <div class="wallet-pay-title" id="walletPayTitle">Processing payment</div>
     <div class="wallet-pay-status" id="walletPayStatus">Connecting to payment provider…</div>
     <div class="wallet-pay-amount" id="walletPayAmountDisplay"></div>
+  </div>
+</div>
+
+<!-- Fidelity payment modal -->
+<div class="upcoming-overlay" id="fidPayOverlay" style="display:none">
+  <div class="upcoming-modal" style="max-width:380px;padding:32px 28px">
+    <button class="um-close" id="fidPayClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:36px;margin-bottom:12px">💳</div>
+      <div style="font-size:17px;font-weight:800;letter-spacing:-.02em" data-i18n="fidPayTitle">Activate Fidelity Card</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px" data-i18n="fidPaySub">Monthly subscription · cancel anytime</div>
+    </div>
+    <div class="fid-pay-summary">
+      <div class="fid-pay-row"><span data-i18n="fidPayItem">Ride Fidelity Card</span><span>€10.00</span></div>
+      <div class="fid-pay-row fid-pay-total"><span data-i18n="fidPayDue">Due today</span><span style="color:var(--brand);font-weight:800">€10.00</span></div>
+      <div class="fid-pay-wallet-bal" id="fidPayWalletBal"></div>
+    </div>
+    <button class="fid-lock-btn" id="fidPayConfirmBtn" style="margin-top:4px;width:100%" data-i18n="fidPayConfirm">Pay €10.00 from Wallet</button>
+    <p style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:12px" data-i18n="fidPayNote">Next billing will be charged automatically one month from today.</p>
   </div>
 </div>
 
