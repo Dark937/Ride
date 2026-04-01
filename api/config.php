@@ -16,7 +16,8 @@ define('JWT_SECRET', '2460d3916048cc382eab442411396e19b7e2d7bc6e7279376580bf8970
 define('JWT_EXPIRY', 7 * 24 * 60 * 60); // 7 days
 
 // ─── AI SETTINGS ─────────────────────────────────────────────────────────────
-define('ANTHROPIC_API_KEY', ''); // Get your key from anthropic.com
+define('ANTHROPIC_API_KEY', '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
+'); // Get your key from anthropic.com
 
 // ─── EMAIL SETTINGS ──────────────────────────────────────────────────────────
 // Set to true to use Altervista's native mail() function (recommended).
