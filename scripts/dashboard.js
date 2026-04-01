@@ -22,7 +22,11 @@ async function syncFromServer(uid) {
   const token = getToken();
   if (!token) return;
   try {
-    const allBookings = await apiRequest('GET', '/api/bookings');
+    // Fetch bookings and fidelity in parallel
+    const [allBookings, fid] = await Promise.all([
+      apiRequest('GET', '/api/bookings'),
+      apiRequest('GET', '/api/fidelity'),
+    ]);
     if (!allBookings) return;
 
     const now = Date.now();
@@ -31,21 +35,25 @@ async function syncFromServer(uid) {
       b.status === 'upcoming' &&
       new Date(b.datetime).getTime() + (b.durationMin || 30) * 60000 < now
     );
-    await Promise.all(toComplete.map(b =>
-      apiRequest('POST', `/api/bookings/${b._id}/complete`)
-    ));
 
-    // Reload after completions
-    const refreshed = toComplete.length
-      ? (await apiRequest('GET', '/api/bookings'))
-      : allBookings;
-    if (!refreshed) return;
+    // Fire completion requests without waiting and without re-fetching
+    if (toComplete.length) {
+      Promise.all(toComplete.map(b =>
+        apiRequest('POST', `/api/bookings/${b._id}/complete`)
+      ));
+    }
 
-    const upcoming   = refreshed.filter(b => b.status === 'upcoming').map(b => ({
+    // Update completed statuses locally instead of re-fetching
+    const completedIds = new Set(toComplete.map(b => b._id));
+    const refreshed = allBookings.map(b =>
+      completedIds.has(b._id) ? { ...b, status: 'completed', completedAt: new Date().toISOString() } : b
+    );
+
+    const upcoming  = refreshed.filter(b => b.status === 'upcoming').map(b => ({
       id: b._id, from: b.from, to: b.to, datetime: b.datetime,
       car: b.car, fare: b.fare, durationMin: b.durationMin, passengers: b.passengers, notes: b.notes,
     }));
-    const completed  = refreshed.filter(b => b.status !== 'upcoming').map(b => ({
+    const completed = refreshed.filter(b => b.status !== 'upcoming').map(b => ({
       id: b._id, from: b.from, to: b.to, date: b.completedAt || b.datetime,
       status: b.status, fare: b.fare, car: b.car, pts: b.pts || Math.round(b.fare),
     }));
@@ -53,7 +61,6 @@ async function syncFromServer(uid) {
     localStorage.setItem('ride_bookings_' + uid, JSON.stringify(upcoming));
     if (completed.length) localStorage.setItem('ride_rides_' + uid, JSON.stringify(completed));
 
-    const fid = await apiRequest('GET', '/api/fidelity');
     if (fid) localStorage.setItem('ride_fidelity_' + uid, JSON.stringify(fid));
   } catch (_) {}
 }
@@ -1248,9 +1255,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   if (user.lang)         { Lang.set(user.lang);                 Lang.apply(); }
   if (user.reduceMotion) { Motion.set(user.reduceMotion === 'true'); Motion.apply(); }
 
-  // Sync server data → localStorage (auto-completes past rides, awards points)
-  await syncFromServer(uid);
-
   RideData.seed(uid);
 
   const name=`${user.firstName||''} ${user.lastName||''}`.trim()||'Rider';
@@ -1401,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     }
   });
 
-  // Render
+  // Render from cache immediately — no waiting for network
   renderDashboard(user,uid);
   renderNotifications(uid);
   // Handle #fidelity hash navigation (from external links)
@@ -1410,4 +1414,13 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     renderFidelity(uid);
   }
   Lang.apply(); // apply after render
+
+  // Sync server data in background, then refresh UI with fresh data
+  syncFromServer(uid).then(() => {
+    renderDashboard(user, uid);
+    renderNotifications(uid);
+    const activePanel = document.querySelector('.panel.active');
+    if (activePanel && activePanel.id === 'panel-fidelity') renderFidelity(uid);
+    if (activePanel && activePanel.id === 'panel-payments') renderWallet(uid);
+  });
 });

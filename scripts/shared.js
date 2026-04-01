@@ -120,6 +120,26 @@ const Session = {
   },
 
   async get() {
+    // Fast path: if a JWT token exists, fetch profile from server directly.
+    // This skips the 600KB WASM load + IndexedDB read on the critical path.
+    const token = localStorage.getItem('ride_token');
+    if (token) {
+      try {
+        const r = await fetch('/api/profile', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.user) {
+            const u = d.user;
+            if (u.lang)  Lang.set(u.lang);
+            if (u.theme) Theme.set(u.theme);
+            return u;
+          }
+        }
+      } catch (_) {}
+    }
+    // Fallback: read from local SQLite database
     await dbReady;
     try {
       const uid = localStorage.getItem("current_user_id");
